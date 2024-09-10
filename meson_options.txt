@@ -1,0 +1,28 @@
+option(
+  'package_subdir',
+  type: 'string',
+  description: 'Subdirectory to append to all installed files, for use as subproject'
+)
+
+option(
+  'introspection',
+  type: 'feature',
+  value: 'enabled',
+  yield: true,
+  description : 'Build introspection data (requires gobject-introspection)'
+)
+option('vapi', type: 'boolean', value: true)
+
+option(
+  'screenshots',
+  type: 'boolean',
+  value: false,
+  description : 'Regenerate screenshots for the documentation'
+)
+
+option(
+  'documentation',
+   type: 'boolean',
+   value: false,
+   description : 'Build API reference documentation'
+)
