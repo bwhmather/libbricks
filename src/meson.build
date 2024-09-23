@@ -5,19 +5,43 @@ libbricks_public_headers = files([
   'bricks.h',
   'brk-bin.h',
   'brk-toolbar-view.h',
+  'brk-tab-bar.h',
+  'brk-tab-view.h',
+  'brk-easing.h',
 ])
+
 libbricks_private_headers = files([
   'brk-gizmo-private.h',
   'brk-widget-utils-private.h',
+  'brk-tab-bar-private.h',
+  'brk-tab-box-private.h',
+  'brk-tab-private.h',
+  'brk-tab-view-private.h',
+  'brk-animation-util.h',
+  'brk-fading-label-private.h',
+  'brk-timed-animation.h',
+  'brk-animation-target.h',
+  'brk-bidi-private.h',
 ])
 
 libbricks_public_sources = files([
+  'brk-animation.c',
   'brk-bin.c',
   'brk-toolbar-view.c',
+  'brk-tab-bar.c',
+  'brk-tab-view.c',
+  'brk-timed-animation.c',
+  'brk-animation-target.c',
 ])
 libbricks_private_sources = files([
   'brk-gizmo.c',
   'brk-widget-utils.c',
+  'brk-tab-box.c',
+  'brk-tab.c',
+  'brk-animation-util.c',
+  'brk-easing.c',
+  'brk-fading-label.c',
+  'brk-bidi.c',
 ])
 
 libbricks_generated_headers = []
@@ -34,7 +58,12 @@ libbricks_generated_headers += [libbricks_resources[1]]
 libbricks_generated_sources += [libbricks_resources[0]]
 
 libbricks_public_enum_headers = [
+  'brk-animation.h',
+  'brk-animation-target.h',
   'brk-toolbar-view.h',
+  'brk-tab-bar.h',
+  'brk-tab-view.h',
+  'brk-easing.h',
 ]
 libbricks_public_enums = gnome.mkenums_simple(
   'brk-enums',
