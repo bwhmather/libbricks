@@ -68,9 +68,9 @@ void brk_animation_reset  (BrkAnimation *self);
 BRK_AVAILABLE_IN_ALL
 void brk_animation_skip   (BrkAnimation *self);
 
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 gboolean brk_animation_get_follow_enable_animations_setting (BrkAnimation *self);
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 void     brk_animation_set_follow_enable_animations_setting (BrkAnimation *self,
                                                              gboolean      setting);
 

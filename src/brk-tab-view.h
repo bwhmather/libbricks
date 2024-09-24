@@ -80,9 +80,9 @@ BRK_AVAILABLE_IN_ALL
 void   brk_tab_page_set_indicator_icon (BrkTabPage *self,
                                         GIcon      *indicator_icon);
 
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 const char *brk_tab_page_get_indicator_tooltip (BrkTabPage *self);
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 void        brk_tab_page_set_indicator_tooltip (BrkTabPage *self,
                                                 const char *tooltip);
 
@@ -98,9 +98,9 @@ BRK_AVAILABLE_IN_ALL
 void     brk_tab_page_set_needs_attention (BrkTabPage *self,
                                            gboolean    needs_attention);
 
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 const char *brk_tab_page_get_keyword (BrkTabPage *self);
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 void        brk_tab_page_set_keyword (BrkTabPage *self,
                                       const char *keyword);
 
@@ -141,15 +141,15 @@ BRK_AVAILABLE_IN_ALL
 void        brk_tab_view_set_menu_model (BrkTabView *self,
                                          GMenuModel *menu_model);
 
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 BrkTabViewShortcuts brk_tab_view_get_shortcuts    (BrkTabView          *self);
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 void                brk_tab_view_set_shortcuts    (BrkTabView          *self,
                                                    BrkTabViewShortcuts  shortcuts);
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 void                brk_tab_view_add_shortcuts    (BrkTabView          *self,
                                                    BrkTabViewShortcuts  shortcuts);
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 void                brk_tab_view_remove_shortcuts (BrkTabView          *self,
                                                    BrkTabViewShortcuts  shortcuts);
 

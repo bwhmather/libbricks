@@ -44,19 +44,19 @@ BrkAnimationTarget *brk_callback_animation_target_new (BrkAnimationTargetFunc ca
 
 #define BRK_TYPE_PROPERTY_ANIMATION_TARGET (brk_property_animation_target_get_type())
 
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 GDK_DECLARE_INTERNAL_TYPE (BrkPropertyAnimationTarget, brk_property_animation_target, BRK, PROPERTY_ANIMATION_TARGET, BrkAnimationTarget)
 
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 BrkAnimationTarget *brk_property_animation_target_new           (GObject    *object,
                                                                  const char *property_name) G_GNUC_WARN_UNUSED_RESULT;
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 BrkAnimationTarget *brk_property_animation_target_new_for_pspec (GObject    *object,
                                                                  GParamSpec *pspec) G_GNUC_WARN_UNUSED_RESULT;
 
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 GObject    *brk_property_animation_target_get_object (BrkPropertyAnimationTarget *self);
-BRK_AVAILABLE_IN_1_2
+BRK_AVAILABLE_IN_ALL
 GParamSpec *brk_property_animation_target_get_pspec  (BrkPropertyAnimationTarget *self);
 
 G_END_DECLS

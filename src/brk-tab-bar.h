@@ -73,12 +73,12 @@ void brk_tab_bar_setup_extra_drop_target (BrkTabBar     *self,
                                           GType         *types,
                                           gsize          n_types);
 
-BRK_AVAILABLE_IN_1_4
+BRK_AVAILABLE_IN_ALL
 GdkDragAction brk_tab_bar_get_extra_drag_preferred_action (BrkTabBar *self);
 
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 gboolean brk_tab_bar_get_extra_drag_preload (BrkTabBar *self);
-BRK_AVAILABLE_IN_1_3
+BRK_AVAILABLE_IN_ALL
 void     brk_tab_bar_set_extra_drag_preload (BrkTabBar *self,
                                              gboolean   preload);
 
