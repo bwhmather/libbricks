@@ -25,37 +25,42 @@
 
 G_BEGIN_DECLS
 
-#define BRK_CRITICAL_CANNOT_REMOVE_CHILD(parent, child) \
-G_STMT_START { \
-  g_critical ("%s:%d: tried to remove non-child %p of type '%s' from %p of type '%s'", \
-              __FILE__, __LINE__, \
-              (child), \
-              G_OBJECT_TYPE_NAME ((GObject*) (child)), \
-              (parent), \
-              G_OBJECT_TYPE_NAME ((GObject*) (parent))); \
-} G_STMT_END
+#define BRK_CRITICAL_CANNOT_REMOVE_CHILD(parent, child)                                            \
+    G_STMT_START {                                                                                 \
+        g_critical(                                                                                \
+            "%s:%d: tried to remove non-child %p of type '%s' from %p of "                         \
+            "type '%s'",                                                                           \
+            __FILE__, __LINE__, (child), G_OBJECT_TYPE_NAME((GObject *)(child)), (parent),         \
+            G_OBJECT_TYPE_NAME((GObject *)(parent))                                                \
+        );                                                                                         \
+    }                                                                                              \
+    G_STMT_END
 
-gboolean brk_widget_focus_child (GtkWidget        *widget,
-                                 GtkDirectionType  direction);
+gboolean
+brk_widget_focus_child(GtkWidget *widget, GtkDirectionType direction);
 
-gboolean brk_widget_grab_focus_self          (GtkWidget *widget);
-gboolean brk_widget_grab_focus_child         (GtkWidget *widget);
-gboolean brk_widget_grab_focus_child_or_self (GtkWidget *widget);
+gboolean
+brk_widget_grab_focus_self(GtkWidget *widget);
+gboolean
+brk_widget_grab_focus_child(GtkWidget *widget);
+gboolean
+brk_widget_grab_focus_child_or_self(GtkWidget *widget);
 
-void brk_widget_compute_expand (GtkWidget *widget,
-                                gboolean  *hexpand_p,
-                                gboolean  *vexpand_p);
+void
+brk_widget_compute_expand(GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p);
 
-void brk_widget_compute_expand_horizontal_only (GtkWidget *widget,
-                                                gboolean  *hexpand_p,
-                                                gboolean  *vexpand_p);
+void
+brk_widget_compute_expand_horizontal_only(
+    GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p
+);
 
-GtkSizeRequestMode brk_widget_get_request_mode (GtkWidget *widget);
+GtkSizeRequestMode
+brk_widget_get_request_mode(GtkWidget *widget);
 
-gboolean brk_widget_lookup_color (GtkWidget  *widget,
-                                  const char *name,
-                                  GdkRGBA    *rgba);
+gboolean
+brk_widget_lookup_color(GtkWidget *widget, const char *name, GdkRGBA *rgba);
 
-gboolean brk_decoration_layout_prefers_start (const char *layout);
+gboolean
+brk_decoration_layout_prefers_start(const char *layout);
 
 G_END_DECLS

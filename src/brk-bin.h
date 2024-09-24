@@ -12,29 +12,30 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include "brk-version.h"
-
 #include <gtk/gtk.h>
+
+#include "brk-version.h"
 
 G_BEGIN_DECLS
 
 #define BRK_TYPE_BIN (brk_bin_get_type())
 
 BRK_AVAILABLE_IN_ALL
-G_DECLARE_DERIVABLE_TYPE (BrkBin, brk_bin, BRK, BIN, GtkWidget)
+G_DECLARE_DERIVABLE_TYPE(BrkBin, brk_bin, BRK, BIN, GtkWidget)
 
-struct _BrkBinClass
-{
-  GtkWidgetClass parent_class;
+struct _BrkBinClass {
+    GtkWidgetClass parent_class;
 };
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_bin_new (void) G_GNUC_WARN_UNUSED_RESULT;
+GtkWidget *
+brk_bin_new(void) G_GNUC_WARN_UNUSED_RESULT;
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_bin_get_child (BrkBin    *self);
+GtkWidget *
+brk_bin_get_child(BrkBin *self);
 BRK_AVAILABLE_IN_ALL
-void       brk_bin_set_child (BrkBin    *self,
-                              GtkWidget *child);
+void
+brk_bin_set_child(BrkBin *self, GtkWidget *child);
 
 G_END_DECLS

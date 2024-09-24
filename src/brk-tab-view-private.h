@@ -16,15 +16,17 @@
 
 G_BEGIN_DECLS
 
-gboolean brk_tab_view_select_first_page (BrkTabView *self);
-gboolean brk_tab_view_select_last_page  (BrkTabView *self);
+gboolean
+brk_tab_view_select_first_page(BrkTabView *self);
+gboolean
+brk_tab_view_select_last_page(BrkTabView *self);
 
-void brk_tab_view_detach_page (BrkTabView *self,
-                               BrkTabPage *page);
-void brk_tab_view_attach_page (BrkTabView *self,
-                               BrkTabPage *page,
-                               int         position);
+void
+brk_tab_view_detach_page(BrkTabView *self, BrkTabPage *page);
+void
+brk_tab_view_attach_page(BrkTabView *self, BrkTabPage *page, int position);
 
-BrkTabView *brk_tab_view_create_window (BrkTabView *self) G_GNUC_WARN_UNUSED_RESULT;
+BrkTabView *
+brk_tab_view_create_window(BrkTabView *self) G_GNUC_WARN_UNUSED_RESULT;
 
 G_END_DECLS

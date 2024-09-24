@@ -12,77 +12,88 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include "brk-version.h"
-
 #include <gtk/gtk.h>
+
 #include "brk-enums.h"
 #include "brk-tab-view.h"
+#include "brk-version.h"
 
 G_BEGIN_DECLS
 
 #define BRK_TYPE_TAB_BAR (brk_tab_bar_get_type())
 
 BRK_AVAILABLE_IN_ALL
-G_DECLARE_FINAL_TYPE (BrkTabBar, brk_tab_bar, BRK, TAB_BAR, GtkWidget)
+G_DECLARE_FINAL_TYPE(BrkTabBar, brk_tab_bar, BRK, TAB_BAR, GtkWidget)
 
 BRK_AVAILABLE_IN_ALL
-BrkTabBar *brk_tab_bar_new (void) G_GNUC_WARN_UNUSED_RESULT;
+BrkTabBar *
+brk_tab_bar_new(void) G_GNUC_WARN_UNUSED_RESULT;
 
 BRK_AVAILABLE_IN_ALL
-BrkTabView *brk_tab_bar_get_view (BrkTabBar  *self);
+BrkTabView *
+brk_tab_bar_get_view(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void        brk_tab_bar_set_view (BrkTabBar  *self,
-                                  BrkTabView *view);
+void
+brk_tab_bar_set_view(BrkTabBar *self, BrkTabView *view);
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_tab_bar_get_start_action_widget (BrkTabBar *self);
+GtkWidget *
+brk_tab_bar_get_start_action_widget(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void       brk_tab_bar_set_start_action_widget (BrkTabBar *self,
-                                                GtkWidget *widget);
+void
+brk_tab_bar_set_start_action_widget(BrkTabBar *self, GtkWidget *widget);
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_tab_bar_get_end_action_widget (BrkTabBar *self);
+GtkWidget *
+brk_tab_bar_get_end_action_widget(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void       brk_tab_bar_set_end_action_widget (BrkTabBar *self,
-                                              GtkWidget *widget);
+void
+brk_tab_bar_set_end_action_widget(BrkTabBar *self, GtkWidget *widget);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_autohide (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_autohide(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_tab_bar_set_autohide (BrkTabBar *self,
-                                   gboolean   autohide);
+void
+brk_tab_bar_set_autohide(BrkTabBar *self, gboolean autohide);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_tabs_revealed (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_tabs_revealed(BrkTabBar *self);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_expand_tabs (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_expand_tabs(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_tab_bar_set_expand_tabs (BrkTabBar *self,
-                                      gboolean   expand_tabs);
+void
+brk_tab_bar_set_expand_tabs(BrkTabBar *self, gboolean expand_tabs);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_inverted (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_inverted(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_tab_bar_set_inverted (BrkTabBar *self,
-                                   gboolean   inverted);
+void
+brk_tab_bar_set_inverted(BrkTabBar *self, gboolean inverted);
 
 BRK_AVAILABLE_IN_ALL
-void brk_tab_bar_setup_extra_drop_target (BrkTabBar     *self,
-                                          GdkDragAction  actions,
-                                          GType         *types,
-                                          gsize          n_types);
+void
+brk_tab_bar_setup_extra_drop_target(
+    BrkTabBar *self, GdkDragAction actions, GType *types, gsize n_types
+);
 
 BRK_AVAILABLE_IN_ALL
-GdkDragAction brk_tab_bar_get_extra_drag_preferred_action (BrkTabBar *self);
+GdkDragAction
+brk_tab_bar_get_extra_drag_preferred_action(BrkTabBar *self);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_extra_drag_preload (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_extra_drag_preload(BrkTabBar *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_tab_bar_set_extra_drag_preload (BrkTabBar *self,
-                                             gboolean   preload);
+void
+brk_tab_bar_set_extra_drag_preload(BrkTabBar *self, gboolean preload);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_tab_bar_get_is_overflowing (BrkTabBar *self);
+gboolean
+brk_tab_bar_get_is_overflowing(BrkTabBar *self);
 
 G_END_DECLS

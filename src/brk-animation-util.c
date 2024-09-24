@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "brk-animation-util.h"
 
@@ -20,9 +20,8 @@
  * Returns: the computed value
  */
 double
-brk_lerp (double a, double b, double t)
-{
-  return a * (1.0 - t) + b * t;
+brk_lerp(double a, double b, double t) {
+    return a * (1.0 - t) + b * t;
 }
 
 /**
@@ -37,15 +36,14 @@ brk_lerp (double a, double b, double t)
  * Returns: whether animations are enabled for @widget
  */
 gboolean
-brk_get_enable_animations (GtkWidget *widget)
-{
-  gboolean enable_animations = TRUE;
+brk_get_enable_animations(GtkWidget *widget) {
+    gboolean enable_animations = TRUE;
 
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), FALSE);
+    g_return_val_if_fail(GTK_IS_WIDGET(widget), FALSE);
 
-  g_object_get (gtk_widget_get_settings (widget),
-                "gtk-enable-animations", &enable_animations,
-                NULL);
+    g_object_get(
+        gtk_widget_get_settings(widget), "gtk-enable-animations", &enable_animations, NULL
+    );
 
-  return enable_animations;
+    return enable_animations;
 }

@@ -11,19 +11,19 @@
 G_BEGIN_DECLS
 
 #if !GTK_CHECK_VERSION(4, 14, 4)
-# error "libbricks requires gtk4 >= 4.15.1"
+#error "libbricks requires gtk4 >= 4.15.1"
 #endif
 
 #if !GLIB_CHECK_VERSION(2, 76, 0)
-# error "libbricks requires glib-2.0 >= 2.76.0"
+#error "libbricks requires glib-2.0 >= 2.76.0"
 #endif
 
 #define _BRICKS_INSIDE
 
-#include "brk-version.h"
-#include "brk-toolbar-view.h"
 #include "brk-tab-bar.h"
 #include "brk-tab-view.h"
+#include "brk-toolbar-view.h"
+#include "brk-version.h"
 
 #undef _BRICKS_INSIDE
 

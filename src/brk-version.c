@@ -6,7 +6,7 @@
  * Author: Alice Mikhaylenko <alice.mikhaylenko@puri.sm>
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "brk-version.h"
 
@@ -25,9 +25,8 @@
  * Returns: the major version number of the Bricks library
  */
 guint
-brk_get_major_version (void)
-{
-  return BRK_MAJOR_VERSION;
+brk_get_major_version(void) {
+    return BRK_MAJOR_VERSION;
 }
 
 /**
@@ -45,9 +44,8 @@ brk_get_major_version (void)
  * Returns: the minor version number of the Bricks library
  */
 guint
-brk_get_minor_version (void)
-{
-  return BRK_MINOR_VERSION;
+brk_get_minor_version(void) {
+    return BRK_MINOR_VERSION;
 }
 
 /**
@@ -65,7 +63,6 @@ brk_get_minor_version (void)
  * Returns: the micro version number of the Bricks library
  */
 guint
-brk_get_micro_version (void)
-{
-  return BRK_MICRO_VERSION;
+brk_get_micro_version(void) {
+    return BRK_MICRO_VERSION;
 }

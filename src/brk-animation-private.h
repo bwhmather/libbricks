@@ -15,14 +15,12 @@
 
 G_BEGIN_DECLS
 
-struct _BrkAnimationClass
-{
-  GObjectClass parent_class;
+struct _BrkAnimationClass {
+    GObjectClass parent_class;
 
-  guint (*estimate_duration) (BrkAnimation *self);
+    guint (*estimate_duration)(BrkAnimation *self);
 
-  double (*calculate_value) (BrkAnimation *self,
-                             guint         t);
+    double (*calculate_value)(BrkAnimation *self, guint t);
 };
 
 G_END_DECLS

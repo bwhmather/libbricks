@@ -5,10 +5,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "brk-animation-private.h"
-
 #include "brk-animation-target-private.h"
 #include "brk-animation-util.h"
 #include "brk-marshalers.h"
@@ -77,380 +76,341 @@
  * [method@Animation.reset] and [method@Animation.skip].
  */
 
-typedef struct
-{
-  GtkWidget *widget;
+typedef struct {
+    GtkWidget *widget;
 
-  double value;
+    double value;
 
-  gint64 start_time; /* ms */
-  gint64 paused_time;
-  guint tick_cb_id;
-  gulong unmap_cb_id;
+    gint64 start_time; /* ms */
+    gint64 paused_time;
+    guint tick_cb_id;
+    gulong unmap_cb_id;
 
-  BrkAnimationTarget *target;
-  gpointer user_data;
+    BrkAnimationTarget *target;
+    gpointer user_data;
 
-  BrkAnimationState state;
+    BrkAnimationState state;
 
-  gboolean follow_enable_animations_setting;
+    gboolean follow_enable_animations_setting;
 } BrkAnimationPrivate;
 
-G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (BrkAnimation, brk_animation, G_TYPE_OBJECT)
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE(BrkAnimation, brk_animation, G_TYPE_OBJECT)
 
 enum {
-  PROP_0,
-  PROP_WIDGET,
-  PROP_TARGET,
-  PROP_VALUE,
-  PROP_STATE,
-  PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING,
-  LAST_PROP,
+    PROP_0,
+    PROP_WIDGET,
+    PROP_TARGET,
+    PROP_VALUE,
+    PROP_STATE,
+    PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING,
+    LAST_PROP,
 };
 
 static GParamSpec *props[LAST_PROP];
 
 enum {
-  SIGNAL_DONE,
-  SIGNAL_LAST_SIGNAL,
+    SIGNAL_DONE,
+    SIGNAL_LAST_SIGNAL,
 };
 
 static guint signals[SIGNAL_LAST_SIGNAL];
 
 static void
-widget_notify_cb (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+widget_notify_cb(BrkAnimation *self) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  priv->widget = NULL;
+    priv->widget = NULL;
 }
 
 static void
-set_widget (BrkAnimation *self,
-            GtkWidget    *widget)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+set_widget(BrkAnimation *self, GtkWidget *widget) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  if (priv->widget == widget)
-    return;
+    if (priv->widget == widget)
+        return;
 
-  if (priv->widget)
-    g_object_weak_unref (G_OBJECT (priv->widget),
-                         (GWeakNotify) widget_notify_cb,
-                         self);
+    if (priv->widget)
+        g_object_weak_unref(G_OBJECT(priv->widget), (GWeakNotify)widget_notify_cb, self);
 
-  priv->widget = widget;
+    priv->widget = widget;
 
-  if (priv->widget)
-    g_object_weak_ref (G_OBJECT (priv->widget),
-                       (GWeakNotify) widget_notify_cb,
-                       self);
+    if (priv->widget)
+        g_object_weak_ref(G_OBJECT(priv->widget), (GWeakNotify)widget_notify_cb, self);
 }
 
 static void
-set_value (BrkAnimation *self,
-           guint         t)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+set_value(BrkAnimation *self, guint t) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  priv->value = BRK_ANIMATION_GET_CLASS (self)->calculate_value (self, t);
+    priv->value = BRK_ANIMATION_GET_CLASS(self)->calculate_value(self, t);
 
-  brk_animation_target_set_value (priv->target, priv->value);
+    brk_animation_target_set_value(priv->target, priv->value);
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_VALUE]);
 }
 
 static void
-stop_animation (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+stop_animation(BrkAnimation *self) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  if (priv->tick_cb_id) {
-    gtk_widget_remove_tick_callback (priv->widget, priv->tick_cb_id);
-    priv->tick_cb_id = 0;
-  }
+    if (priv->tick_cb_id) {
+        gtk_widget_remove_tick_callback(priv->widget, priv->tick_cb_id);
+        priv->tick_cb_id = 0;
+    }
 
-  if (priv->unmap_cb_id) {
-    g_signal_handler_disconnect (priv->widget, priv->unmap_cb_id);
-    priv->unmap_cb_id = 0;
-  }
+    if (priv->unmap_cb_id) {
+        g_signal_handler_disconnect(priv->widget, priv->unmap_cb_id);
+        priv->unmap_cb_id = 0;
+    }
 }
 
 static gboolean
-tick_cb (GtkWidget     *widget,
-         GdkFrameClock *frame_clock,
-         BrkAnimation  *self)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+tick_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkAnimation *self) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  gint64 frame_time = gdk_frame_clock_get_frame_time (frame_clock) / 1000; /* ms */
-  guint duration = BRK_ANIMATION_GET_CLASS (self)->estimate_duration (self);
-  guint t = (guint) (frame_time - priv->start_time);
+    gint64 frame_time = gdk_frame_clock_get_frame_time(frame_clock) / 1000; /* ms */
+    guint duration = BRK_ANIMATION_GET_CLASS(self)->estimate_duration(self);
+    guint t = (guint)(frame_time - priv->start_time);
 
-  if (t >= duration && duration != BRK_DURATION_INFINITE) {
-    brk_animation_skip (self);
+    if (t >= duration && duration != BRK_DURATION_INFINITE) {
+        brk_animation_skip(self);
 
-    return G_SOURCE_REMOVE;
-  }
+        return G_SOURCE_REMOVE;
+    }
 
-  set_value (self, t);
+    set_value(self, t);
 
-  return G_SOURCE_CONTINUE;
+    return G_SOURCE_CONTINUE;
 }
 
 static guint
-brk_animation_estimate_duration (BrkAnimation *animation)
-{
-  g_assert_not_reached ();
+brk_animation_estimate_duration(BrkAnimation *animation) {
+    g_assert_not_reached();
 }
 
 static double
-brk_animation_calculate_value (BrkAnimation *animation,
-                               guint         t)
-{
-  g_assert_not_reached ();
+brk_animation_calculate_value(BrkAnimation *animation, guint t) {
+    g_assert_not_reached();
 }
 
 static void
-play (BrkAnimation *self)
-{
+play(BrkAnimation *self) {
 
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  if (priv->state == BRK_ANIMATION_PLAYING) {
-    g_critical ("Trying to play animation %p, but it's already playing", self);
+    if (priv->state == BRK_ANIMATION_PLAYING) {
+        g_critical("Trying to play animation %p, but it's already playing", self);
 
-    return;
-  }
+        return;
+    }
 
-  priv->state = BRK_ANIMATION_PLAYING;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_STATE]);
+    priv->state = BRK_ANIMATION_PLAYING;
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_STATE]);
 
-  if ((priv->follow_enable_animations_setting &&
-       !brk_get_enable_animations (priv->widget)) ||
-      !gtk_widget_get_mapped (priv->widget)) {
-    brk_animation_skip (g_object_ref (self));
+    if ((priv->follow_enable_animations_setting && !brk_get_enable_animations(priv->widget)) ||
+        !gtk_widget_get_mapped(priv->widget)) {
+        brk_animation_skip(g_object_ref(self));
 
-    return;
-  }
+        return;
+    }
 
-  priv->start_time += gdk_frame_clock_get_frame_time (gtk_widget_get_frame_clock (priv->widget)) / 1000;
-  priv->start_time -= priv->paused_time;
+    priv->start_time +=
+        gdk_frame_clock_get_frame_time(gtk_widget_get_frame_clock(priv->widget)) / 1000;
+    priv->start_time -= priv->paused_time;
 
-  if (priv->tick_cb_id)
-    return;
+    if (priv->tick_cb_id)
+        return;
 
-  priv->unmap_cb_id =
-    g_signal_connect_swapped (priv->widget, "unmap",
-                              G_CALLBACK (brk_animation_skip), self);
-  priv->tick_cb_id = gtk_widget_add_tick_callback (priv->widget, (GtkTickCallback) tick_cb, self, NULL);
+    priv->unmap_cb_id =
+        g_signal_connect_swapped(priv->widget, "unmap", G_CALLBACK(brk_animation_skip), self);
+    priv->tick_cb_id =
+        gtk_widget_add_tick_callback(priv->widget, (GtkTickCallback)tick_cb, self, NULL);
 
-  g_object_ref (self);
+    g_object_ref(self);
 }
 
 static void
-brk_animation_constructed (GObject *object)
-{
-  BrkAnimation *self = BRK_ANIMATION (object);
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+brk_animation_constructed(GObject *object) {
+    BrkAnimation *self = BRK_ANIMATION(object);
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  G_OBJECT_CLASS (brk_animation_parent_class)->constructed (object);
+    G_OBJECT_CLASS(brk_animation_parent_class)->constructed(object);
 
-  priv->value = BRK_ANIMATION_GET_CLASS (self)->calculate_value (self, 0);
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE]);
+    priv->value = BRK_ANIMATION_GET_CLASS(self)->calculate_value(self, 0);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_VALUE]);
 }
 
 static void
-brk_animation_dispose (GObject *object)
-{
-  BrkAnimation *self = BRK_ANIMATION (object);
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+brk_animation_dispose(GObject *object) {
+    BrkAnimation *self = BRK_ANIMATION(object);
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  if (priv->state == BRK_ANIMATION_PLAYING)
-    brk_animation_skip (self);
+    if (priv->state == BRK_ANIMATION_PLAYING)
+        brk_animation_skip(self);
 
-  g_clear_object (&priv->target);
+    g_clear_object(&priv->target);
 
-  set_widget (self, NULL);
+    set_widget(self, NULL);
 
-  G_OBJECT_CLASS (brk_animation_parent_class)->dispose (object);
+    G_OBJECT_CLASS(brk_animation_parent_class)->dispose(object);
 }
 
 static void
-brk_animation_get_property (GObject    *object,
-                            guint       prop_id,
-                            GValue     *value,
-                            GParamSpec *pspec)
-{
-  BrkAnimation *self = BRK_ANIMATION (object);
+brk_animation_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec) {
+    BrkAnimation *self = BRK_ANIMATION(object);
 
-  switch (prop_id) {
-  case PROP_WIDGET:
-    g_value_set_object (value, brk_animation_get_widget (self));
-    break;
+    switch (prop_id) {
+    case PROP_WIDGET:
+        g_value_set_object(value, brk_animation_get_widget(self));
+        break;
 
-  case PROP_TARGET:
-    g_value_set_object (value, brk_animation_get_target (self));
-    break;
+    case PROP_TARGET:
+        g_value_set_object(value, brk_animation_get_target(self));
+        break;
 
-  case PROP_VALUE:
-    g_value_set_double (value, brk_animation_get_value (self));
-    break;
+    case PROP_VALUE:
+        g_value_set_double(value, brk_animation_get_value(self));
+        break;
 
-  case PROP_STATE:
-    g_value_set_enum (value, brk_animation_get_state (self));
-    break;
+    case PROP_STATE:
+        g_value_set_enum(value, brk_animation_get_state(self));
+        break;
 
-  case PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING:
-    g_value_set_boolean (value, brk_animation_get_follow_enable_animations_setting (self));
-    break;
+    case PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING:
+        g_value_set_boolean(value, brk_animation_get_follow_enable_animations_setting(self));
+        break;
 
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-  }
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 static void
-brk_animation_set_property (GObject      *object,
-                            guint         prop_id,
-                            const GValue *value,
-                            GParamSpec   *pspec)
-{
-  BrkAnimation *self = BRK_ANIMATION (object);
+brk_animation_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec) {
+    BrkAnimation *self = BRK_ANIMATION(object);
 
-  switch (prop_id) {
-  case PROP_WIDGET:
-    set_widget (self, g_value_get_object (value));
-    break;
+    switch (prop_id) {
+    case PROP_WIDGET:
+        set_widget(self, g_value_get_object(value));
+        break;
 
-  case PROP_TARGET:
-    brk_animation_set_target (BRK_ANIMATION (self), g_value_get_object (value));
-    break;
+    case PROP_TARGET:
+        brk_animation_set_target(BRK_ANIMATION(self), g_value_get_object(value));
+        break;
 
-  case PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING:
-    brk_animation_set_follow_enable_animations_setting (self, g_value_get_boolean (value));
-    break;
+    case PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING:
+        brk_animation_set_follow_enable_animations_setting(self, g_value_get_boolean(value));
+        break;
 
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-  }
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 static void
-brk_animation_class_init (BrkAnimationClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+brk_animation_class_init(BrkAnimationClass *klass) {
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
-  object_class->constructed = brk_animation_constructed;
-  object_class->dispose = brk_animation_dispose;
-  object_class->set_property = brk_animation_set_property;
-  object_class->get_property = brk_animation_get_property;
+    object_class->constructed = brk_animation_constructed;
+    object_class->dispose = brk_animation_dispose;
+    object_class->set_property = brk_animation_set_property;
+    object_class->get_property = brk_animation_get_property;
 
-  klass->estimate_duration = brk_animation_estimate_duration;
-  klass->calculate_value = brk_animation_calculate_value;
+    klass->estimate_duration = brk_animation_estimate_duration;
+    klass->calculate_value = brk_animation_calculate_value;
 
-  /**
-   * BrkAnimation:widget: (attributes org.gtk.Property.get=brk_animation_get_widget)
-   *
-   * The animation widget.
-   *
-   * It provides the frame clock for the animation. It's not strictly necessary
-   * for this widget to be same as the one being animated.
-   *
-   * The widget must be mapped in order for the animation to work. If it's not
-   * mapped, or if it gets unmapped during an ongoing animation, the animation
-   * will be automatically skipped.
-   */
-  props[PROP_WIDGET] =
-    g_param_spec_object ("widget", NULL, NULL,
-                         GTK_TYPE_WIDGET,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+    /**
+     * BrkAnimation:widget: (attributes org.gtk.Property.get=brk_animation_get_widget)
+     *
+     * The animation widget.
+     *
+     * It provides the frame clock for the animation. It's not strictly necessary
+     * for this widget to be same as the one being animated.
+     *
+     * The widget must be mapped in order for the animation to work. If it's not
+     * mapped, or if it gets unmapped during an ongoing animation, the animation
+     * will be automatically skipped.
+     */
+    props[PROP_WIDGET] = g_param_spec_object(
+        "widget", NULL, NULL, GTK_TYPE_WIDGET,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS
+    );
 
-  /**
-   * BrkAnimation:target: (attributes org.gtk.Property.get=brk_animation_get_target org.gtk.Property.set=brk_animation_set_target)
-   *
-   * The target to animate.
-   */
-  props[PROP_TARGET] =
-    g_param_spec_object ("target", NULL, NULL,
-                         BRK_TYPE_ANIMATION_TARGET,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkAnimation:target: (attributes org.gtk.Property.get=brk_animation_get_target org.gtk.Property.set=brk_animation_set_target)
+     *
+     * The target to animate.
+     */
+    props[PROP_TARGET] = g_param_spec_object(
+        "target", NULL, NULL, BRK_TYPE_ANIMATION_TARGET,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkAnimation:value: (attributes org.gtk.Property.get=brk_animation_get_value)
-   *
-   * The current value of the animation.
-   */
-  props[PROP_VALUE] =
-    g_param_spec_double ("value", NULL, NULL,
-                         -G_MAXDOUBLE,
-                         G_MAXDOUBLE,
-                         0,
-                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+    /**
+     * BrkAnimation:value: (attributes org.gtk.Property.get=brk_animation_get_value)
+     *
+     * The current value of the animation.
+     */
+    props[PROP_VALUE] = g_param_spec_double(
+        "value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS
+    );
 
-  /**
-   * BrkAnimation:state: (attributes org.gtk.Property.get=brk_animation_get_state)
-   *
-   * The animation state.
-   *
-   * The state indicates whether the animation is currently playing, paused,
-   * finished or hasn't been started yet.
-   */
-  props[PROP_STATE] =
-    g_param_spec_enum ("state", NULL, NULL,
-                       BRK_TYPE_ANIMATION_STATE,
-                       BRK_ANIMATION_IDLE,
-                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+    /**
+     * BrkAnimation:state: (attributes org.gtk.Property.get=brk_animation_get_state)
+     *
+     * The animation state.
+     *
+     * The state indicates whether the animation is currently playing, paused,
+     * finished or hasn't been started yet.
+     */
+    props[PROP_STATE] = g_param_spec_enum(
+        "state", NULL, NULL, BRK_TYPE_ANIMATION_STATE, BRK_ANIMATION_IDLE,
+        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS
+    );
 
-  /**
-   * BrkAnimation:follow-enable-animations-setting: (attributes org.gtk.Property.get=brk_animation_get_follow_enable_animations_setting org.gtk.Property.set=brk_animation_set_follow_enable_animations_setting)
-   *
-   * Whether to skip the animation when animations are globally disabled.
-   *
-   * The default behavior is to skip the animation. Set to `FALSE` to disable
-   * this behavior.
-   *
-   * This can be useful for cases where animation is essential, like spinners,
-   * or in demo applications. Most other animations should keep it enabled.
-   *
-   * See [property@Gtk.Settings:gtk-enable-animations].
-   *
-   * Since: 1.3
-   */
-  props[PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING] =
-    g_param_spec_boolean ("follow-enable-animations-setting", NULL, NULL,
-                          TRUE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkAnimation:follow-enable-animations-setting: (attributes org.gtk.Property.get=brk_animation_get_follow_enable_animations_setting org.gtk.Property.set=brk_animation_set_follow_enable_animations_setting)
+     *
+     * Whether to skip the animation when animations are globally disabled.
+     *
+     * The default behavior is to skip the animation. Set to `FALSE` to disable
+     * this behavior.
+     *
+     * This can be useful for cases where animation is essential, like spinners,
+     * or in demo applications. Most other animations should keep it enabled.
+     *
+     * See [property@Gtk.Settings:gtk-enable-animations].
+     *
+     * Since: 1.3
+     */
+    props[PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING] = g_param_spec_boolean(
+        "follow-enable-animations-setting", NULL, NULL, TRUE,
+        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  g_object_class_install_properties (object_class, LAST_PROP, props);
+    g_object_class_install_properties(object_class, LAST_PROP, props);
 
-  /**
-   * BrkAnimation::done:
-   *
-   * This signal is emitted when the animation has been completed, either on its
-   * own or via calling [method@Animation.skip].
-   */
-  signals[SIGNAL_DONE] =
-    g_signal_new ("done",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0,
-                  NULL, NULL,
-                  brk_marshal_VOID__VOID,
-                  G_TYPE_NONE,
-                  0);
-  g_signal_set_va_marshaller (signals[SIGNAL_DONE],
-                              G_TYPE_FROM_CLASS (klass),
-                              brk_marshal_VOID__VOIDv);
+    /**
+     * BrkAnimation::done:
+     *
+     * This signal is emitted when the animation has been completed, either on its
+     * own or via calling [method@Animation.skip].
+     */
+    signals[SIGNAL_DONE] = g_signal_new(
+        "done", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, brk_marshal_VOID__VOID,
+        G_TYPE_NONE, 0
+    );
+    g_signal_set_va_marshaller(
+        signals[SIGNAL_DONE], G_TYPE_FROM_CLASS(klass), brk_marshal_VOID__VOIDv
+    );
 }
 
 static void
-brk_animation_init (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv = brk_animation_get_instance_private (self);
+brk_animation_init(BrkAnimation *self) {
+    BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-  priv->state = BRK_ANIMATION_IDLE;
-  priv->follow_enable_animations_setting = TRUE;
+    priv->state = BRK_ANIMATION_IDLE;
+    priv->follow_enable_animations_setting = TRUE;
 }
 
 /**
@@ -469,15 +429,14 @@ brk_animation_init (BrkAnimation *self)
  * Returns: (transfer none): the animation widget
  */
 GtkWidget *
-brk_animation_get_widget (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_get_widget(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_val_if_fail (BRK_IS_ANIMATION (self), NULL);
+    g_return_val_if_fail(BRK_IS_ANIMATION(self), NULL);
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  return priv->widget;
+    return priv->widget;
 }
 
 /**
@@ -489,15 +448,14 @@ brk_animation_get_widget (BrkAnimation *self)
  * Returns: (transfer none): the animation target
  */
 BrkAnimationTarget *
-brk_animation_get_target (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_get_target(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_val_if_fail (BRK_IS_ANIMATION (self), NULL);
+    g_return_val_if_fail(BRK_IS_ANIMATION(self), NULL);
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  return priv->target;
+    return priv->target;
 }
 
 /**
@@ -508,22 +466,20 @@ brk_animation_get_target (BrkAnimation *self)
  * Sets the target @self animates to @target.
  */
 void
-brk_animation_set_target (BrkAnimation       *self,
-                          BrkAnimationTarget *target)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_set_target(BrkAnimation *self, BrkAnimationTarget *target) {
+    BrkAnimationPrivate *priv;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
-  g_return_if_fail (BRK_IS_ANIMATION_TARGET (target));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
+    g_return_if_fail(BRK_IS_ANIMATION_TARGET(target));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (target == priv->target)
-    return;
+    if (target == priv->target)
+        return;
 
-  g_set_object (&priv->target, target);
+    g_set_object(&priv->target, target);
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_TARGET]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_TARGET]);
 }
 
 /**
@@ -535,15 +491,14 @@ brk_animation_set_target (BrkAnimation       *self,
  * Returns: the current value
  */
 double
-brk_animation_get_value (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_get_value(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_val_if_fail (BRK_IS_ANIMATION (self), 0.0);
+    g_return_val_if_fail(BRK_IS_ANIMATION(self), 0.0);
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  return priv->value;
+    return priv->value;
 }
 
 /**
@@ -558,15 +513,14 @@ brk_animation_get_value (BrkAnimation *self)
  * Returns: the animation value
  */
 BrkAnimationState
-brk_animation_get_state (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_get_state(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_val_if_fail (BRK_IS_ANIMATION (self), BRK_ANIMATION_IDLE);
+    g_return_val_if_fail(BRK_IS_ANIMATION(self), BRK_ANIMATION_IDLE);
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  return priv->state;
+    return priv->state;
 }
 
 /**
@@ -590,21 +544,20 @@ brk_animation_get_state (BrkAnimation *self)
  * run after the animation has already finished, and not while it's playing.
  */
 void
-brk_animation_play (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_play(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (priv->state != BRK_ANIMATION_IDLE) {
-    priv->state = BRK_ANIMATION_IDLE;
-    priv->start_time = 0;
-    priv->paused_time = 0;
-  }
+    if (priv->state != BRK_ANIMATION_IDLE) {
+        priv->state = BRK_ANIMATION_IDLE;
+        priv->start_time = 0;
+        priv->paused_time = 0;
+    }
 
-  play (self);
+    play(self);
 }
 
 /**
@@ -618,29 +571,29 @@ brk_animation_play (BrkAnimation *self)
  * Sets [property@Animation:state] to `BRK_ANIMATION_PAUSED`.
  */
 void
-brk_animation_pause (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_pause(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (priv->state != BRK_ANIMATION_PLAYING)
-    return;
+    if (priv->state != BRK_ANIMATION_PLAYING)
+        return;
 
-  g_object_freeze_notify (G_OBJECT (self));
+    g_object_freeze_notify(G_OBJECT(self));
 
-  priv->state = BRK_ANIMATION_PAUSED;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_STATE]);
+    priv->state = BRK_ANIMATION_PAUSED;
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_STATE]);
 
-  stop_animation (self);
+    stop_animation(self);
 
-  priv->paused_time = gdk_frame_clock_get_frame_time (gtk_widget_get_frame_clock (priv->widget)) / 1000;
+    priv->paused_time =
+        gdk_frame_clock_get_frame_time(gtk_widget_get_frame_clock(priv->widget)) / 1000;
 
-  g_object_thaw_notify (G_OBJECT (self));
+    g_object_thaw_notify(G_OBJECT(self));
 
-  g_object_unref (self);
+    g_object_unref(self);
 }
 
 /**
@@ -655,21 +608,20 @@ brk_animation_pause (BrkAnimation *self)
  * Sets [property@Animation:state] to `BRK_ANIMATION_PLAYING`.
  */
 void
-brk_animation_resume (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_resume(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (priv->state != BRK_ANIMATION_PAUSED) {
-    g_critical ("Trying to resume animation %p, but it's not paused", self);
+    if (priv->state != BRK_ANIMATION_PAUSED) {
+        g_critical("Trying to resume animation %p, but it's not paused", self);
 
-    return;
-  }
+        return;
+    }
 
-  play (self);
+    play(self);
 }
 
 /**
@@ -685,38 +637,37 @@ brk_animation_resume (BrkAnimation *self)
  * Sets [property@Animation:state] to `BRK_ANIMATION_FINISHED`.
  */
 void
-brk_animation_skip (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
-  gboolean was_playing;
+brk_animation_skip(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
+    gboolean was_playing;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (priv->state == BRK_ANIMATION_FINISHED)
-    return;
+    if (priv->state == BRK_ANIMATION_FINISHED)
+        return;
 
-  g_object_freeze_notify (G_OBJECT (self));
+    g_object_freeze_notify(G_OBJECT(self));
 
-  was_playing = priv->state == BRK_ANIMATION_PLAYING;
+    was_playing = priv->state == BRK_ANIMATION_PLAYING;
 
-  priv->state = BRK_ANIMATION_FINISHED;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_STATE]);
+    priv->state = BRK_ANIMATION_FINISHED;
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_STATE]);
 
-  stop_animation (self);
+    stop_animation(self);
 
-  set_value (self, BRK_ANIMATION_GET_CLASS (self)->estimate_duration (self));
+    set_value(self, BRK_ANIMATION_GET_CLASS(self)->estimate_duration(self));
 
-  priv->start_time = 0;
-  priv->paused_time = 0;
+    priv->start_time = 0;
+    priv->paused_time = 0;
 
-  g_object_thaw_notify (G_OBJECT (self));
+    g_object_thaw_notify(G_OBJECT(self));
 
-  g_signal_emit (self, signals[SIGNAL_DONE], 0);
+    g_signal_emit(self, signals[SIGNAL_DONE], 0);
 
-  if (was_playing)
-    g_object_unref (self);
+    if (was_playing)
+        g_object_unref(self);
 }
 
 /**
@@ -728,39 +679,38 @@ brk_animation_skip (BrkAnimation *self)
  * Sets [property@Animation:state] to `BRK_ANIMATION_IDLE`.
  */
 void
-brk_animation_reset (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
-  gboolean was_playing;
+brk_animation_reset(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
+    gboolean was_playing;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  if (priv->state == BRK_ANIMATION_IDLE)
-    return;
+    if (priv->state == BRK_ANIMATION_IDLE)
+        return;
 
-  g_object_freeze_notify (G_OBJECT (self));
+    g_object_freeze_notify(G_OBJECT(self));
 
-  was_playing = priv->state == BRK_ANIMATION_PLAYING;
+    was_playing = priv->state == BRK_ANIMATION_PLAYING;
 
-  priv->state = BRK_ANIMATION_IDLE;
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_STATE]);
+    priv->state = BRK_ANIMATION_IDLE;
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_STATE]);
 
-  stop_animation (self);
+    stop_animation(self);
 
-  set_value (self, 0);
-  priv->start_time = 0;
-  priv->paused_time = 0;
+    set_value(self, 0);
+    priv->start_time = 0;
+    priv->paused_time = 0;
 
-  g_object_thaw_notify (G_OBJECT (self));
+    g_object_thaw_notify(G_OBJECT(self));
 
-  if (was_playing)
-    g_object_unref (self);
+    if (was_playing)
+        g_object_unref(self);
 }
 
 /**
- * brk_animation_get_follow_enable_animations_setting: (attributes org.gtk.Method.get_property=follow-enable-animations-setting)
+ * brk_animation_get_follow_enable_animations_setting:  (attributes org.gtk.Method.get_property=follow-enable-animations-setting)
  * @self: an animation
  *
  * Gets whether @self should be skipped when animations are globally disabled.
@@ -770,19 +720,18 @@ brk_animation_reset (BrkAnimation *self)
  * Since: 1.3
  */
 gboolean
-brk_animation_get_follow_enable_animations_setting (BrkAnimation *self)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_get_follow_enable_animations_setting(BrkAnimation *self) {
+    BrkAnimationPrivate *priv;
 
-  g_return_val_if_fail (BRK_IS_ANIMATION (self), FALSE);
+    g_return_val_if_fail(BRK_IS_ANIMATION(self), FALSE);
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  return priv->follow_enable_animations_setting;
+    return priv->follow_enable_animations_setting;
 }
 
 /**
- * brk_animation_set_follow_enable_animations_setting: (attributes org.gtk.Method.set_property=follow-enable-animations-setting)
+ * brk_animation_set_follow_enable_animations_setting:  (attributes org.gtk.Method.set_property=follow-enable-animations-setting)
  * @self: an animation
  * @setting: whether to follow the global setting
  *
@@ -799,26 +748,22 @@ brk_animation_get_follow_enable_animations_setting (BrkAnimation *self)
  * Since: 1.3
  */
 void
-brk_animation_set_follow_enable_animations_setting (BrkAnimation *self,
-                                                    gboolean      setting)
-{
-  BrkAnimationPrivate *priv;
+brk_animation_set_follow_enable_animations_setting(BrkAnimation *self, gboolean setting) {
+    BrkAnimationPrivate *priv;
 
-  g_return_if_fail (BRK_IS_ANIMATION (self));
+    g_return_if_fail(BRK_IS_ANIMATION(self));
 
-  priv = brk_animation_get_instance_private (self);
+    priv = brk_animation_get_instance_private(self);
 
-  setting = !!setting;
+    setting = !!setting;
 
-  if (setting == priv->follow_enable_animations_setting)
-    return;
+    if (setting == priv->follow_enable_animations_setting)
+        return;
 
-  priv->follow_enable_animations_setting = setting;
+    priv->follow_enable_animations_setting = setting;
 
-  if (setting &&
-      !brk_get_enable_animations (priv->widget) &&
-      priv->state != BRK_ANIMATION_IDLE)
-    brk_animation_skip (g_object_ref (self));
+    if (setting && !brk_get_enable_animations(priv->widget) && priv->state != BRK_ANIMATION_IDLE)
+        brk_animation_skip(g_object_ref(self));
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING]);
 }

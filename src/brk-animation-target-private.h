@@ -14,7 +14,7 @@
 
 G_BEGIN_DECLS
 
-void brk_animation_target_set_value (BrkAnimationTarget *self,
-                                     double              value);
+void
+brk_animation_target_set_value(BrkAnimationTarget *self, double value);
 
 G_END_DECLS

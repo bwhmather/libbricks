@@ -15,7 +15,7 @@
 
 G_BEGIN_DECLS
 
-PangoDirection brk_find_base_dir (const char *text,
-                                  int         length);
+PangoDirection
+brk_find_base_dir(const char *text, int length);
 
 G_END_DECLS

@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "brk-timed-animation.h"
 
-#include "brk-enums.h"
 #include "brk-animation-private.h"
 #include "brk-animation-util.h"
+#include "brk-enums.h"
 
 /**
  * BrkTimedAnimation:
@@ -33,290 +33,267 @@
  * direction every other iteration.
  */
 
-struct _BrkTimedAnimation
-{
-  BrkAnimation parent_instance;
+struct _BrkTimedAnimation {
+    BrkAnimation parent_instance;
 
-  double value_from;
-  double value_to;
-  guint duration; /* ms */
-  BrkEasing easing;
-  guint repeat_count;
-  gboolean reverse;
-  gboolean alternate;
+    double value_from;
+    double value_to;
+    guint duration; /* ms */
+    BrkEasing easing;
+    guint repeat_count;
+    gboolean reverse;
+    gboolean alternate;
 };
 
-struct _BrkTimedAnimationClass
-{
-  BrkAnimationClass parent_class;
+struct _BrkTimedAnimationClass {
+    BrkAnimationClass parent_class;
 };
 
-G_DEFINE_FINAL_TYPE (BrkTimedAnimation, brk_timed_animation, BRK_TYPE_ANIMATION)
+G_DEFINE_FINAL_TYPE(BrkTimedAnimation, brk_timed_animation, BRK_TYPE_ANIMATION)
 
 enum {
-  PROP_0,
-  PROP_VALUE_FROM,
-  PROP_VALUE_TO,
-  PROP_DURATION,
-  PROP_EASING,
-  PROP_REPEAT_COUNT,
-  PROP_REVERSE,
-  PROP_ALTERNATE,
-  LAST_PROP,
+    PROP_0,
+    PROP_VALUE_FROM,
+    PROP_VALUE_TO,
+    PROP_DURATION,
+    PROP_EASING,
+    PROP_REPEAT_COUNT,
+    PROP_REVERSE,
+    PROP_ALTERNATE,
+    LAST_PROP,
 };
 
 static GParamSpec *props[LAST_PROP];
 
 static guint
-brk_timed_animation_estimate_duration (BrkAnimation *animation)
-{
-  BrkTimedAnimation *self = BRK_TIMED_ANIMATION (animation);
+brk_timed_animation_estimate_duration(BrkAnimation *animation) {
+    BrkTimedAnimation *self = BRK_TIMED_ANIMATION(animation);
 
-  if (self->repeat_count == 0)
-    return BRK_DURATION_INFINITE;
+    if (self->repeat_count == 0)
+        return BRK_DURATION_INFINITE;
 
-  return self->duration * self->repeat_count;
+    return self->duration * self->repeat_count;
 }
 
 static double
-brk_timed_animation_calculate_value (BrkAnimation *animation,
-                                     guint         t)
-{
-  BrkTimedAnimation *self = BRK_TIMED_ANIMATION (animation);
+brk_timed_animation_calculate_value(BrkAnimation *animation, guint t) {
+    BrkTimedAnimation *self = BRK_TIMED_ANIMATION(animation);
 
-  double value;
-  double iteration, progress;
-  gboolean reverse = false;
+    double value;
+    double iteration, progress;
+    gboolean reverse = false;
 
-  if (self->duration == 0)
-    return self->value_to;
+    if (self->duration == 0)
+        return self->value_to;
 
-  progress = modf (((double) t / self->duration), &iteration);
+    progress = modf(((double)t / self->duration), &iteration);
 
-  if (self->alternate)
-    reverse = ((int) iteration % 2);
+    if (self->alternate)
+        reverse = ((int)iteration % 2);
 
-  if (self->reverse)
-    reverse = !reverse;
+    if (self->reverse)
+        reverse = !reverse;
 
-  /* When the animation ends, return the exact final value, which depends on the
-     direction the animation is going at that moment, having into account that at the
-     time of this check we're already on the next iteration. */
-  if (t >= brk_timed_animation_estimate_duration (animation))
-    return self->alternate == reverse ? self->value_to : self->value_from;
+    /* When the animation ends, return the exact final value, which depends on the
+     direction the animation is going at that moment, having into account that
+     at the time of this check we're already on the next iteration. */
+    if (t >= brk_timed_animation_estimate_duration(animation))
+        return self->alternate == reverse ? self->value_to : self->value_from;
 
-  progress = reverse ? (1 - progress) : progress;
+    progress = reverse ? (1 - progress) : progress;
 
-  value = brk_easing_ease (self->easing, progress);
+    value = brk_easing_ease(self->easing, progress);
 
-  return brk_lerp (self->value_from, self->value_to, value);
+    return brk_lerp(self->value_from, self->value_to, value);
 }
 
 static void
-brk_timed_animation_get_property (GObject    *object,
-                                  guint       prop_id,
-                                  GValue     *value,
-                                  GParamSpec *pspec)
-{
-  BrkTimedAnimation *self = BRK_TIMED_ANIMATION (object);
+brk_timed_animation_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec) {
+    BrkTimedAnimation *self = BRK_TIMED_ANIMATION(object);
 
-  switch (prop_id) {
-  case PROP_VALUE_FROM:
-    g_value_set_double (value, brk_timed_animation_get_value_from (self));
-    break;
+    switch (prop_id) {
+    case PROP_VALUE_FROM:
+        g_value_set_double(value, brk_timed_animation_get_value_from(self));
+        break;
 
-  case PROP_VALUE_TO:
-    g_value_set_double (value, brk_timed_animation_get_value_to (self));
-    break;
+    case PROP_VALUE_TO:
+        g_value_set_double(value, brk_timed_animation_get_value_to(self));
+        break;
 
-  case PROP_DURATION:
-    g_value_set_uint (value, brk_timed_animation_get_duration (self));
-    break;
+    case PROP_DURATION:
+        g_value_set_uint(value, brk_timed_animation_get_duration(self));
+        break;
 
-  case PROP_EASING:
-    g_value_set_enum (value, brk_timed_animation_get_easing (self));
-    break;
+    case PROP_EASING:
+        g_value_set_enum(value, brk_timed_animation_get_easing(self));
+        break;
 
-  case PROP_REPEAT_COUNT:
-    g_value_set_uint (value, brk_timed_animation_get_repeat_count (self));
-    break;
+    case PROP_REPEAT_COUNT:
+        g_value_set_uint(value, brk_timed_animation_get_repeat_count(self));
+        break;
 
-  case PROP_REVERSE:
-    g_value_set_boolean (value, brk_timed_animation_get_reverse (self));
-    break;
+    case PROP_REVERSE:
+        g_value_set_boolean(value, brk_timed_animation_get_reverse(self));
+        break;
 
-  case PROP_ALTERNATE:
-    g_value_set_boolean (value, brk_timed_animation_get_alternate (self));
-    break;
+    case PROP_ALTERNATE:
+        g_value_set_boolean(value, brk_timed_animation_get_alternate(self));
+        break;
 
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-  }
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 static void
-brk_timed_animation_set_property (GObject      *object,
-                                  guint         prop_id,
-                                  const GValue *value,
-                                  GParamSpec   *pspec)
-{
-  BrkTimedAnimation *self = BRK_TIMED_ANIMATION (object);
+brk_timed_animation_set_property(
+    GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec
+) {
+    BrkTimedAnimation *self = BRK_TIMED_ANIMATION(object);
 
-  switch (prop_id) {
-  case PROP_VALUE_FROM:
-    brk_timed_animation_set_value_from (self, g_value_get_double (value));
-    break;
+    switch (prop_id) {
+    case PROP_VALUE_FROM:
+        brk_timed_animation_set_value_from(self, g_value_get_double(value));
+        break;
 
-  case PROP_VALUE_TO:
-    brk_timed_animation_set_value_to (self, g_value_get_double (value));
-    break;
+    case PROP_VALUE_TO:
+        brk_timed_animation_set_value_to(self, g_value_get_double(value));
+        break;
 
-  case PROP_DURATION:
-    brk_timed_animation_set_duration (self, g_value_get_uint (value));
-    break;
+    case PROP_DURATION:
+        brk_timed_animation_set_duration(self, g_value_get_uint(value));
+        break;
 
-  case PROP_EASING:
-    brk_timed_animation_set_easing (self, g_value_get_enum (value));
-    break;
+    case PROP_EASING:
+        brk_timed_animation_set_easing(self, g_value_get_enum(value));
+        break;
 
-  case PROP_REPEAT_COUNT:
-    brk_timed_animation_set_repeat_count (self, g_value_get_uint (value));
-    break;
+    case PROP_REPEAT_COUNT:
+        brk_timed_animation_set_repeat_count(self, g_value_get_uint(value));
+        break;
 
-  case PROP_REVERSE:
-    brk_timed_animation_set_reverse (self, g_value_get_boolean (value));
-    break;
+    case PROP_REVERSE:
+        brk_timed_animation_set_reverse(self, g_value_get_boolean(value));
+        break;
 
-  case PROP_ALTERNATE:
-    brk_timed_animation_set_alternate (self, g_value_get_boolean (value));
-    break;
+    case PROP_ALTERNATE:
+        brk_timed_animation_set_alternate(self, g_value_get_boolean(value));
+        break;
 
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-  }
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 static void
-brk_timed_animation_class_init (BrkTimedAnimationClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  BrkAnimationClass *animation_class = BRK_ANIMATION_CLASS (klass);
+brk_timed_animation_class_init(BrkTimedAnimationClass *klass) {
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    BrkAnimationClass *animation_class = BRK_ANIMATION_CLASS(klass);
 
-  object_class->set_property = brk_timed_animation_set_property;
-  object_class->get_property = brk_timed_animation_get_property;
+    object_class->set_property = brk_timed_animation_set_property;
+    object_class->get_property = brk_timed_animation_get_property;
 
-  animation_class->estimate_duration = brk_timed_animation_estimate_duration;
-  animation_class->calculate_value = brk_timed_animation_calculate_value;
+    animation_class->estimate_duration = brk_timed_animation_estimate_duration;
+    animation_class->calculate_value = brk_timed_animation_calculate_value;
 
-  /**
-   * BrkTimedAnimation:value-from: (attributes org.gtk.Property.get=brk_timed_animation_get_value_from org.gtk.Property.set=brk_timed_animation_set_value_from)
-   *
-   * The value to animate from.
-   *
-   * The animation will start at this value and end at
-   * [property@TimedAnimation:value-to].
-   *
-   * If [property@TimedAnimation:reverse] is `TRUE`, the animation will end at
-   * this value instead.
-   */
-  props[PROP_VALUE_FROM] =
-    g_param_spec_double ("value-from", NULL, NULL,
-                         -G_MAXDOUBLE,
-                         G_MAXDOUBLE,
-                         0,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:value-from:  (attributes org.gtk.Property.get=brk_timed_animation_get_value_from org.gtk.Property.set=brk_timed_animation_set_value_from)
+     *
+     * The value to animate from.
+     *
+     * The animation will start at this value and end at
+     * [property@TimedAnimation:value-to].
+     *
+     * If [property@TimedAnimation:reverse] is `TRUE`, the animation will end at
+     * this value instead.
+     */
+    props[PROP_VALUE_FROM] = g_param_spec_double(
+        "value-from", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkTimedAnimation:value-to: (attributes org.gtk.Property.get=brk_timed_animation_get_value_to org.gtk.Property.set=brk_timed_animation_set_value_to)
-   *
-   * The value to animate to.
-   *
-   * The animation will start at [property@TimedAnimation:value-from] and end at
-   * this value.
-   *
-   * If [property@TimedAnimation:reverse] is `TRUE`, the animation will start
-   * at this value instead.
-   */
-  props[PROP_VALUE_TO] =
-    g_param_spec_double ("value-to", NULL, NULL,
-                         -G_MAXDOUBLE,
-                         G_MAXDOUBLE,
-                         0,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:value-to:  (attributes org.gtk.Property.get=brk_timed_animation_get_value_to org.gtk.Property.set=brk_timed_animation_set_value_to)
+     *
+     * The value to animate to.
+     *
+     * The animation will start at [property@TimedAnimation:value-from] and end at
+     * this value.
+     *
+     * If [property@TimedAnimation:reverse] is `TRUE`, the animation will start
+     * at this value instead.
+     */
+    props[PROP_VALUE_TO] = g_param_spec_double(
+        "value-to", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkTimedAnimation:duration: (attributes org.gtk.Property.get=brk_timed_animation_get_duration org.gtk.Property.set=brk_timed_animation_set_duration)
-   *
-   * Duration of the animation, in milliseconds.
-   *
-   * Describes how much time the animation will take.
-   *
-   * If the animation repeats more than once, describes the duration of one
-   * iteration.
-   */
-  props[PROP_DURATION] =
-    g_param_spec_uint ("duration", NULL, NULL,
-                       0,
-                       BRK_DURATION_INFINITE,
-                       0,
-                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:duration:  (attributes org.gtk.Property.get=brk_timed_animation_get_duration org.gtk.Property.set=brk_timed_animation_set_duration)
+     *
+     * Duration of the animation, in milliseconds.
+     *
+     * Describes how much time the animation will take.
+     *
+     * If the animation repeats more than once, describes the duration of one
+     * iteration.
+     */
+    props[PROP_DURATION] = g_param_spec_uint(
+        "duration", NULL, NULL, 0, BRK_DURATION_INFINITE, 0,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkTimedAnimation:easing: (attributes org.gtk.Property.get=brk_timed_animation_get_easing org.gtk.Property.set=brk_timed_animation_set_easing)
-   *
-   * Easing function used in the animation.
-   *
-   * Describes the curve the value is interpolated on.
-   *
-   * See [enum@Easing] for the description of specific easing functions.
-   */
-  props[PROP_EASING] =
-    g_param_spec_enum ("easing", NULL, NULL,
-                       BRK_TYPE_EASING,
-                       BRK_EASE_OUT_CUBIC,
-                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:easing:  (attributes org.gtk.Property.get=brk_timed_animation_get_easing org.gtk.Property.set=brk_timed_animation_set_easing)
+     *
+     * Easing function used in the animation.
+     *
+     * Describes the curve the value is interpolated on.
+     *
+     * See [enum@Easing] for the description of specific easing functions.
+     */
+    props[PROP_EASING] = g_param_spec_enum(
+        "easing", NULL, NULL, BRK_TYPE_EASING, BRK_EASE_OUT_CUBIC,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkTimedAnimation:repeat-count: (attributes org.gtk.Property.get=brk_timed_animation_get_repeat_count org.gtk.Property.set=brk_timed_animation_set_repeat_count)
-   *
-   * Number of times the animation will play.
-   *
-   * If set to 0, the animation will repeat endlessly.
-   */
-  props[PROP_REPEAT_COUNT] =
-    g_param_spec_uint ("repeat-count", NULL, NULL,
-                       0,
-                       G_MAXUINT,
-                       1,
-                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:repeat-count:  (attributes org.gtk.Property.get=brk_timed_animation_get_repeat_count org.gtk.Property.set=brk_timed_animation_set_repeat_count)
+     *
+     * Number of times the animation will play.
+     *
+     * If set to 0, the animation will repeat endlessly.
+     */
+    props[PROP_REPEAT_COUNT] = g_param_spec_uint(
+        "repeat-count", NULL, NULL, 0, G_MAXUINT, 1,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
   /**
-   * BrkTimedAnimation:reverse: (attributes org.gtk.Property.get=brk_timed_animation_get_reverse org.gtk.Property.set=brk_timed_animation_set_reverse)
+   * BrkTimedAnimation:reverse:  (attributes org.gtk.Property.get=brk_timed_animation_get_reverse org.gtk.Property.set=brk_timed_animation_set_reverse)
    *
    * Whether the animation plays backwards.
    */
-  props[PROP_REVERSE] =
-    g_param_spec_boolean ("reverse", NULL, NULL,
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    props[PROP_REVERSE] = g_param_spec_boolean(
+        "reverse", NULL, NULL, FALSE,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  /**
-   * BrkTimedAnimation:alternate: (attributes org.gtk.Property.get=brk_timed_animation_get_alternate org.gtk.Property.set=brk_timed_animation_set_alternate)
-   *
-   * Whether the animation changes direction on every iteration.
-   */
-  props[PROP_ALTERNATE] =
-    g_param_spec_boolean ("alternate", NULL, NULL,
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+    /**
+     * BrkTimedAnimation:alternate:  (attributes org.gtk.Property.get=brk_timed_animation_get_alternate org.gtk.Property.set=brk_timed_animation_set_alternate)
+     *
+     * Whether the animation changes direction on every iteration.
+     */
+    props[PROP_ALTERNATE] = g_param_spec_boolean(
+        "alternate", NULL, NULL, FALSE,
+        G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
+    );
 
-  g_object_class_install_properties (object_class, LAST_PROP, props);
+    g_object_class_install_properties(object_class, LAST_PROP, props);
 }
 
 static void
-brk_timed_animation_init (BrkTimedAnimation *self)
-{
-}
+brk_timed_animation_init(BrkTimedAnimation *self) {}
 
 /**
  * brk_timed_animation_new:
@@ -332,32 +309,26 @@ brk_timed_animation_init (BrkTimedAnimation *self)
  * Returns: (transfer none): the newly created animation
  */
 BrkAnimation *
-brk_timed_animation_new (GtkWidget          *widget,
-                         double              from,
-                         double              to,
-                         guint               duration,
-                         BrkAnimationTarget *target)
-{
-  BrkAnimation *animation;
+brk_timed_animation_new(
+    GtkWidget *widget, double from, double to, guint duration, BrkAnimationTarget *target
+) {
+    BrkAnimation *animation;
 
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), NULL);
-  g_return_val_if_fail (BRK_IS_ANIMATION_TARGET (target), NULL);
+    g_return_val_if_fail(GTK_IS_WIDGET(widget), NULL);
+    g_return_val_if_fail(BRK_IS_ANIMATION_TARGET(target), NULL);
 
-  animation = g_object_new (BRK_TYPE_TIMED_ANIMATION,
-                            "widget", widget,
-                            "value-from", from,
-                            "value-to", to,
-                            "duration", duration,
-                            "target", target,
-                            NULL);
+    animation = g_object_new(
+        BRK_TYPE_TIMED_ANIMATION, "widget", widget, "value-from", from, "value-to", to, "duration",
+        duration, "target", target, NULL
+    );
 
-  g_object_unref (target);
+    g_object_unref(target);
 
-  return animation;
+    return animation;
 }
 
 /**
- * brk_timed_animation_get_value_from: (attributes org.gtk.Method.get_property=value-from)
+ * brk_timed_animation_get_value_from:  (attributes org.gtk.Method.get_property=value-from)
  * @self: a timed animation
  *
  * Gets the value @self will animate from.
@@ -365,15 +336,14 @@ brk_timed_animation_new (GtkWidget          *widget,
  * Returns: the value to animate from
  */
 double
-brk_timed_animation_get_value_from (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), 0.0);
+brk_timed_animation_get_value_from(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), 0.0);
 
-  return self->value_from;
+    return self->value_from;
 }
 
 /**
- * brk_timed_animation_set_value_from: (attributes org.gtk.Method.set_property=value-from)
+ * brk_timed_animation_set_value_from:  (attributes org.gtk.Method.set_property=value-from)
  * @self: a timed animation
  * @value: the value to animate from
  *
@@ -386,21 +356,19 @@ brk_timed_animation_get_value_from (BrkTimedAnimation *self)
  * this value instead.
  */
 void
-brk_timed_animation_set_value_from (BrkTimedAnimation *self,
-                                    double             value)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_value_from(BrkTimedAnimation *self, double value) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (G_APPROX_VALUE (self->value_from, value, DBL_EPSILON))
-    return;
+    if (G_APPROX_VALUE(self->value_from, value, DBL_EPSILON))
+        return;
 
-  self->value_from = value;
+    self->value_from = value;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE_FROM]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_VALUE_FROM]);
 }
 
 /**
- * brk_timed_animation_get_value_to: (attributes org.gtk.Method.get_property=value-to)
+ * brk_timed_animation_get_value_to:  (attributes org.gtk.Method.get_property=value-to)
  * @self: a timed animation
  *
  * Gets the value @self will animate to.
@@ -408,15 +376,14 @@ brk_timed_animation_set_value_from (BrkTimedAnimation *self,
  * Returns: the value to animate to
  */
 double
-brk_timed_animation_get_value_to (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), 0.0);
+brk_timed_animation_get_value_to(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), 0.0);
 
-  return self->value_to;
+    return self->value_to;
 }
 
 /**
- * brk_timed_animation_set_value_to: (attributes org.gtk.Method.set_property=value-to)
+ * brk_timed_animation_set_value_to:  (attributes org.gtk.Method.set_property=value-to)
  * @self: a timed animation
  * @value: the value to animate to
  *
@@ -429,21 +396,19 @@ brk_timed_animation_get_value_to (BrkTimedAnimation *self)
  * at this value instead.
  */
 void
-brk_timed_animation_set_value_to (BrkTimedAnimation *self,
-                                  double             value)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_value_to(BrkTimedAnimation *self, double value) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (G_APPROX_VALUE (self->value_to, value, DBL_EPSILON))
-    return;
+    if (G_APPROX_VALUE(self->value_to, value, DBL_EPSILON))
+        return;
 
-  self->value_to = value;
+    self->value_to = value;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_VALUE_TO]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_VALUE_TO]);
 }
 
 /**
- * brk_timed_animation_get_duration: (attributes org.gtk.Method.get_property=duration)
+ * brk_timed_animation_get_duration:  (attributes org.gtk.Method.get_property=duration)
  * @self: a timed animation
  *
  * Gets the duration of @self.
@@ -451,15 +416,14 @@ brk_timed_animation_set_value_to (BrkTimedAnimation *self,
  * Returns: the duration of @self, in milliseconds
  */
 guint
-brk_timed_animation_get_duration (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), 0);
+brk_timed_animation_get_duration(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), 0);
 
-  return self->duration;
+    return self->duration;
 }
 
 /**
- * brk_timed_animation_set_duration: (attributes org.gtk.Method.set_property=duration)
+ * brk_timed_animation_set_duration:  (attributes org.gtk.Method.set_property=duration)
  * @self: a timed animation
  * @duration: the duration to use, in milliseconds
  *
@@ -468,21 +432,19 @@ brk_timed_animation_get_duration (BrkTimedAnimation *self)
  * If the animation repeats more than once, sets the duration of one iteration.
  */
 void
-brk_timed_animation_set_duration (BrkTimedAnimation *self,
-                                  guint              duration)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_duration(BrkTimedAnimation *self, guint duration) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (self->duration == duration)
-    return;
+    if (self->duration == duration)
+        return;
 
-  self->duration = duration;
+    self->duration = duration;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_DURATION]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_DURATION]);
 }
 
 /**
- * brk_timed_animation_get_easing: (attributes org.gtk.Method.get_property=easing)
+ * brk_timed_animation_get_easing:  (attributes org.gtk.Method.get_property=easing)
  * @self: a timed animation
  *
  * Gets the easing function @self uses.
@@ -490,16 +452,14 @@ brk_timed_animation_set_duration (BrkTimedAnimation *self,
  * Returns: the easing function @self uses
  */
 BrkEasing
-brk_timed_animation_get_easing (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self),
-                        BRK_LINEAR);
+brk_timed_animation_get_easing(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), BRK_LINEAR);
 
-  return self->easing;
+    return self->easing;
 }
 
 /**
- * brk_timed_animation_set_easing: (attributes org.gtk.Method.set_property=easing)
+ * brk_timed_animation_set_easing:  (attributes org.gtk.Method.set_property=easing)
  * @self: a timed animation
  * @easing: the easing function to use
  *
@@ -508,22 +468,20 @@ brk_timed_animation_get_easing (BrkTimedAnimation *self)
  * See [enum@Easing] for the description of specific easing functions.
  */
 void
-brk_timed_animation_set_easing (BrkTimedAnimation *self,
-                                BrkEasing          easing)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
-  g_return_if_fail (easing <= BRK_EASE_IN_OUT_BOUNCE);
+brk_timed_animation_set_easing(BrkTimedAnimation *self, BrkEasing easing) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
+    g_return_if_fail(easing <= BRK_EASE_IN_OUT_BOUNCE);
 
-  if (self->easing == easing)
-    return;
+    if (self->easing == easing)
+        return;
 
-  self->easing = easing;
+    self->easing = easing;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_EASING]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_EASING]);
 }
 
 /**
- * brk_timed_animation_get_repeat_count: (attributes org.gtk.Method.get_property=repeat-count)
+ * brk_timed_animation_get_repeat_count:  (attributes org.gtk.Method.get_property=repeat-count)
  * @self: a timed animation
  *
  * Gets the number of times @self will play.
@@ -531,15 +489,14 @@ brk_timed_animation_set_easing (BrkTimedAnimation *self,
  * Returns: the number of times @self will play
  */
 guint
-brk_timed_animation_get_repeat_count (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), 0);
+brk_timed_animation_get_repeat_count(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), 0);
 
-  return self->repeat_count;
+    return self->repeat_count;
 }
 
 /**
- * brk_timed_animation_set_repeat_count: (attributes org.gtk.Method.set_property=repeat-count)
+ * brk_timed_animation_set_repeat_count:  (attributes org.gtk.Method.set_property=repeat-count)
  * @self: a timed animation
  * @repeat_count: the number of times @self will play
  *
@@ -548,21 +505,19 @@ brk_timed_animation_get_repeat_count (BrkTimedAnimation *self)
  * If set to 0, @self will repeat endlessly.
  */
 void
-brk_timed_animation_set_repeat_count (BrkTimedAnimation *self,
-                                      guint              repeat_count)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_repeat_count(BrkTimedAnimation *self, guint repeat_count) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (self->repeat_count == repeat_count)
-    return;
+    if (self->repeat_count == repeat_count)
+        return;
 
-  self->repeat_count = repeat_count;
+    self->repeat_count = repeat_count;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_REPEAT_COUNT]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_REPEAT_COUNT]);
 }
 
 /**
- * brk_timed_animation_get_reverse: (attributes org.gtk.Method.get_property=reverse)
+ * brk_timed_animation_get_reverse:  (attributes org.gtk.Method.get_property=reverse)
  * @self: a timed animation
  *
  * Gets whether @self plays backwards.
@@ -570,36 +525,33 @@ brk_timed_animation_set_repeat_count (BrkTimedAnimation *self,
  * Returns: whether @self plays backwards
  */
 gboolean
-brk_timed_animation_get_reverse (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), FALSE);
+brk_timed_animation_get_reverse(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), FALSE);
 
-  return self->reverse;
+    return self->reverse;
 }
 
 /**
- * brk_timed_animation_set_reverse: (attributes org.gtk.Method.set_property=reverse)
+ * brk_timed_animation_set_reverse:  (attributes org.gtk.Method.set_property=reverse)
  * @self: a timed animation
  * @reverse: whether @self plays backwards
  *
  * Sets whether @self plays backwards.
  */
 void
-brk_timed_animation_set_reverse (BrkTimedAnimation *self,
-                                 gboolean           reverse)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_reverse(BrkTimedAnimation *self, gboolean reverse) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (self->reverse == reverse)
-    return;
+    if (self->reverse == reverse)
+        return;
 
-  self->reverse = reverse;
+    self->reverse = reverse;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_REVERSE]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_REVERSE]);
 }
 
 /**
- * brk_timed_animation_get_alternate: (attributes org.gtk.Method.get_property=alternate)
+ * brk_timed_animation_get_alternate:  (attributes org.gtk.Method.get_property=alternate)
  * @self: a timed animation
  *
  * Gets whether @self changes direction on every iteration.
@@ -607,30 +559,27 @@ brk_timed_animation_set_reverse (BrkTimedAnimation *self,
  * Returns: whether @self alternates
  */
 gboolean
-brk_timed_animation_get_alternate (BrkTimedAnimation *self)
-{
-  g_return_val_if_fail (BRK_IS_TIMED_ANIMATION (self), FALSE);
+brk_timed_animation_get_alternate(BrkTimedAnimation *self) {
+    g_return_val_if_fail(BRK_IS_TIMED_ANIMATION(self), FALSE);
 
-  return self->alternate;
+    return self->alternate;
 }
 
 /**
- * brk_timed_animation_set_alternate: (attributes org.gtk.Method.set_property=alternate)
+ * brk_timed_animation_set_alternate:  (attributes org.gtk.Method.set_property=alternate)
  * @self: a timed animation
  * @alternate: whether @self alternates
  *
  * Sets whether @self changes direction on every iteration.
  */
 void
-brk_timed_animation_set_alternate (BrkTimedAnimation *self,
-                                   gboolean           alternate)
-{
-  g_return_if_fail (BRK_IS_TIMED_ANIMATION (self));
+brk_timed_animation_set_alternate(BrkTimedAnimation *self, gboolean alternate) {
+    g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-  if (self->alternate == alternate)
-    return;
+    if (self->alternate == alternate)
+        return;
 
-  self->alternate = alternate;
+    self->alternate = alternate;
 
-  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ALTERNATE]);
+    g_object_notify_by_pspec(G_OBJECT(self), props[PROP_ALTERNATE]);
 }

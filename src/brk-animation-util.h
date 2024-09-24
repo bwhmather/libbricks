@@ -11,18 +11,18 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include "brk-version.h"
-
 #include <gtk/gtk.h>
+
+#include "brk-version.h"
 
 G_BEGIN_DECLS
 
 BRK_AVAILABLE_IN_ALL
-double brk_lerp (double a,
-                 double b,
-                 double t);
+double
+brk_lerp(double a, double b, double t);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_get_enable_animations (GtkWidget *widget);
+gboolean
+brk_get_enable_animations(GtkWidget *widget);
 
 G_END_DECLS

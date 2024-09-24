@@ -18,14 +18,16 @@ G_BEGIN_DECLS
 
 #define BRK_TYPE_FADING_LABEL (brk_fading_label_get_type())
 
-G_DECLARE_FINAL_TYPE (BrkFadingLabel, brk_fading_label, BRK, FADING_LABEL, GtkWidget)
+G_DECLARE_FINAL_TYPE(BrkFadingLabel, brk_fading_label, BRK, FADING_LABEL, GtkWidget)
 
-const char *brk_fading_label_get_label (BrkFadingLabel *self);
-void        brk_fading_label_set_label (BrkFadingLabel *self,
-                                        const char     *label);
+const char *
+brk_fading_label_get_label(BrkFadingLabel *self);
+void
+brk_fading_label_set_label(BrkFadingLabel *self, const char *label);
 
-float brk_fading_label_get_align (BrkFadingLabel *self);
-void  brk_fading_label_set_align (BrkFadingLabel *self,
-                                  float           align);
+float
+brk_fading_label_get_align(BrkFadingLabel *self);
+void
+brk_fading_label_set_align(BrkFadingLabel *self, float align);
 
 G_END_DECLS

@@ -12,84 +12,94 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include "brk-version.h"
-
 #include <gtk/gtk.h>
+
 #include "brk-enums.h"
+#include "brk-version.h"
 
 G_BEGIN_DECLS
 
 #define BRK_TYPE_TOOLBAR_VIEW (brk_toolbar_view_get_type())
 
 typedef enum {
-  BRK_TOOLBAR_FLAT,
-  BRK_TOOLBAR_RAISED,
-  BRK_TOOLBAR_RAISED_BORDER,
+    BRK_TOOLBAR_FLAT,
+    BRK_TOOLBAR_RAISED,
+    BRK_TOOLBAR_RAISED_BORDER,
 } BrkToolbarStyle;
 
 BRK_AVAILABLE_IN_ALL
-G_DECLARE_FINAL_TYPE (BrkToolbarView, brk_toolbar_view, BRK, TOOLBAR_VIEW, GtkWidget)
+G_DECLARE_FINAL_TYPE(BrkToolbarView, brk_toolbar_view, BRK, TOOLBAR_VIEW, GtkWidget)
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_toolbar_view_new (void) G_GNUC_WARN_UNUSED_RESULT;
+GtkWidget *
+brk_toolbar_view_new(void) G_GNUC_WARN_UNUSED_RESULT;
 
 BRK_AVAILABLE_IN_ALL
-GtkWidget *brk_toolbar_view_get_content (BrkToolbarView *self);
+GtkWidget *
+brk_toolbar_view_get_content(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void       brk_toolbar_view_set_content (BrkToolbarView *self,
-                                         GtkWidget      *content);
+void
+brk_toolbar_view_set_content(BrkToolbarView *self, GtkWidget *content);
 
 BRK_AVAILABLE_IN_ALL
-void brk_toolbar_view_add_top_bar (BrkToolbarView *self,
-                                   GtkWidget      *widget);
+void
+brk_toolbar_view_add_top_bar(BrkToolbarView *self, GtkWidget *widget);
 
 BRK_AVAILABLE_IN_ALL
-void brk_toolbar_view_add_bottom_bar (BrkToolbarView *self,
-                                      GtkWidget      *widget);
+void
+brk_toolbar_view_add_bottom_bar(BrkToolbarView *self, GtkWidget *widget);
 
 BRK_AVAILABLE_IN_ALL
-void brk_toolbar_view_remove (BrkToolbarView *self,
-                              GtkWidget      *widget);
+void
+brk_toolbar_view_remove(BrkToolbarView *self, GtkWidget *widget);
 
 BRK_AVAILABLE_IN_ALL
-BrkToolbarStyle brk_toolbar_view_get_top_bar_style (BrkToolbarView  *self);
+BrkToolbarStyle
+brk_toolbar_view_get_top_bar_style(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void            brk_toolbar_view_set_top_bar_style (BrkToolbarView  *self,
-                                                    BrkToolbarStyle  style);
+void
+brk_toolbar_view_set_top_bar_style(BrkToolbarView *self, BrkToolbarStyle style);
 
 BRK_AVAILABLE_IN_ALL
-BrkToolbarStyle brk_toolbar_view_get_bottom_bar_style (BrkToolbarView  *self);
+BrkToolbarStyle
+brk_toolbar_view_get_bottom_bar_style(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void            brk_toolbar_view_set_bottom_bar_style (BrkToolbarView  *self,
-                                                       BrkToolbarStyle  style);
+void
+brk_toolbar_view_set_bottom_bar_style(BrkToolbarView *self, BrkToolbarStyle style);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_toolbar_view_get_reveal_top_bars (BrkToolbarView *self);
+gboolean
+brk_toolbar_view_get_reveal_top_bars(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_toolbar_view_set_reveal_top_bars (BrkToolbarView *self,
-                                               gboolean        reveal);
+void
+brk_toolbar_view_set_reveal_top_bars(BrkToolbarView *self, gboolean reveal);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_toolbar_view_get_reveal_bottom_bars (BrkToolbarView *self);
+gboolean
+brk_toolbar_view_get_reveal_bottom_bars(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_toolbar_view_set_reveal_bottom_bars (BrkToolbarView *self,
-                                                  gboolean        reveal);
+void
+brk_toolbar_view_set_reveal_bottom_bars(BrkToolbarView *self, gboolean reveal);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_toolbar_view_get_extend_content_to_top_edge (BrkToolbarView *self);
+gboolean
+brk_toolbar_view_get_extend_content_to_top_edge(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_toolbar_view_set_extend_content_to_top_edge (BrkToolbarView *self,
-                                                          gboolean        extend);
+void
+brk_toolbar_view_set_extend_content_to_top_edge(BrkToolbarView *self, gboolean extend);
 
 BRK_AVAILABLE_IN_ALL
-gboolean brk_toolbar_view_get_extend_content_to_bottom_edge (BrkToolbarView *self);
+gboolean
+brk_toolbar_view_get_extend_content_to_bottom_edge(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-void     brk_toolbar_view_set_extend_content_to_bottom_edge (BrkToolbarView *self,
-                                                             gboolean        extend);
+void
+brk_toolbar_view_set_extend_content_to_bottom_edge(BrkToolbarView *self, gboolean extend);
 
 BRK_AVAILABLE_IN_ALL
-int brk_toolbar_view_get_top_bar_height    (BrkToolbarView *self);
+int
+brk_toolbar_view_get_top_bar_height(BrkToolbarView *self);
 BRK_AVAILABLE_IN_ALL
-int brk_toolbar_view_get_bottom_bar_height (BrkToolbarView *self);
+int
+brk_toolbar_view_get_bottom_bar_height(BrkToolbarView *self);
 
 G_END_DECLS
