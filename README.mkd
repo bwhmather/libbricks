@@ -17,22 +17,26 @@ Non-goals:
 
 
 What we would aim to provide:
-  - Named container and widget classes that provide default styles.
+  - Named container and widget classes that allow applications to be assembed without dipping into CSS.
   - Human Interface Guidelines that try to describe what it means to be a "traditional desktop application" and how to build one.
   - Helpers for loading icon and widget themes.
   - Demo application for illustrating patterns and testing themes.
-  - A default GTK theme, based on the upstream GTK theme, which reduces need for manual padding.
+  - A curated set of widget themes, tested with each release.
   - An updated baseline true colour icon theme.
   - Generic choosers and dialogs that support typeahead and look good with server side decorations (might be out of scope).
   - A community of likeminded developers.
   - A curated list of applications that follow the `libbricks` style.
 
 
+`libbricks` maintains two separate contracts:
+  - A contract with theme authors: CSS classes.
+  - A contract with application developers: Widgets.
+
+
+
 
 Application developers using `libbricks` should not need to manually set margins or separation.
-Application developers using `libbricks` should not need to manually set CSS classes (but can if they want to).
-
-Developers of custom widgets using `libbricks` should be able to provide
+Application developers using `libbricks` should not need to manually set CSS classes.
 
 
 `libbricks` is developed as a monorepo, but its components are designed to be packaged separately.
@@ -94,6 +98,9 @@ Possible other components:
 
 ### Writing `libbricks` Applications
 
+
+
+
   - Application authors should never need to create custom widgets.  If you think you need a custom widget, talk to us and get it into `libbricks`.
   - Application authors should never need to set css classes on widgets.  CSS classes are the contract between `libbricks` and theme authors.  `gobject` properties are the contract between application authors and `libbricks`.
 
@@ -127,30 +134,31 @@ We would like the breeze GTK theme to support `libbricks` widgets and will do wh
 Widgets:
   - General:
     - `BrkStyleManager` - Supports switching theme.  Should also (somehow) support registering theme specific extensions for custom widgets.
+    - `BrkVisibilityGroup` - Allows hiding and showing widgets as a group.
   - Main window:
     - `BrkToolBar` - A box with `.toolbar` class already applied.
     - `BrkToolBarView` - A vertical box with top and bottom toolbars and a content area.
     - `BrkStatusBar` - More general widget for displaying mostly non-interactive information at the bottom of a window.
     - `BrkGroup` (?) - In `BrkToolBar` will group sets of buttons separated by separators.  In `BrkStatusBar` they will have a border around them.
-    - `BrkTabBar` - Pretty tab bar for homogeneous tabs.
-  - Other
+    - `BrkTabView` - A tabbed container for switching between homogeneous pages.
+  - Other:
     - `BrkScrollbar` - Old school scroll bar supporting buttons and styling. Can, of course, be made to look like the default one with none of that.
-  - Dialogs
+  - Dialogs:
     - `BrkDialog`
     - Something for centering stuff in a dialog.
     - Extra information revealer.
     - Windows style logo header.
     - Big icon on left and form stuff on right.
-  - Preferences
+  - Preferences:
     - `BrkPreferencesWindow`
     - `BrkPreferencesGroup` (possibly `BrkFieldSet` ala html, or `BrkFrame` ala old GTK).
     - `BrkPreferencesRow`
-  - Selection
+  - Selection:
     - `BrkFileChooser`
 
 
 CSS classes:
-  - TODO
+  - Need some way to indicate that widgets should extend all of the way to the edge of the parent container.
 
 
 Banned widgets:
@@ -159,7 +167,7 @@ Banned widgets:
   - `GtkMessageDialog`
   - `GtkAboutDialog`
   - `GtkAssistant` - Replacement provided without client side decorations.
-  - `GtkShortcutsWindow` - Replacement provided without client side decorations.
+  - `GtkShortcutsWindow` - No replacement provided.  Show keyboard shortcuts inline in menus.
   - `GtkFrame` - Replaced with `BrkPreferencesGroup` and similar.
 
 Discouraged widgets:
@@ -168,9 +176,10 @@ Discouraged widgets:
   - `GtkNotebook`?
 
 ## Themes
-  - Classic - A slightly modernised GTK2 style.
+  - Classic - A somewhat modernised GTK2 style.
   - Default - Compatible with Gtk4 default style.  No frames around field sets.
   - Fisher - Window XP style.
+  - Redmond - Windows 2000 style.
   - Nadawaita - Superficially similar to Adwaita, but with different layout.  Items in field sets are styled as a list box.
 
 ## Style Guide
