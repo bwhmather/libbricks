@@ -4,6 +4,7 @@ libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
 libbricks_public_headers = files([
   'bricks.h',
   'brk-bin.h',
+  'brk-toolbar.h',
   'brk-toolbar-view.h',
   'brk-tab-bar.h',
   'brk-tab-view.h',
@@ -27,11 +28,14 @@ libbricks_private_headers = files([
 libbricks_public_sources = files([
   'brk-animation.c',
   'brk-bin.c',
+  'brk-toolbar.c',
   'brk-toolbar-view.c',
   'brk-tab-bar.c',
   'brk-tab-view.c',
   'brk-timed-animation.c',
   'brk-animation-target.c',
+  'bricks.c',
+  'brk-version.c',
 ])
 libbricks_private_sources = files([
   'brk-gizmo.c',

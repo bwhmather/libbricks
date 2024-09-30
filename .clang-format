@@ -5,7 +5,7 @@ UseTab: Never
 TabWidth: 4
 ---
 Language: Cpp
-ColumnLimit: 100
+ColumnLimit: 0
 AlignAfterOpenBracket: BlockIndent
 AlignOperands: DontAlign
 BreakBeforeTernaryOperators: true

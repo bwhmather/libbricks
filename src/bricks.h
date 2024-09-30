@@ -23,6 +23,7 @@ G_BEGIN_DECLS
 #include "brk-tab-bar.h"
 #include "brk-tab-view.h"
 #include "brk-toolbar-view.h"
+#include "brk-toolbar.h"
 #include "brk-version.h"
 
 #undef _BRICKS_INSIDE
