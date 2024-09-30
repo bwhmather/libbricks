@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2024 Ben Mather <bwhmather@bwhmather.com>
+ *
+ * Based on libadwaita:
  * Copyright (C) 2020 Purism SPC
  *
  * Based on gtkgizmo.c

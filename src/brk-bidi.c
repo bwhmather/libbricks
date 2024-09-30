@@ -22,7 +22,9 @@
  * GTK+ at ftp://ftp.gtk.org/pub/gtk/..
  */
 
-/* Bits taken from GTK 4.0.2 and tweaked to be used by libbricks. */
+/* Bits taken from GTK 4.0.2 and tweaked to be used by libadwaita. */
+
+/* Subsequently taken from libadwaita and tweaked to be used by libbricks. */
 
 #include <fribidi.h>
 

@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2024 Ben Mather <bwhmather@bwhmather.com>
+ *
+ * Based on libadwaita:
  * Copyright (C) 2021 Manuel Genovés <manuel.genoves@gmail.com>
  * Copyright (C) 2021 Purism SPC
  *

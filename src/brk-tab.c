@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2024 Ben Mather <bwhmather@bwhmather.com>
+ *
+ * Based on libadwaita:
  * Copyright (C) 2020-2021 Purism SPC
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
@@ -8,7 +11,9 @@
 
 #include <config.h>
 
+#include "brk-animation.h"
 #include "brk-bidi-private.h"
+#include "brk-easing.h"
 #include "brk-fading-label-private.h"
 #include "brk-gizmo-private.h"
 #include "brk-tab-private.h"
