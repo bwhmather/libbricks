@@ -19,7 +19,10 @@
 
 typedef struct _CompareInfo CompareInfo;
 
-enum Axis { HORIZONTAL = 0, VERTICAL = 1 };
+enum Axis {
+    HORIZONTAL = 0,
+    VERTICAL = 1
+};
 
 struct _CompareInfo {
     GtkWidget *widget;

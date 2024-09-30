@@ -145,7 +145,12 @@ G_DEFINE_FINAL_TYPE(
     BrkPropertyAnimationTarget, brk_property_animation_target, BRK_TYPE_ANIMATION_TARGET
 )
 
-enum { PROPERTY_PROP_0, PROPERTY_PROP_OBJECT, PROPERTY_PROP_PSPEC, LAST_PROPERTY_PROP };
+enum {
+    PROPERTY_PROP_0,
+    PROPERTY_PROP_OBJECT,
+    PROPERTY_PROP_PSPEC,
+    LAST_PROPERTY_PROP
+};
 
 static GParamSpec *property_props[LAST_PROPERTY_PROP];
 

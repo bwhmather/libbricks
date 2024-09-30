@@ -56,7 +56,14 @@ struct _BrkTab {
 
 G_DEFINE_FINAL_TYPE(BrkTab, brk_tab, GTK_TYPE_WIDGET)
 
-enum { PROP_0, PROP_VIEW, PROP_DRAGGING, PROP_PAGE, PROP_INVERTED, LAST_PROP };
+enum {
+    PROP_0,
+    PROP_VIEW,
+    PROP_DRAGGING,
+    PROP_PAGE,
+    PROP_INVERTED,
+    LAST_PROP
+};
 
 static GParamSpec *props[LAST_PROP];
 

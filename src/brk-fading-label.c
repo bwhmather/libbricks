@@ -24,7 +24,12 @@ struct _BrkFadingLabel {
 
 G_DEFINE_FINAL_TYPE(BrkFadingLabel, brk_fading_label, GTK_TYPE_WIDGET)
 
-enum { PROP_0, PROP_LABEL, PROP_ALIGN, LAST_PROP };
+enum {
+    PROP_0,
+    PROP_LABEL,
+    PROP_ALIGN,
+    LAST_PROP
+};
 
 static GParamSpec *props[LAST_PROP];
 

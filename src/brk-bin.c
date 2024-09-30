@@ -43,7 +43,11 @@ G_DEFINE_TYPE_WITH_CODE(
 
 static GtkBuildableIface *parent_buildable_iface;
 
-enum { PROP_0, PROP_CHILD, LAST_PROP };
+enum {
+    PROP_0,
+    PROP_CHILD,
+    LAST_PROP
+};
 
 static GParamSpec *props[LAST_PROP];
 

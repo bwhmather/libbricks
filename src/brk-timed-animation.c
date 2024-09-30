@@ -269,11 +269,11 @@ brk_timed_animation_class_init(BrkTimedAnimationClass *klass) {
         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY
     );
 
-  /**
-   * BrkTimedAnimation:reverse:  (attributes org.gtk.Property.get=brk_timed_animation_get_reverse org.gtk.Property.set=brk_timed_animation_set_reverse)
-   *
-   * Whether the animation plays backwards.
-   */
+    /**
+     * BrkTimedAnimation:reverse:  (attributes org.gtk.Property.get=brk_timed_animation_get_reverse org.gtk.Property.set=brk_timed_animation_set_reverse)
+     *
+     * Whether the animation plays backwards.
+     */
     props[PROP_REVERSE] = g_param_spec_boolean(
         "reverse", NULL, NULL, FALSE,
         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY

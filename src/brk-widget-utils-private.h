@@ -25,15 +25,15 @@
 
 G_BEGIN_DECLS
 
-#define BRK_CRITICAL_CANNOT_REMOVE_CHILD(parent, child)                                            \
-    G_STMT_START {                                                                                 \
-        g_critical(                                                                                \
-            "%s:%d: tried to remove non-child %p of type '%s' from %p of "                         \
-            "type '%s'",                                                                           \
-            __FILE__, __LINE__, (child), G_OBJECT_TYPE_NAME((GObject *)(child)), (parent),         \
-            G_OBJECT_TYPE_NAME((GObject *)(parent))                                                \
-        );                                                                                         \
-    }                                                                                              \
+#define BRK_CRITICAL_CANNOT_REMOVE_CHILD(parent, child)                                    \
+    G_STMT_START {                                                                         \
+        g_critical(                                                                        \
+            "%s:%d: tried to remove non-child %p of type '%s' from %p of "                 \
+            "type '%s'",                                                                   \
+            __FILE__, __LINE__, (child), G_OBJECT_TYPE_NAME((GObject *)(child)), (parent), \
+            G_OBJECT_TYPE_NAME((GObject *)(parent))                                        \
+        );                                                                                 \
+    }                                                                                      \
     G_STMT_END
 
 gboolean
