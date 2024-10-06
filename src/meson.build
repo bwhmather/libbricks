@@ -77,7 +77,10 @@ libbricks_public_enums = gnome.mkenums_simple(
 #if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
 #error "Only <bricks.h> can be included directly."
 #endif
+
+#include "brk-version.h"
 ''',
+  decorator: 'BRK_AVAILABLE_IN_ALL',
   install_dir: libbricks_header_dir,
 )
 libbricks_generated_headers += [libbricks_public_enums[1]]
@@ -109,6 +112,7 @@ config_data = configuration_data()
 config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
 config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
 config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+config_data.set('_BRK_EXTERN', '__attribute__((visibility("default"))) extern')
 libbricks_config_h = configure_file(output: 'config.h', configuration: config_data)
 libbricks_generated_headers += []
 
@@ -136,6 +140,7 @@ libbricks = library(
   include_directories: include_directories('.'),
   install: true,
   install_dir: libdir,
+  gnu_symbol_visibility: 'hidden',
 )
 
 if get_option('vapi') and not generate_gir
