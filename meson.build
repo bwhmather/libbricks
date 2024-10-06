@@ -138,3 +138,4 @@ generate_gir = gir.found() and (
 
 subdir('src')
 subdir('docs')
+subdir('tests')
