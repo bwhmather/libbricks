@@ -13,6 +13,8 @@
 
 #include "brk-version.h"
 
+#include <glib.h>
+
 /**
  * brk_get_major_version:
  *

@@ -11,11 +11,18 @@
 
 #include <config.h>
 
+#include "brk-tab-bar.h"
+
+#include <gdk/gdk.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+
 #include "brk-bin.h"
 #include "brk-tab-bar-private.h"
 #include "brk-tab-box-private.h"
+#include "brk-tab-view.h"
 #include "brk-widget-utils-private.h"
-
 /**
  * BrkTabBar:
  *

@@ -11,16 +11,28 @@
 
 #include <config.h>
 
+#include <float.h>
+#include <gdk/gdk.h>
+#include <gio/gio.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <graphene.h>
+#include <gsk/gsk.h>
+#include <gtk/gtk.h>
 #include <math.h>
 
+#include "brk-animation-target.h"
 #include "brk-animation-util.h"
+#include "brk-animation.h"
 #include "brk-easing.h"
 #include "brk-gizmo-private.h"
 #include "brk-marshalers.h"
 #include "brk-tab-bar-private.h"
+#include "brk-tab-bar.h"
 #include "brk-tab-box-private.h"
 #include "brk-tab-private.h"
 #include "brk-tab-view-private.h"
+#include "brk-tab-view.h"
 #include "brk-timed-animation.h"
 #include "brk-widget-utils-private.h"
 

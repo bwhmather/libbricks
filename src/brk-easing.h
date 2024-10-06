@@ -16,7 +16,6 @@
 
 #include <glib.h>
 
-#include "brk-enums.h"
 #include "brk-version.h"
 
 G_BEGIN_DECLS

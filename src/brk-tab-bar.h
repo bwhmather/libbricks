@@ -17,7 +17,9 @@
 
 #include <gtk/gtk.h>
 
-#include "brk-enums.h"
+#include <gdk/gdk.h>
+#include <glib.h>
+#include <glib-object.h>
 #include "brk-tab-view.h"
 #include "brk-version.h"
 

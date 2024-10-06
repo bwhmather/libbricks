@@ -11,12 +11,23 @@
 
 #include <config.h>
 
+#include <gdk/gdk.h>
+#include <gio/gio.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <graphene.h>
+#include <gsk/gsk.h>
+#include <gtk/gtk.h>
+#include <pango/pango.h>
+
+#include "brk-animation-target.h"
 #include "brk-animation.h"
 #include "brk-bidi-private.h"
 #include "brk-easing.h"
 #include "brk-fading-label-private.h"
 #include "brk-gizmo-private.h"
 #include "brk-tab-private.h"
+#include "brk-tab-view.h"
 #include "brk-timed-animation.h"
 
 #define FADE_WIDTH 18.0f

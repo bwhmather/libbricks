@@ -21,6 +21,8 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <gdk/gdk.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS

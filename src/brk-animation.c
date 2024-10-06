@@ -10,11 +10,19 @@
 
 #include <config.h>
 
+#include "brk-animation.h"
+
+#include <gdk/gdk.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+
 #include "brk-animation-private.h"
 #include "brk-animation-target-private.h"
+#include "brk-animation-target.h"
 #include "brk-animation-util.h"
+#include "brk-enums.h"
 #include "brk-marshalers.h"
-
 /**
  * BrkAnimation:
  *

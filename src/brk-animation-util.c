@@ -12,6 +12,9 @@
 
 #include "brk-animation-util.h"
 
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
 /**
  * brk_lerp:
  * @a: the start

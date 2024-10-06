@@ -15,6 +15,15 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config.h>
+
+#include <float.h>
+#include <gdk/gdk.h>
+#include <glib.h>
+#include <graphene.h>
+#include <gtk/gtk.h>
+#include <stdlib.h>
+
 #include "brk-widget-utils-private.h"
 
 typedef struct _CompareInfo CompareInfo;

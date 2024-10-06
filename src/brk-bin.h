@@ -18,6 +18,8 @@
 #include <gtk/gtk.h>
 
 #include "brk-version.h"
+#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 

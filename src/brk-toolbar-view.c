@@ -13,6 +13,12 @@
 
 #include "brk-toolbar-view.h"
 
+#include <glib-object.h>
+#include <glib.h>
+#include <graphene.h>
+#include <gsk/gsk.h>
+#include <gtk/gtk.h>
+
 #include "brk-enums.h"
 #include "brk-widget-utils-private.h"
 

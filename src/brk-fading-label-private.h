@@ -16,6 +16,8 @@
 #endif
 
 #include <gtk/gtk.h>
+#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 

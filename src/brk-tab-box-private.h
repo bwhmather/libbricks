@@ -15,6 +15,9 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <gdk/gdk.h>
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
 #include "brk-tab-view.h"

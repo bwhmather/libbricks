@@ -11,8 +11,18 @@
 
 #include "brk-timed-animation.h"
 
+#include <float.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+#include <math.h>
+#include <stdbool.h>
+
 #include "brk-animation-private.h"
+#include "brk-animation-target.h"
 #include "brk-animation-util.h"
+#include "brk-animation.h"
+#include "brk-easing.h"
 #include "brk-enums.h"
 
 /**

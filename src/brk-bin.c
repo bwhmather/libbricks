@@ -13,6 +13,10 @@
 
 #include "brk-bin.h"
 
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+
 #include "brk-widget-utils-private.h"
 
 /**

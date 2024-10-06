@@ -17,8 +17,9 @@
 #include <gtk/gtk.h>
 
 #include "brk-animation-target.h"
-#include "brk-enums.h"
 #include "brk-version.h"
+#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 

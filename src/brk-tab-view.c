@@ -11,8 +11,16 @@
 
 #include <config.h>
 
+#include "brk-tab-view.h"
+
+#include <gdk/gdk.h>
+#include <gio/gio.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+
 #include "brk-bin.h"
-#include "brk-gizmo-private.h"
+#include "brk-enums.h"
 #include "brk-marshalers.h"
 #include "brk-tab-view-private.h"
 #include "brk-widget-utils-private.h"

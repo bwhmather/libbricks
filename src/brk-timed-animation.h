@@ -13,8 +13,12 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <gdk/gdk.h>
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
+#include "brk-animation-target.h"
 #include "brk-animation.h"
 #include "brk-easing.h"
 #include "brk-version.h"

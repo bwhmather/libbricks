@@ -9,6 +9,11 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
+#include <config.h>
+
+#include <glib-object.h>
+#include <glib.h>
+#include <gtk/gtk.h>
 
 #include "brk-gizmo-private.h"
 #include "brk-widget-utils-private.h"

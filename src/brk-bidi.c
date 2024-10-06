@@ -26,7 +26,11 @@
 
 /* Subsequently taken from libadwaita and tweaked to be used by libbricks. */
 
+#include <config.h>
+
 #include <fribidi.h>
+#include <glib.h>
+#include <pango/pango.h>
 
 #include "brk-bidi-private.h"
 

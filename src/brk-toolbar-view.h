@@ -15,9 +15,10 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-enums.h"
 #include "brk-version.h"
 
 G_BEGIN_DECLS

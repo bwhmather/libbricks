@@ -15,6 +15,7 @@
 #endif
 
 #include <gtk/gtk.h>
+#include <glib.h>
 
 #include "brk-version.h"
 

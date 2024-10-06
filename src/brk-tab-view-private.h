@@ -15,6 +15,8 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <glib.h>
+
 #include "brk-tab-view.h"
 
 G_BEGIN_DECLS

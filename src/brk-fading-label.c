@@ -11,7 +11,14 @@
 
 #include <config.h>
 
-#include <glib/gi18n-lib.h>
+#include <float.h>
+#include <glib-object.h>
+#include <glib.h>
+#include <graphene.h>
+#include <gsk/gsk.h>
+#include <gtk/gtk.h>
+#include <math.h>
+#include <pango/pango.h>
 
 #include "brk-bidi-private.h"
 #include "brk-fading-label-private.h"
