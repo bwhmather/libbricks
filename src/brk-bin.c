@@ -59,6 +59,38 @@ enum {
 static GParamSpec *props[LAST_PROP];
 
 static void
+brk_bin_compute_expand(GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p) {
+    BrkBin *self = BRK_BIN(widget);
+    BrkBinPrivate *priv;
+    gboolean hexpand = FALSE;
+    gboolean vexpand = FALSE;
+
+    priv = brk_bin_get_instance_private(self);
+
+    if (priv->child != NULL) {
+        hexpand = gtk_widget_compute_expand(priv->child, GTK_ORIENTATION_HORIZONTAL);
+        vexpand = gtk_widget_compute_expand(priv->child, GTK_ORIENTATION_VERTICAL);
+    }
+
+    *hexpand_p = hexpand;
+    *vexpand_p = vexpand;
+}
+
+static gboolean
+brk_bin_focus_child(GtkWidget *widget, GtkDirectionType direction) {
+    BrkBin *self = BRK_BIN(widget);
+    BrkBinPrivate *priv;
+
+    priv = brk_bin_get_instance_private(self);
+
+    if (priv->child == NULL) {
+        return FALSE;
+    }
+
+    return gtk_widget_child_focus(priv->child, direction);
+}
+
+static void
 brk_bin_dispose(GObject *object) {
     BrkBin *self = BRK_BIN(object);
     BrkBinPrivate *priv = brk_bin_get_instance_private(self);
@@ -103,8 +135,8 @@ brk_bin_class_init(BrkBinClass *klass) {
     object_class->get_property = brk_bin_get_property;
     object_class->set_property = brk_bin_set_property;
 
-    widget_class->compute_expand = brk_widget_compute_expand;
-    widget_class->focus = brk_widget_focus_child;
+    widget_class->compute_expand = brk_bin_compute_expand;
+    widget_class->focus = brk_bin_focus_child;
 
     /**
      * BrkBin:child: (attributes org.gtk.Property.get=brk_bin_get_child org.gtk.Property.set=brk_bin_set_child)
