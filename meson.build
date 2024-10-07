@@ -137,5 +137,7 @@ generate_gir = gir.found() and (
 )
 
 subdir('src')
-subdir('docs')
-subdir('tests')
+if not meson.is_subproject()
+    subdir('docs')
+    subdir('tests')
+endif
