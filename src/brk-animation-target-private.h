@@ -14,6 +14,7 @@
 #endif
 
 #include <glib.h>
+
 #include "brk-animation-target.h"
 
 G_BEGIN_DECLS

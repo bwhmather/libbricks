@@ -14,8 +14,8 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include <gtk/gtk.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 #include "brk-version.h"
 

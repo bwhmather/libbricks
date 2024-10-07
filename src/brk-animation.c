@@ -141,12 +141,12 @@ set_widget(BrkAnimation *self, GtkWidget *widget) {
         return;
 
     if (priv->widget)
-        g_object_weak_unref(G_OBJECT(priv->widget), (GWeakNotify)widget_notify_cb, self);
+        g_object_weak_unref(G_OBJECT(priv->widget), (GWeakNotify) widget_notify_cb, self);
 
     priv->widget = widget;
 
     if (priv->widget)
-        g_object_weak_ref(G_OBJECT(priv->widget), (GWeakNotify)widget_notify_cb, self);
+        g_object_weak_ref(G_OBJECT(priv->widget), (GWeakNotify) widget_notify_cb, self);
 }
 
 static void
@@ -181,7 +181,7 @@ tick_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkAnimation *self) {
 
     gint64 frame_time = gdk_frame_clock_get_frame_time(frame_clock) / 1000; /* ms */
     guint duration = BRK_ANIMATION_GET_CLASS(self)->estimate_duration(self);
-    guint t = (guint)(frame_time - priv->start_time);
+    guint t = (guint) (frame_time - priv->start_time);
 
     if (t >= duration && duration != BRK_DURATION_INFINITE) {
         brk_animation_skip(self);
@@ -235,7 +235,7 @@ play(BrkAnimation *self) {
     priv->unmap_cb_id =
         g_signal_connect_swapped(priv->widget, "unmap", G_CALLBACK(brk_animation_skip), self);
     priv->tick_cb_id =
-        gtk_widget_add_tick_callback(priv->widget, (GtkTickCallback)tick_cb, self, NULL);
+        gtk_widget_add_tick_callback(priv->widget, (GtkTickCallback) tick_cb, self, NULL);
 
     g_object_ref(self);
 }

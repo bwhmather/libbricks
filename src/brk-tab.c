@@ -247,7 +247,7 @@ close_clicked_cb(BrkTab *self) {
     /* When animations are disabled, we don't want to immediately remove the
    * whole tab mid-click. Instead, defer it until the click has happened.
    */
-    g_idle_add_once((GSourceOnceFunc)close_idle_cb, self);
+    g_idle_add_once((GSourceOnceFunc) close_idle_cb, self);
 }
 
 static void
@@ -731,19 +731,19 @@ brk_tab_class_init(BrkTabClass *klass) {
     gtk_widget_class_bind_template_callback(widget_class, extra_drag_notify_value_cb);
 
     gtk_widget_class_add_binding(
-        widget_class, GDK_KEY_space, 0, (GtkShortcutFunc)activate_cb, NULL
+        widget_class, GDK_KEY_space, 0, (GtkShortcutFunc) activate_cb, NULL
     );
     gtk_widget_class_add_binding(
-        widget_class, GDK_KEY_KP_Space, 0, (GtkShortcutFunc)activate_cb, NULL
+        widget_class, GDK_KEY_KP_Space, 0, (GtkShortcutFunc) activate_cb, NULL
     );
     gtk_widget_class_add_binding(
-        widget_class, GDK_KEY_Return, 0, (GtkShortcutFunc)activate_cb, NULL
+        widget_class, GDK_KEY_Return, 0, (GtkShortcutFunc) activate_cb, NULL
     );
     gtk_widget_class_add_binding(
-        widget_class, GDK_KEY_ISO_Enter, 0, (GtkShortcutFunc)activate_cb, NULL
+        widget_class, GDK_KEY_ISO_Enter, 0, (GtkShortcutFunc) activate_cb, NULL
     );
     gtk_widget_class_add_binding(
-        widget_class, GDK_KEY_KP_Enter, 0, (GtkShortcutFunc)activate_cb, NULL
+        widget_class, GDK_KEY_KP_Enter, 0, (GtkShortcutFunc) activate_cb, NULL
     );
 
     gtk_widget_class_set_css_name(widget_class, "tab");
@@ -760,7 +760,7 @@ brk_tab_init(BrkTab *self) {
     gtk_widget_init_template(GTK_WIDGET(self));
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)close_btn_animation_value_cb, self, NULL
+        (BrkAnimationTargetFunc) close_btn_animation_value_cb, self, NULL
     );
     self->close_btn_animation =
         brk_timed_animation_new(GTK_WIDGET(self), 0, 0, CLOSE_BTN_ANIMATION_DURATION, target);
@@ -770,7 +770,7 @@ brk_tab_init(BrkTab *self) {
     );
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)attention_indicator_animation_value_cb, self, NULL
+        (BrkAnimationTargetFunc) attention_indicator_animation_value_cb, self, NULL
     );
     self->needs_attention_animation = brk_timed_animation_new(
         GTK_WIDGET(self), 0, 0, ATTENTION_INDICATOR_ANIMATION_DURATION, target

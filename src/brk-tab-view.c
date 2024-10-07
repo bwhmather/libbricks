@@ -279,12 +279,12 @@ set_page_parent(BrkTabPage *self, BrkTabPage *parent) {
         return;
 
     if (self->parent)
-        g_object_weak_unref(G_OBJECT(self->parent), (GWeakNotify)page_parent_notify_cb, self);
+        g_object_weak_unref(G_OBJECT(self->parent), (GWeakNotify) page_parent_notify_cb, self);
 
     self->parent = parent;
 
     if (self->parent)
-        g_object_weak_ref(G_OBJECT(self->parent), (GWeakNotify)page_parent_notify_cb, self);
+        g_object_weak_ref(G_OBJECT(self->parent), (GWeakNotify) page_parent_notify_cb, self);
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PAGE_PROP_PARENT]);
 }
@@ -306,7 +306,7 @@ brk_tab_page_dispose(GObject *object) {
 
 static void
 brk_tab_page_finalize(GObject *object) {
-    BrkTabPage *self = (BrkTabPage *)object;
+    BrkTabPage *self = (BrkTabPage *) object;
 
     g_clear_object(&self->child);
     g_clear_pointer(&self->title, g_free);
@@ -1198,7 +1198,7 @@ add_switch_shortcut(
     trigger = gtk_alternative_trigger_new(
         gtk_keyval_trigger_new(keysym, modifiers), gtk_keyval_trigger_new(keypad_keysym, modifiers)
     );
-    action = gtk_callback_action_new((GtkShortcutFunc)select_page_cb, self, NULL);
+    action = gtk_callback_action_new((GtkShortcutFunc) select_page_cb, self, NULL);
     shortcut = gtk_shortcut_new(trigger, action);
 
     gtk_shortcut_set_arguments(shortcut, g_variant_new("(hhb)", mask, direction, last));
@@ -1254,7 +1254,7 @@ add_reorder_shortcut(
         gtk_keyval_trigger_new(keysym, GDK_CONTROL_MASK | GDK_SHIFT_MASK),
         gtk_keyval_trigger_new(keypad_keysym, GDK_CONTROL_MASK | GDK_SHIFT_MASK)
     );
-    action = gtk_callback_action_new((GtkShortcutFunc)reorder_page_cb, self, NULL);
+    action = gtk_callback_action_new((GtkShortcutFunc) reorder_page_cb, self, NULL);
     shortcut = gtk_shortcut_new(trigger, action);
 
     gtk_shortcut_set_arguments(shortcut, g_variant_new("(hhb)", mask, direction, last));
@@ -1300,7 +1300,7 @@ add_switch_nth_page_shortcut(
         gtk_keyval_trigger_new(keysym, GDK_ALT_MASK),
         gtk_keyval_trigger_new(keypad_keysym, GDK_ALT_MASK)
     );
-    action = gtk_callback_action_new((GtkShortcutFunc)select_nth_page_cb, self, NULL);
+    action = gtk_callback_action_new((GtkShortcutFunc) select_nth_page_cb, self, NULL);
     shortcut = gtk_shortcut_new(trigger, action);
 
     gtk_shortcut_set_arguments(shortcut, g_variant_new_byte(n_page));
@@ -1428,7 +1428,7 @@ brk_tab_view_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
             continue;
 
         if (!self->unmap_extra_pages_cb)
-            self->unmap_extra_pages_cb = g_idle_add_once((GSourceOnceFunc)unmap_extra_pages, self);
+            self->unmap_extra_pages_cb = g_idle_add_once((GSourceOnceFunc) unmap_extra_pages, self);
     }
 }
 
@@ -1457,7 +1457,7 @@ brk_tab_view_dispose(GObject *object) {
 
 static void
 brk_tab_view_finalize(GObject *object) {
-    BrkTabView *self = (BrkTabView *)object;
+    BrkTabView *self = (BrkTabView *) object;
 
     g_clear_weak_pointer(&self->pages);
     g_clear_object(&self->menu_model);
@@ -2602,7 +2602,7 @@ brk_tab_view_get_nth_page(BrkTabView *self, int position) {
     g_return_val_if_fail(position >= 0, NULL);
     g_return_val_if_fail(position < self->n_pages, NULL);
 
-    page = g_list_model_get_item(G_LIST_MODEL(self->children), (guint)position);
+    page = g_list_model_get_item(G_LIST_MODEL(self->children), (guint) position);
 
     g_object_unref(page);
 

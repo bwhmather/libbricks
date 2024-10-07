@@ -128,10 +128,11 @@ static void
 brk_bin_buildable_add_child(
     GtkBuildable *buildable, GtkBuilder *builder, GObject *child, const char *type
 ) {
-    if (GTK_IS_WIDGET(child))
+    if (GTK_IS_WIDGET(child)) {
         brk_bin_set_child(BRK_BIN(buildable), GTK_WIDGET(child));
-    else
+    } else {
         parent_buildable_iface->add_child(buildable, builder, child, type);
+    }
 }
 
 static void
@@ -186,21 +187,25 @@ brk_bin_set_child(BrkBin *self, GtkWidget *child) {
     g_return_if_fail(BRK_IS_BIN(self));
     g_return_if_fail(child == NULL || GTK_IS_WIDGET(child));
 
-    if (child)
+    if (child) {
         g_return_if_fail(gtk_widget_get_parent(child) == NULL);
+    }
 
     priv = brk_bin_get_instance_private(self);
 
-    if (priv->child == child)
+    if (priv->child == child) {
         return;
+    }
 
-    if (priv->child)
+    if (priv->child) {
         gtk_widget_unparent(priv->child);
+    }
 
     priv->child = child;
 
-    if (priv->child)
+    if (priv->child) {
         gtk_widget_set_parent(priv->child, GTK_WIDGET(self));
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_CHILD]);
 }

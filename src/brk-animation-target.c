@@ -195,17 +195,18 @@ brk_property_animation_target_constructed(GObject *object) {
     G_OBJECT_CLASS(brk_property_animation_target_parent_class)->constructed(object);
 
     if (!self->object)
-        g_error("BrkPropertyAnimationTarget constructed without specifying a value "
-                "for the 'object' property");
+        g_error(
+            "BrkPropertyAnimationTarget constructed without specifying a value for the 'object' property"
+        );
 
     if (!self->pspec)
-        g_error("BrkPropertyAnimationTarget constructed without specifying a value "
-                "for the 'pspec' property");
+        g_error(
+            "BrkPropertyAnimationTarget constructed without specifying a value for the 'pspec' property"
+        );
 
     if (!g_type_is_a(G_OBJECT_TYPE(self->object), self->pspec->owner_type))
         g_error(
-            "Cannot create BrkPropertyAnimationTarget: %s doesn't have the "
-            "%s:%s property",
+            "Cannot create BrkPropertyAnimationTarget: %s doesn't have the %s:%s property",
             G_OBJECT_TYPE_NAME(self->object), g_type_name(self->pspec->owner_type),
             self->pspec->name
         );

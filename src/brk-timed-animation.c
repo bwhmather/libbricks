@@ -99,10 +99,10 @@ brk_timed_animation_calculate_value(BrkAnimation *animation, guint t) {
     if (self->duration == 0)
         return self->value_to;
 
-    progress = modf(((double)t / self->duration), &iteration);
+    progress = modf(((double) t / self->duration), &iteration);
 
     if (self->alternate)
-        reverse = ((int)iteration % 2);
+        reverse = ((int) iteration % 2);
 
     if (self->reverse)
         reverse = !reverse;

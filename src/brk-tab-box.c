@@ -287,7 +287,7 @@ find_nth_alive_tab(BrkTabBox *self, guint position) {
 
 static inline int
 calculate_tab_width(TabInfo *info, int base_width) {
-    return (int)floor((base_width + SPACING) * info->appear_progress) - SPACING;
+    return (int) floor((base_width + SPACING) * info->appear_progress) - SPACING;
 }
 
 static int
@@ -319,7 +319,7 @@ get_base_tab_width(BrkTabBox *self, gboolean target_end_padding, gboolean target
 
     used_width = (self->allocated_width - (n + 1) * SPACING - end_padding) * max_progress;
 
-    ret = (int)ceil(used_width / n);
+    ret = (int) ceil(used_width / n);
 
     if (!self->expand_tabs)
         ret = MIN(ret, MAX_TAB_WIDTH_NON_EXPAND - SPACING);
@@ -346,9 +346,9 @@ predict_tab_width(BrkTabBox *self, TabInfo *info, gboolean assume_placeholder) {
     );
 
     if (self->expand_tabs)
-        return MAX((int)floor(width / (double)n), min);
+        return MAX((int) floor(width / (double) n), min);
     else
-        return CLAMP((int)floor(width / (double)n), min, MAX_TAB_WIDTH_NON_EXPAND);
+        return CLAMP((int) floor(width / (double) n), min, MAX_TAB_WIDTH_NON_EXPAND);
 }
 
 static int
@@ -363,7 +363,7 @@ calculate_tab_offset(BrkTabBox *self, TabInfo *info, gboolean target) {
     if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
         width = -width;
 
-    return (int)round(width * (target ? info->end_reorder_offset : info->reorder_offset));
+    return (int) round(width * (target ? info->end_reorder_offset : info->reorder_offset));
 }
 
 static void
@@ -375,8 +375,8 @@ get_visible_range(BrkTabBox *self, int *lower, int *upper) {
         double value = gtk_adjustment_get_value(self->adjustment);
         double page_size = gtk_adjustment_get_page_size(self->adjustment);
 
-        min = MAX(min, (int)floor(value) + SPACING);
-        max = MIN(max, (int)ceil(value + page_size) - SPACING);
+        min = MAX(min, (int) floor(value) + SPACING);
+        max = MIN(max, (int) ceil(value + page_size) - SPACING);
     }
 
     if (lower)
@@ -477,7 +477,7 @@ resize_animation_value_cb(double value, BrkTabBox *self) {
         target_end_padding = MAX(target_end_padding, 0);
     }
 
-    self->end_padding = (int)floor(brk_lerp(self->initial_end_padding, target_end_padding, value));
+    self->end_padding = (int) floor(brk_lerp(self->initial_end_padding, target_end_padding, value));
 
     gtk_widget_queue_resize(GTK_WIDGET(self));
 }
@@ -638,10 +638,10 @@ add_focus_bindings(
     guint keypad_keysym = keysym - GDK_KEY_Left + GDK_KEY_KP_Left;
 
     gtk_widget_class_add_binding(
-        widget_class, keysym, 0, (GtkShortcutFunc)focus_tab_cb, "(hb)", direction, last
+        widget_class, keysym, 0, (GtkShortcutFunc) focus_tab_cb, "(hb)", direction, last
     );
     gtk_widget_class_add_binding(
-        widget_class, keypad_keysym, 0, (GtkShortcutFunc)focus_tab_cb, "(hb)", direction, last
+        widget_class, keypad_keysym, 0, (GtkShortcutFunc) focus_tab_cb, "(hb)", direction, last
     );
 }
 
@@ -653,11 +653,11 @@ add_reorder_bindings(
     guint keypad_keysym = keysym - GDK_KEY_Left + GDK_KEY_KP_Left;
 
     gtk_widget_class_add_binding(
-        widget_class, keysym, GDK_SHIFT_MASK, (GtkShortcutFunc)reorder_tab_cb, "(hb)", direction,
+        widget_class, keysym, GDK_SHIFT_MASK, (GtkShortcutFunc) reorder_tab_cb, "(hb)", direction,
         last
     );
     gtk_widget_class_add_binding(
-        widget_class, keypad_keysym, GDK_SHIFT_MASK, (GtkShortcutFunc)reorder_tab_cb, "(hb)",
+        widget_class, keypad_keysym, GDK_SHIFT_MASK, (GtkShortcutFunc) reorder_tab_cb, "(hb)",
         direction, last
     );
 }
@@ -764,7 +764,7 @@ set_drop_target_tab(BrkTabBox *self, TabInfo *info) {
 
     if (self->drop_target_tab) {
         self->drop_switch_timeout_id =
-            g_timeout_add_once(DROP_SWITCH_TIMEOUT, (GSourceOnceFunc)drop_switch_timeout_cb, self);
+            g_timeout_add_once(DROP_SWITCH_TIMEOUT, (GSourceOnceFunc) drop_switch_timeout_cb, self);
     }
 }
 
@@ -1016,7 +1016,7 @@ reorder_animation_value_cb(double value, TabInfo *dest_tab) {
     if (dest_tab->end_reorder_offset * (is_rtl ? 1 : -1) > 0)
         x2 += dest_tab->width - self->reordered_tab->width;
 
-    self->reorder_window_x = (int)round(brk_lerp(x1, x2, value));
+    self->reorder_window_x = (int) round(brk_lerp(x1, x2, value));
 
     gtk_widget_queue_allocate(GTK_WIDGET(self));
 }
@@ -1035,7 +1035,7 @@ animate_reordering(BrkTabBox *self, TabInfo *dest_tab) {
         brk_animation_skip(self->reorder_animation);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)reorder_animation_value_cb, dest_tab, NULL
+        (BrkAnimationTargetFunc) reorder_animation_value_cb, dest_tab, NULL
     );
     self->reorder_animation =
         brk_timed_animation_new(GTK_WIDGET(self), 0, 1, REORDER_ANIMATION_DURATION, target);
@@ -1083,7 +1083,7 @@ animate_reorder_offset(BrkTabBox *self, TabInfo *info, double offset) {
         brk_animation_skip(info->reorder_animation);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)reorder_offset_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) reorder_offset_animation_value_cb, info, NULL
     );
     info->reorder_animation = brk_timed_animation_new(
         GTK_WIDGET(self), start_offset, offset, REORDER_ANIMATION_DURATION, target
@@ -1269,13 +1269,13 @@ drag_autoscroll_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkTabBox *sel
             self->reordered_tab->container, GTK_ORIENTATION_HORIZONTAL, -1, NULL, &tab_width, NULL,
             NULL
         );
-        x = (double)self->reorder_x - SPACING;
+        x = (double) self->reorder_x - SPACING;
     } else if (self->drop_target_tab) {
         gtk_widget_measure(
             self->drop_target_tab->container, GTK_ORIENTATION_HORIZONTAL, -1, NULL, &tab_width,
             NULL, NULL
         );
-        x = (double)self->drop_target_x - tab_width / 2;
+        x = (double) self->drop_target_x - tab_width / 2;
     } else {
         return G_SOURCE_CONTINUE;
     }
@@ -1306,9 +1306,9 @@ drag_autoscroll_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkTabBox *sel
         return G_SOURCE_CONTINUE;
 
     if (autoscroll_factor > 0)
-        offset = (int)ceil(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
+        offset = (int) ceil(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
     else
-        offset = (int)floor(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
+        offset = (int) floor(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
 
     self->reorder_x += offset;
     gtk_adjustment_set_value(self->adjustment, value + offset);
@@ -1331,7 +1331,7 @@ start_autoscroll(BrkTabBox *self) {
 
     self->drag_autoscroll_prev_time = gdk_frame_clock_get_frame_time(frame_clock);
     self->drag_autoscroll_cb_id = gtk_widget_add_tick_callback(
-        GTK_WIDGET(self), (GtkTickCallback)drag_autoscroll_cb, self, NULL
+        GTK_WIDGET(self), (GtkTickCallback) drag_autoscroll_cb, self, NULL
     );
 }
 
@@ -1359,8 +1359,8 @@ start_drag_reodering(BrkTabBox *self, TabInfo *info, double x, double y) {
 
         reset_reorder_animations(self);
 
-        self->reorder_x = (int)round(x - self->drag_offset_x);
-        self->reorder_y = (int)round(y - self->drag_offset_y);
+        self->reorder_x = (int) round(x - self->drag_offset_x);
+        self->reorder_y = (int) round(y - self->drag_offset_y);
     } else
         force_end_reordering(self);
 
@@ -1413,8 +1413,8 @@ reorder_begin_cb(BrkTabBox *self, double start_x, double start_y, GtkGesture *ge
     self->drag_offset_y = start_y;
 
     if (!self->reorder_animation) {
-        self->reorder_x = (int)round(start_x - self->drag_offset_x);
-        self->reorder_y = (int)round(start_y - self->drag_offset_y);
+        self->reorder_x = (int) round(start_x - self->drag_offset_x);
+        self->reorder_y = (int) round(start_y - self->drag_offset_y);
     }
 }
 
@@ -1479,8 +1479,8 @@ reorder_update_cb(BrkTabBox *self, double offset_x, double offset_y, GtkGesture 
         return;
     }
 
-    self->reorder_x = (int)round(x - self->drag_offset_x);
-    self->reorder_y = (int)round(y - self->drag_offset_y);
+    self->reorder_x = (int) round(x - self->drag_offset_x);
+    self->reorder_y = (int) round(y - self->drag_offset_y);
 
     device = gtk_event_controller_get_current_event_device(GTK_EVENT_CONTROLLER(gesture));
 
@@ -1621,8 +1621,8 @@ create_tab_info(BrkTabBox *self, BrkTabPage *page) {
     info->width = -1;
     info->container = brk_gizmo_new_with_role(
         "tabboxchild", GTK_ACCESSIBLE_ROLE_GROUP, measure_tab, allocate_tab, NULL, NULL,
-        (BrkGizmoFocusFunc)brk_widget_focus_child,
-        (BrkGizmoGrabFocusFunc)brk_widget_grab_focus_child
+        (BrkGizmoFocusFunc) brk_widget_focus_child,
+        (BrkGizmoGrabFocusFunc) brk_widget_grab_focus_child
     );
     info->tab = brk_tab_new(self->view);
 
@@ -1671,7 +1671,7 @@ page_attached_cb(BrkTabBox *self, BrkTabPage *page, int position) {
     );
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)appear_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) appear_animation_value_cb, info, NULL
     );
     info->appear_animation =
         brk_timed_animation_new(GTK_WIDGET(self), 0, 1, OPEN_ANIMATION_DURATION, target);
@@ -1782,7 +1782,7 @@ page_detached_cb(BrkTabBox *self, BrkTabPage *page) {
         brk_animation_skip(info->appear_animation);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)appear_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) appear_animation_value_cb, info, NULL
     );
     info->appear_animation = brk_timed_animation_new(
         GTK_WIDGET(self), info->appear_progress, 0, CLOSE_ANIMATION_DURATION, target
@@ -1965,7 +1965,7 @@ insert_placeholder(BrkTabBox *self, BrkTabPage *page, int pos) {
     }
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)insert_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) insert_animation_value_cb, info, NULL
     );
     info->appear_animation = brk_timed_animation_new(
         GTK_WIDGET(self), initial_progress, 1, OPEN_ANIMATION_DURATION, target
@@ -2015,7 +2015,7 @@ replace_placeholder(BrkTabBox *self, BrkTabPage *page) {
     brk_animation_skip(info->appear_animation);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)appear_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) appear_animation_value_cb, info, NULL
     );
     info->appear_animation = brk_timed_animation_new(
         GTK_WIDGET(self), initial_progress, 1, OPEN_ANIMATION_DURATION, target
@@ -2084,10 +2084,10 @@ remove_placeholder(BrkTabBox *self) {
     if (info->appear_animation)
         brk_animation_skip(info->appear_animation);
 
-    g_idle_add_once((GSourceOnceFunc)remove_placeholder_scroll_cb, self);
+    g_idle_add_once((GSourceOnceFunc) remove_placeholder_scroll_cb, self);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)appear_animation_value_cb, info, NULL
+        (BrkAnimationTargetFunc) appear_animation_value_cb, info, NULL
     );
     info->appear_animation = brk_timed_animation_new(
         GTK_WIDGET(self), info->appear_progress, 0, CLOSE_ANIMATION_DURATION, target
@@ -2211,13 +2211,13 @@ static void
 icon_resize_animation_value_cb(double value, DragIcon *icon) {
     double relative_pos;
 
-    relative_pos = (double)icon->hotspot_x / icon->width;
+    relative_pos = (double) icon->hotspot_x / icon->width;
 
-    icon->width = (int)round(value);
+    icon->width = (int) round(value);
 
     gtk_widget_set_size_request(GTK_WIDGET(icon->tab), icon->width, -1);
 
-    icon->hotspot_x = (int)round(icon->width * relative_pos);
+    icon->hotspot_x = (int) round(icon->width * relative_pos);
 
     gdk_drag_set_hotspot(icon->drag, icon->hotspot_x, icon->hotspot_y);
 
@@ -2246,13 +2246,13 @@ create_drag_icon(BrkTabBox *self, GdkDrag *drag) {
 
     gtk_widget_set_size_request(GTK_WIDGET(icon->tab), icon->width, -1);
 
-    icon->hotspot_x = (int)self->drag_offset_x;
-    icon->hotspot_y = (int)self->drag_offset_y;
+    icon->hotspot_x = (int) self->drag_offset_x;
+    icon->hotspot_y = (int) self->drag_offset_y;
 
     gdk_drag_set_hotspot(drag, icon->hotspot_x, icon->hotspot_y);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)icon_resize_animation_value_cb, icon, NULL
+        (BrkAnimationTargetFunc) icon_resize_animation_value_cb, icon, NULL
     );
     icon->resize_animation = brk_timed_animation_new(
         GTK_WIDGET(icon->tab), 0, 0, ICON_RESIZE_ANIMATION_DURATION, target
@@ -2367,14 +2367,14 @@ tab_drag_enter_motion_cb(BrkTabBox *self, double x, double y, GtkDropTarget *tar
         self->drag_offset_x = source_tab_box->drag_icon->hotspot_x;
         self->drag_offset_y = source_tab_box->drag_icon->hotspot_y;
 
-        self->reorder_x = (int)round(x - source_tab_box->drag_icon->hotspot_x);
+        self->reorder_x = (int) round(x - source_tab_box->drag_icon->hotspot_x);
 
         start_drag_reodering(self, self->reorder_placeholder, x, y);
 
         return GDK_ACTION_MOVE;
     }
 
-    self->reorder_x = (int)round(x - source_tab_box->drag_icon->hotspot_x);
+    self->reorder_x = (int) round(x - source_tab_box->drag_icon->hotspot_x);
 
     update_drag_reodering(self);
 
@@ -2461,7 +2461,7 @@ drag_leave_cb(BrkTabBox *self, GtkDropControllerMotion *controller) {
 
     if (!self->reset_drop_target_tab_id)
         self->reset_drop_target_tab_id =
-            g_idle_add_once((GSourceOnceFunc)reset_drop_target_tab_cb, self);
+            g_idle_add_once((GSourceOnceFunc) reset_drop_target_tab_cb, self);
 
     end_autoscroll(self);
 }
@@ -2509,7 +2509,7 @@ touch_menu_notify_visible_cb(BrkTabBox *self) {
     self->hovering = FALSE;
     update_hover(self);
 
-    g_idle_add_once((GSourceOnceFunc)reset_setup_menu_cb, self);
+    g_idle_add_once((GSourceOnceFunc) reset_setup_menu_cb, self);
 }
 
 static void
@@ -2913,7 +2913,7 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
         int separator_width;
 
         child_allocation.x = ((info == self->reordered_tab) ? self->reorder_window_x : info->pos) -
-            (int)floor(value);
+            (int) floor(value);
         child_allocation.y = 0;
         child_allocation.width = MAX(0, info->width);
         child_allocation.height = height;
@@ -2962,8 +2962,8 @@ snapshot_tabs(BrkTabBox *self, GtkSnapshot *snapshot) {
     GList *l;
     gboolean is_rtl, is_clipping = FALSE;
 
-    scroll_start = (int)floor(gtk_adjustment_get_value(self->adjustment));
-    scroll_end = scroll_start + (int)ceil(gtk_adjustment_get_page_size(self->adjustment));
+    scroll_start = (int) floor(gtk_adjustment_get_value(self->adjustment));
+    scroll_end = scroll_start + (int) ceil(gtk_adjustment_get_page_size(self->adjustment));
     is_rtl = gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL;
 
     if (self->reordered_tab && gtk_widget_get_opacity(self->reordered_tab->container) > 0) {
@@ -3169,7 +3169,7 @@ brk_tab_box_dispose(GObject *object) {
 
 static void
 brk_tab_box_finalize(GObject *object) {
-    BrkTabBox *self = (BrkTabBox *)object;
+    BrkTabBox *self = (BrkTabBox *) object;
 
     g_clear_pointer(&self->extra_drag_types, g_free);
 
@@ -3375,7 +3375,7 @@ brk_tab_box_init(BrkTabBox *self) {
     gtk_widget_add_controller(GTK_WIDGET(self), controller);
 
     target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc)resize_animation_value_cb, self, NULL
+        (BrkAnimationTargetFunc) resize_animation_value_cb, self, NULL
     );
     self->resize_animation =
         brk_timed_animation_new(GTK_WIDGET(self), 0, 1, RESIZE_ANIMATION_DURATION, target);
@@ -3389,7 +3389,7 @@ brk_tab_box_init(BrkTabBox *self) {
    * well after one last update, so that we don't miss the last frame.
    */
     target =
-        brk_callback_animation_target_new((BrkAnimationTargetFunc)scroll_animation_cb, self, NULL);
+        brk_callback_animation_target_new((BrkAnimationTargetFunc) scroll_animation_cb, self, NULL);
     self->scroll_animation =
         brk_timed_animation_new(GTK_WIDGET(self), 0, 1, SCROLL_ANIMATION_DURATION, target);
 
@@ -3440,7 +3440,7 @@ brk_tab_box_set_view(BrkTabBox *self, BrkTabView *view) {
         gtk_widget_remove_controller(GTK_WIDGET(self->view), self->view_drop_target);
         self->view_drop_target = NULL;
 
-        g_clear_list(&self->tabs, (GDestroyNotify)remove_and_free_tab_info);
+        g_clear_list(&self->tabs, (GDestroyNotify) remove_and_free_tab_info);
         self->n_tabs = 0;
     }
 

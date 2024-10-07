@@ -71,8 +71,8 @@ reverse_ptr_array(GPtrArray *arr) {
 static int
 tab_sort_func(gconstpointer a, gconstpointer b, gpointer user_data) {
     graphene_rect_t child_bounds1, child_bounds2;
-    GtkWidget *child1 = *((GtkWidget **)a);
-    GtkWidget *child2 = *((GtkWidget **)b);
+    GtkWidget *child1 = *((GtkWidget **) a);
+    GtkWidget *child2 = *((GtkWidget **) b);
     GtkTextDirection text_direction = GPOINTER_TO_INT(user_data);
     float y1, y2;
 
@@ -155,8 +155,8 @@ axis_compare(gconstpointer a, gconstpointer b, gpointer user_data) {
     int start1, end1;
     int start2, end2;
 
-    if (!gtk_widget_compute_bounds(*((GtkWidget **)a), compare->widget, &bounds1) ||
-        !gtk_widget_compute_bounds(*((GtkWidget **)b), compare->widget, &bounds2))
+    if (!gtk_widget_compute_bounds(*((GtkWidget **) a), compare->widget, &bounds1) ||
+        !gtk_widget_compute_bounds(*((GtkWidget **) b), compare->widget, &bounds2))
         return 0;
 
     get_axis_info(&bounds1, compare->axis, &start1, &end1);

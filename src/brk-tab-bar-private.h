@@ -15,9 +15,10 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <glib.h>
+
 #include "brk-tab-bar.h"
 #include "brk-tab-box-private.h"
-#include <glib.h>
 
 G_BEGIN_DECLS
 

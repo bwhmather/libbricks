@@ -14,12 +14,12 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
 #include "brk-animation-target.h"
 #include "brk-version.h"
-#include <glib.h>
-#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -31,7 +31,7 @@ G_BEGIN_DECLS
  * This value is mostly used internally.
  */
 
-#define BRK_DURATION_INFINITE ((guint)0xffffffff)
+#define BRK_DURATION_INFINITE ((guint) 0xffffffff)
 
 #define BRK_TYPE_ANIMATION (brk_animation_get_type())
 

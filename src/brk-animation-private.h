@@ -14,9 +14,10 @@
 #error "Only <bricks.h> can be included directly."
 #endif
 
-#include "brk-animation.h"
-#include <glib.h>
 #include <glib-object.h>
+#include <glib.h>
+
+#include "brk-animation.h"
 
 G_BEGIN_DECLS
 
