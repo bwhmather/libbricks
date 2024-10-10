@@ -319,6 +319,7 @@ object_handled_accumulator(
 static void
 begin_transfer_for_group(BrkTabView *self) {
     GSList *l;
+    gint i;
 
     for (l = tab_view_list; l; l = l->next) {
         BrkTabView *view = l->data;
@@ -326,6 +327,11 @@ begin_transfer_for_group(BrkTabView *self) {
         view->transfer_count++;
 
         if (view->transfer_count == 1) {
+            for (i = 0; i < self->n_pages; i++) {
+                BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
+                gtk_widget_set_can_target(brk_tab_page_get_bin(page), FALSE);
+            }
+
             g_object_notify_by_pspec(G_OBJECT(view), props[PROP_IS_TRANSFERRING_PAGE]);
         }
     }
@@ -334,6 +340,7 @@ begin_transfer_for_group(BrkTabView *self) {
 static void
 end_transfer_for_group(BrkTabView *self) {
     GSList *l;
+    gint i;
 
     for (l = tab_view_list; l; l = l->next) {
         BrkTabView *view = l->data;
@@ -341,6 +348,11 @@ end_transfer_for_group(BrkTabView *self) {
         view->transfer_count--;
 
         if (view->transfer_count == 0) {
+            for (i = 0; i < self->n_pages; i++) {
+                BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
+                gtk_widget_set_can_target(brk_tab_page_get_bin(page), TRUE);
+            }
+
             g_object_notify_by_pspec(G_OBJECT(view), props[PROP_IS_TRANSFERRING_PAGE]);
         }
     }
@@ -400,11 +412,7 @@ attach_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     gtk_widget_set_child_visible(brk_tab_page_get_bin(page), FALSE);
     gtk_widget_set_parent(brk_tab_page_get_bin(page), GTK_WIDGET(self));
-    page->transfer_binding = g_object_bind_property(
-        self, "is-transferring-page",
-        brk_tab_page_get_bin(page), "can-target",
-        G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN
-    );
+    gtk_widget_set_can_target(brk_tab_page_get_bin(page), !brk_tab_view_get_is_transferring_page(self));
     gtk_widget_queue_resize(GTK_WIDGET(self));
 
     g_object_freeze_notify(G_OBJECT(self));
@@ -539,7 +547,6 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
 
     g_object_thaw_notify(G_OBJECT(self));
 
-    g_clear_pointer(&page->transfer_binding, g_binding_unbind);
     gtk_widget_unparent(brk_tab_page_get_bin(page));
 
     if (!in_dispose) {

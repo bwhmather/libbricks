@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 GtkWidget *
 brk_tab_page_get_bin(BrkTabPage *self);
 
-GBinding *
+void
 brk_tab_page_set_parent(BrkTabPage *self, BrkTabPage *parent);
 
 // TODO should be replaced with `brk_tab_page_close`

@@ -34,7 +34,6 @@ struct _BrkTabPage {
     char *keyword;
 
     GtkWidget *last_focus;
-    GBinding *transfer_binding;
 
     GtkATContext *at_context;
 
@@ -649,6 +648,11 @@ brk_tab_page_set_closing(BrkTabPage *self, gboolean closing) {
 gboolean
 brk_tab_page_get_closing(BrkTabPage *self) {
     return self->closing;
+}
+
+GtkWidget *
+brk_tab_page_get_bin(BrkTabPage *self) {
+    return self->bin;
 }
 
 /**
