@@ -524,10 +524,11 @@ static void
 brk_tab_page_buildable_add_child(
     GtkBuildable *buildable, GtkBuilder *builder, GObject *child, const char *type
 ) {
-    if (GTK_IS_WIDGET(child))
+    if (GTK_IS_WIDGET(child)) {
         brk_bin_set_child(BRK_BIN(BRK_TAB_PAGE(buildable)->bin), GTK_WIDGET(child));
-    else
+    } else {
         tab_page_parent_buildable_iface->add_child(buildable, builder, child, type);
+    }
 }
 
 static void
@@ -541,22 +542,25 @@ static GtkATContext *
 brk_tab_page_accessible_get_at_context(GtkAccessible *accessible) {
     BrkTabPage *self = BRK_TAB_PAGE(accessible);
 
-    if (self->in_destruction)
+    if (self->in_destruction) {
         return NULL;
+    }
 
     if (self->at_context == NULL) {
         GtkAccessibleRole role = GTK_ACCESSIBLE_ROLE_TAB_PANEL;
         GdkDisplay *display;
 
-        if (self->bin != NULL)
+        if (self->bin != NULL) {
             display = gtk_widget_get_display(self->bin);
-        else
+        } else {
             display = gdk_display_get_default();
+        }
 
         self->at_context = gtk_at_context_create(role, accessible, display);
 
-        if (self->at_context == NULL)
+        if (self->at_context == NULL) {
             return NULL;
+        }
     }
 
     return g_object_ref(self->at_context);
@@ -572,8 +576,9 @@ brk_tab_page_accessible_get_accessible_parent(GtkAccessible *accessible) {
     BrkTabPage *self = BRK_TAB_PAGE(accessible);
     GtkWidget *parent;
 
-    if (!self->bin)
+    if (!self->bin) {
         return NULL;
+    }
 
     parent = gtk_widget_get_parent(self->bin);
 
@@ -584,8 +589,9 @@ static GtkAccessible *
 brk_tab_page_accessible_get_first_accessible_child(GtkAccessible *accessible) {
     BrkTabPage *self = BRK_TAB_PAGE(accessible);
 
-    if (self->bin)
+    if (self->bin) {
         return GTK_ACCESSIBLE(g_object_ref(self->bin));
+    }
 
     return NULL;
 }
@@ -597,13 +603,15 @@ brk_tab_page_accessible_get_next_accessible_sibling(GtkAccessible *accessible) {
     BrkTabPage *next_page;
     int pos;
 
-    if (!BRK_TAB_VIEW(view))
+    if (!BRK_TAB_VIEW(view)) {
         return NULL;
+    }
 
     pos = brk_tab_view_get_page_position(BRK_TAB_VIEW(view), self);
 
-    if (pos >= brk_tab_view_get_n_pages(BRK_TAB_VIEW(view)) - 1)
+    if (pos >= brk_tab_view_get_n_pages(BRK_TAB_VIEW(view)) - 1) {
         return NULL;
+    }
 
     next_page = brk_tab_view_get_nth_page(BRK_TAB_VIEW(view), pos + 1);
 
@@ -616,8 +624,9 @@ brk_tab_page_accessible_get_bounds(
 ) {
     BrkTabPage *self = BRK_TAB_PAGE(accessible);
 
-    if (self->bin)
+    if (self->bin) {
         return gtk_accessible_get_bounds(GTK_ACCESSIBLE(self->bin), x, y, width, height);
+    }
 
     return FALSE;
 }
@@ -679,16 +688,19 @@ brk_tab_page_set_parent(BrkTabPage *self, BrkTabPage *parent) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
     g_return_if_fail(parent == NULL || BRK_IS_TAB_PAGE(parent));
 
-    if (self->parent == parent)
+    if (self->parent == parent) {
         return;
+    }
 
-    if (self->parent)
+    if (self->parent) {
         g_object_weak_unref(G_OBJECT(self->parent), (GWeakNotify) page_parent_notify_cb, self);
+    }
 
     self->parent = parent;
 
-    if (self->parent)
+    if (self->parent) {
         g_object_weak_ref(G_OBJECT(self->parent), (GWeakNotify) page_parent_notify_cb, self);
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_PARENT]);
 }
@@ -737,8 +749,9 @@ void
 brk_tab_page_set_title(BrkTabPage *self, const char *title) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
 
-    if (!g_set_str(&self->title, title ? title : ""))
+    if (!g_set_str(&self->title, title ? title : "")) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_TITLE]);
 
@@ -775,8 +788,9 @@ void
 brk_tab_page_set_tooltip(BrkTabPage *self, const char *tooltip) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
 
-    if (!g_set_str(&self->tooltip, tooltip ? tooltip : ""))
+    if (!g_set_str(&self->tooltip, tooltip ? tooltip : "")) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_TOOLTIP]);
 }
@@ -811,8 +825,9 @@ brk_tab_page_set_icon(BrkTabPage *self, GIcon *icon) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
     g_return_if_fail(icon == NULL || G_IS_ICON(icon));
 
-    if (!g_set_object(&self->icon, icon))
+    if (!g_set_object(&self->icon, icon)) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_ICON]);
 }
@@ -847,8 +862,9 @@ brk_tab_page_set_loading(BrkTabPage *self, gboolean loading) {
 
     loading = !!loading;
 
-    if (self->loading == loading)
+    if (self->loading == loading) {
         return;
+    }
 
     self->loading = loading;
 
@@ -893,8 +909,9 @@ brk_tab_page_set_indicator_icon(BrkTabPage *self, GIcon *indicator_icon) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
     g_return_if_fail(indicator_icon == NULL || G_IS_ICON(indicator_icon));
 
-    if (!g_set_object(&self->indicator_icon, indicator_icon))
+    if (!g_set_object(&self->indicator_icon, indicator_icon)) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_INDICATOR_ICON]);
 }
@@ -934,8 +951,9 @@ brk_tab_page_set_indicator_tooltip(BrkTabPage *self, const char *tooltip) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
     g_return_if_fail(tooltip != NULL);
 
-    if (!g_set_str(&self->indicator_tooltip, tooltip ? tooltip : ""))
+    if (!g_set_str(&self->indicator_tooltip, tooltip ? tooltip : "")) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_INDICATOR_TOOLTIP]);
 }
@@ -974,8 +992,9 @@ brk_tab_page_set_indicator_activatable(BrkTabPage *self, gboolean activatable) {
 
     activatable = !!activatable;
 
-    if (self->indicator_activatable == activatable)
+    if (self->indicator_activatable == activatable) {
         return;
+    }
 
     self->indicator_activatable = activatable;
 
@@ -1017,8 +1036,9 @@ brk_tab_page_set_needs_attention(BrkTabPage *self, gboolean needs_attention) {
 
     needs_attention = !!needs_attention;
 
-    if (self->needs_attention == needs_attention)
+    if (self->needs_attention == needs_attention) {
         return;
+    }
 
     self->needs_attention = needs_attention;
 
@@ -1057,8 +1077,9 @@ void
 brk_tab_page_set_keyword(BrkTabPage *self, const char *keyword) {
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
 
-    if (!g_set_str(&self->keyword, keyword))
+    if (!g_set_str(&self->keyword, keyword)) {
         return;
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_KEYWORD]);
 }

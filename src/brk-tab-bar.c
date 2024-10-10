@@ -101,8 +101,9 @@ static guint signals[SIGNAL_LAST_SIGNAL];
 
 static void
 set_tabs_revealed(BrkTabBar *self, gboolean tabs_revealed) {
-    if (tabs_revealed == brk_tab_bar_get_tabs_revealed(self))
+    if (tabs_revealed == brk_tab_bar_get_tabs_revealed(self)) {
         return;
+    }
 
     gtk_revealer_set_reveal_child(self->revealer, tabs_revealed);
 
@@ -136,8 +137,9 @@ static void
 notify_selected_page_cb(BrkTabBar *self) {
     BrkTabPage *page = brk_tab_view_get_selected_page(self->view);
 
-    if (!page)
+    if (!page) {
         return;
+    }
 
     brk_tab_box_select_page(self->box, page);
 }
@@ -157,13 +159,15 @@ update_is_overflowing(BrkTabBar *self) {
     GtkAdjustment *adj = gtk_scrolled_window_get_hadjustment(self->scrolled_window);
     gboolean overflowing = is_overflowing(adj);
 
-    if (overflowing == self->is_overflowing)
+    if (overflowing == self->is_overflowing) {
         return;
+    }
 
     overflowing |= self->resize_frozen;
 
-    if (overflowing == self->is_overflowing)
+    if (overflowing == self->is_overflowing) {
         return;
+    }
 
     self->is_overflowing = overflowing;
 
@@ -234,26 +238,30 @@ brk_tab_bar_focus(GtkWidget *widget, GtkDirectionType direction) {
     gboolean is_rtl;
     GtkDirectionType start, end;
 
-    if (!brk_tab_bar_get_tabs_revealed(self))
+    if (!brk_tab_bar_get_tabs_revealed(self)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
-    if (!gtk_widget_get_focus_child(widget))
+    if (!gtk_widget_get_focus_child(widget)) {
         return gtk_widget_child_focus(GTK_WIDGET(self->box), direction);
+    }
 
     is_rtl = gtk_widget_get_direction(widget) == GTK_TEXT_DIR_RTL;
     start = is_rtl ? GTK_DIR_RIGHT : GTK_DIR_LEFT;
     end = is_rtl ? GTK_DIR_LEFT : GTK_DIR_RIGHT;
 
     if (direction == start) {
-        if (brk_tab_view_select_previous_page(self->view))
+        if (brk_tab_view_select_previous_page(self->view)) {
             return GDK_EVENT_STOP;
+        }
 
         return gtk_widget_keynav_failed(widget, direction);
     }
 
     if (direction == end) {
-        if (brk_tab_view_select_next_page(self->view))
+        if (brk_tab_view_select_next_page(self->view)) {
             return GDK_EVENT_STOP;
+        }
 
         return gtk_widget_keynav_failed(widget, direction);
     }
@@ -594,12 +602,13 @@ brk_tab_bar_buildable_add_child(
         return;
     }
 
-    if (!type || !g_strcmp0(type, "start"))
+    if (!type || !g_strcmp0(type, "start")) {
         brk_tab_bar_set_start_action_widget(self, GTK_WIDGET(child));
-    else if (!g_strcmp0(type, "end"))
+    } else if (!g_strcmp0(type, "end")) {
         brk_tab_bar_set_end_action_widget(self, GTK_WIDGET(child));
-    else
+    } else {
         GTK_BUILDER_WARN_INVALID_CHILD_TYPE(BRK_TAB_BAR(self), type);
+    }
 }
 
 static void
@@ -618,8 +627,9 @@ brk_tab_bar_tabs_have_visible_focus(BrkTabBar *self) {
     if (scroll_focus_child) {
         GtkWidget *tab = gtk_widget_get_first_child(scroll_focus_child);
 
-        if (gtk_widget_has_visible_focus(tab))
+        if (gtk_widget_has_visible_focus(tab)) {
             return TRUE;
+        }
     }
 
     return FALSE;
@@ -664,8 +674,9 @@ brk_tab_bar_set_view(BrkTabBar *self, BrkTabView *view) {
     g_return_if_fail(BRK_IS_TAB_BAR(self));
     g_return_if_fail(view == NULL || BRK_IS_TAB_VIEW(view));
 
-    if (self->view == view)
+    if (self->view == view) {
         return;
+    }
 
     if (self->view) {
         g_signal_handlers_disconnect_by_func(self->view, update_autohide_cb, self);
@@ -732,8 +743,9 @@ brk_tab_bar_set_start_action_widget(BrkTabBar *self, GtkWidget *widget) {
 
     old_widget = brk_bin_get_child(self->start_action_bin);
 
-    if (old_widget == widget)
+    if (old_widget == widget) {
         return;
+    }
 
     brk_bin_set_child(self->start_action_bin, widget);
     gtk_widget_set_visible(GTK_WIDGET(self->start_action_bin), widget != NULL);
@@ -772,8 +784,9 @@ brk_tab_bar_set_end_action_widget(BrkTabBar *self, GtkWidget *widget) {
 
     old_widget = brk_bin_get_child(self->end_action_bin);
 
-    if (old_widget == widget)
+    if (old_widget == widget) {
         return;
+    }
 
     brk_bin_set_child(self->end_action_bin, widget);
     gtk_widget_set_visible(GTK_WIDGET(self->end_action_bin), widget != NULL);
@@ -814,8 +827,9 @@ brk_tab_bar_set_autohide(BrkTabBar *self, gboolean autohide) {
 
     autohide = !!autohide;
 
-    if (autohide == self->autohide)
+    if (autohide == self->autohide) {
         return;
+    }
 
     self->autohide = autohide;
 
@@ -872,8 +886,9 @@ brk_tab_bar_set_expand_tabs(BrkTabBar *self, gboolean expand_tabs) {
 
     expand_tabs = !!expand_tabs;
 
-    if (brk_tab_bar_get_expand_tabs(self) == expand_tabs)
+    if (brk_tab_bar_get_expand_tabs(self) == expand_tabs) {
         return;
+    }
 
     brk_tab_box_set_expand_tabs(self->box, expand_tabs);
 
@@ -911,8 +926,9 @@ brk_tab_bar_set_inverted(BrkTabBar *self, gboolean inverted) {
 
     inverted = !!inverted;
 
-    if (brk_tab_bar_get_inverted(self) == inverted)
+    if (brk_tab_bar_get_inverted(self) == inverted) {
         return;
+    }
 
     brk_tab_box_set_inverted(self->box, inverted);
 
@@ -998,8 +1014,9 @@ void
 brk_tab_bar_set_extra_drag_preload(BrkTabBar *self, gboolean preload) {
     g_return_if_fail(BRK_IS_TAB_BAR(self));
 
-    if (brk_tab_bar_get_extra_drag_preload(self) == preload)
+    if (brk_tab_bar_get_extra_drag_preload(self) == preload) {
         return;
+    }
 
     brk_tab_box_set_extra_drag_preload(self->box, preload);
 

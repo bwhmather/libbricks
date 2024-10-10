@@ -89,8 +89,9 @@ static void
 brk_callback_animation_finalize(GObject *object) {
     BrkCallbackAnimationTarget *self = BRK_CALLBACK_ANIMATION_TARGET(object);
 
-    if (self->destroy_notify)
+    if (self->destroy_notify) {
         self->destroy_notify(self->user_data);
+    }
 
     G_OBJECT_CLASS(brk_callback_animation_target_parent_class)->finalize(object);
 }
@@ -169,8 +170,9 @@ object_weak_notify(gpointer data, GObject *object) {
 
 static void
 set_object(BrkPropertyAnimationTarget *self, GObject *object) {
-    if (self->object)
+    if (self->object) {
         g_object_weak_unref(self->object, object_weak_notify, self);
+    }
     self->object = object;
     g_object_weak_ref(self->object, object_weak_notify, self);
 }
@@ -180,8 +182,9 @@ brk_property_animation_target_set_value(BrkAnimationTarget *target, double value
     BrkPropertyAnimationTarget *self = BRK_PROPERTY_ANIMATION_TARGET(target);
     GValue gvalue = G_VALUE_INIT;
 
-    if (!self->object || !self->pspec)
+    if (!self->object || !self->pspec) {
         return;
+    }
 
     g_value_init(&gvalue, G_TYPE_DOUBLE);
     g_value_set_double(&gvalue, value);
@@ -194,30 +197,34 @@ brk_property_animation_target_constructed(GObject *object) {
 
     G_OBJECT_CLASS(brk_property_animation_target_parent_class)->constructed(object);
 
-    if (!self->object)
+    if (!self->object) {
         g_error(
             "BrkPropertyAnimationTarget constructed without specifying a value for the 'object' property"
         );
+    }
 
-    if (!self->pspec)
+    if (!self->pspec) {
         g_error(
             "BrkPropertyAnimationTarget constructed without specifying a value for the 'pspec' property"
         );
+    }
 
-    if (!g_type_is_a(G_OBJECT_TYPE(self->object), self->pspec->owner_type))
+    if (!g_type_is_a(G_OBJECT_TYPE(self->object), self->pspec->owner_type)) {
         g_error(
             "Cannot create BrkPropertyAnimationTarget: %s doesn't have the %s:%s property",
             G_OBJECT_TYPE_NAME(self->object), g_type_name(self->pspec->owner_type),
             self->pspec->name
         );
+    }
 }
 
 static void
 brk_property_animation_target_dispose(GObject *object) {
     BrkPropertyAnimationTarget *self = BRK_PROPERTY_ANIMATION_TARGET(object);
 
-    if (self->object)
+    if (self->object) {
         g_object_weak_unref(self->object, object_weak_notify, self);
+    }
     self->object = NULL;
 
     G_OBJECT_CLASS(brk_property_animation_target_parent_class)->dispose(object);
@@ -341,11 +348,12 @@ brk_property_animation_target_new(GObject *object, const char *property_name) {
 
     pspec = g_object_class_find_property(G_OBJECT_GET_CLASS(object), property_name);
 
-    if (!pspec)
+    if (!pspec) {
         g_error(
             "Type '%s' does not have a property named '%s'", G_OBJECT_TYPE_NAME(object),
             property_name
         );
+    }
 
     return brk_property_animation_target_new_for_pspec(object, pspec);
 }

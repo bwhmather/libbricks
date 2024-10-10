@@ -202,8 +202,9 @@ static guint
 brk_tab_pages_get_n_items(GListModel *model) {
     BrkTabPages *self = BRK_TAB_PAGES(model);
 
-    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view)))
+    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view))) {
         return 0;
+    }
 
     return self->view->n_pages;
 }
@@ -213,13 +214,15 @@ brk_tab_pages_get_item(GListModel *model, guint position) {
     BrkTabPages *self = BRK_TAB_PAGES(model);
     BrkTabPage *page;
 
-    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view)))
+    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view))) {
         return NULL;
+    }
 
     page = brk_tab_view_get_nth_page(self->view, position);
 
-    if (!page)
+    if (!page) {
         return NULL;
+    }
 
     return g_object_ref(page);
 }
@@ -236,8 +239,9 @@ brk_tab_pages_is_selected(GtkSelectionModel *model, guint position) {
     BrkTabPages *self = BRK_TAB_PAGES(model);
     BrkTabPage *page;
 
-    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view)))
+    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view))) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self->view, position);
 
@@ -249,8 +253,9 @@ brk_tab_pages_select_item(GtkSelectionModel *model, guint position, gboolean exc
     BrkTabPages *self = BRK_TAB_PAGES(model);
     BrkTabPage *page;
 
-    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view)))
+    if (G_UNLIKELY(!BRK_IS_TAB_VIEW(self->view))) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self->view, position);
 
@@ -320,8 +325,9 @@ begin_transfer_for_group(BrkTabView *self) {
 
         view->transfer_count++;
 
-        if (view->transfer_count == 1)
+        if (view->transfer_count == 1) {
             g_object_notify_by_pspec(G_OBJECT(view), props[PROP_IS_TRANSFERRING_PAGE]);
+        }
     }
 }
 
@@ -334,15 +340,17 @@ end_transfer_for_group(BrkTabView *self) {
 
         view->transfer_count--;
 
-        if (view->transfer_count == 0)
+        if (view->transfer_count == 0) {
             g_object_notify_by_pspec(G_OBJECT(view), props[PROP_IS_TRANSFERRING_PAGE]);
+        }
     }
 }
 
 static void
 set_n_pages(BrkTabView *self, int n_pages) {
-    if (n_pages == self->n_pages)
+    if (n_pages == self->n_pages) {
         return;
+    }
 
     self->n_pages = n_pages;
 
@@ -351,8 +359,9 @@ set_n_pages(BrkTabView *self, int n_pages) {
 
 static inline gboolean
 page_belongs_to_this_view(BrkTabView *self, BrkTabPage *page) {
-    if (!page)
+    if (!page) {
         return FALSE;
+    }
 
     return gtk_widget_get_parent(brk_tab_page_get_bin(page)) == GTK_WIDGET(self);
 }
@@ -361,21 +370,24 @@ static inline gboolean
 child_belongs_to_this_view(BrkTabView *self, GtkWidget *child) {
     GtkWidget *parent;
 
-    if (!child)
+    if (!child) {
         return FALSE;
+    }
 
     parent = gtk_widget_get_parent(child);
 
-    if (!parent)
+    if (!parent) {
         return FALSE;
+    }
 
     return gtk_widget_get_parent(parent) == GTK_WIDGET(self);
 }
 
 static inline gboolean
 is_descendant_of(BrkTabPage *page, BrkTabPage *parent) {
-    while (page && page != parent)
+    while (page && page != parent) {
         page = brk_tab_page_get_parent(page);
+    }
 
     return page == parent;
 }
@@ -416,8 +428,9 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
     guint new_position = GTK_INVALID_LIST_POSITION;
     gboolean contains_focus = FALSE;
 
-    if (self->selected_page == selected_page)
+    if (self->selected_page == selected_page) {
         return;
+    }
 
     if (self->selected_page) {
         if (notify_pages && self->pages) {
@@ -439,8 +452,9 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
     self->selected_page = selected_page;
 
     if (self->selected_page) {
-        if (notify_pages && self->pages)
+        if (notify_pages && self->pages) {
             new_position = brk_tab_view_get_page_position(self, self->selected_page);
+        }
 
         if (!gtk_widget_in_destruction(GTK_WIDGET(self))) {
             gtk_widget_set_child_visible(brk_tab_page_get_bin(self->selected_page), TRUE);
@@ -458,15 +472,16 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
     if (notify_pages && self->pages) {
         if (old_position == GTK_INVALID_LIST_POSITION && new_position == GTK_INVALID_LIST_POSITION)
             ; /* nothing to do */
-        else if (old_position == GTK_INVALID_LIST_POSITION)
+        else if (old_position == GTK_INVALID_LIST_POSITION) {
             gtk_selection_model_selection_changed(self->pages, new_position, 1);
-        else if (new_position == GTK_INVALID_LIST_POSITION)
+        } else if (new_position == GTK_INVALID_LIST_POSITION) {
             gtk_selection_model_selection_changed(self->pages, old_position, 1);
-        else
+        } else {
             gtk_selection_model_selection_changed(
                 self->pages, MIN(old_position, new_position),
                 MAX(old_position, new_position) - MIN(old_position, new_position) + 1
             );
+        }
     }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_SELECTED_PAGE]);
@@ -477,8 +492,9 @@ select_previous_page(BrkTabView *self, BrkTabPage *page) {
     int pos = brk_tab_view_get_page_position(self, page);
     BrkTabPage *parent;
 
-    if (page != self->selected_page)
+    if (page != self->selected_page) {
         return;
+    }
 
     parent = brk_tab_page_get_parent(page);
 
@@ -494,8 +510,9 @@ select_previous_page(BrkTabView *self, BrkTabPage *page) {
         }
     }
 
-    if (brk_tab_view_select_next_page(self))
+    if (brk_tab_view_select_next_page(self)) {
         return;
+    }
 
     brk_tab_view_select_previous_page(self);
 }
@@ -510,8 +527,9 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
     g_object_ref(page);
     g_object_ref(brk_tab_page_get_bin(page));
 
-    if (self->n_pages == 1)
+    if (self->n_pages == 1) {
         set_selected_page(self, NULL, !in_dispose);
+    }
 
     g_list_store_remove(self->children, pos);
 
@@ -524,13 +542,15 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
     g_clear_pointer(&page->transfer_binding, g_binding_unbind);
     gtk_widget_unparent(brk_tab_page_get_bin(page));
 
-    if (!in_dispose)
+    if (!in_dispose) {
         gtk_widget_queue_resize(GTK_WIDGET(self));
+    }
 
     g_signal_emit(self, signals[SIGNAL_PAGE_DETACHED], 0, page, pos);
 
-    if (!in_dispose && self->pages)
+    if (!in_dispose && self->pages) {
         g_list_model_items_changed(G_LIST_MODEL(self->pages), pos, 1, 0);
+    }
 
     g_object_unref(brk_tab_page_get_bin(page));
     g_object_unref(page);
@@ -543,11 +563,13 @@ insert_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     g_object_freeze_notify(G_OBJECT(self));
 
-    if (!self->selected_page)
+    if (!self->selected_page) {
         set_selected_page(self, page, FALSE);
+    }
 
-    if (self->pages)
+    if (self->pages) {
         g_list_model_items_changed(G_LIST_MODEL(self->pages), position, 0, 1);
+    }
 
     g_object_thaw_notify(G_OBJECT(self));
 }
@@ -576,22 +598,26 @@ select_page_cb(GtkWidget *widget, GVariant *args, BrkTabView *self) {
     GtkDirectionType direction;
     gboolean last, success = FALSE;
 
-    if (!brk_tab_view_get_selected_page(self))
+    if (!brk_tab_view_get_selected_page(self)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
-    if (self->n_pages <= 1)
+    if (self->n_pages <= 1) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     g_variant_get(args, "(hhb)", &mask, &direction, &last);
 
-    if (!(self->shortcuts & mask))
+    if (!(self->shortcuts & mask)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     if (direction == GTK_DIR_TAB_BACKWARD) {
-        if (last)
+        if (last) {
             success = brk_tab_view_select_first_page(self);
-        else
+        } else {
             success = brk_tab_view_select_previous_page(self);
+        }
 
         if (!success && !last) {
             BrkTabPage *page = brk_tab_view_get_nth_page(self, self->n_pages - 1);
@@ -601,10 +627,11 @@ select_page_cb(GtkWidget *widget, GVariant *args, BrkTabView *self) {
             success = TRUE;
         }
     } else if (direction == GTK_DIR_TAB_FORWARD) {
-        if (last)
+        if (last) {
             success = brk_tab_view_select_last_page(self);
-        else
+        } else {
             success = brk_tab_view_select_next_page(self);
+        }
 
         if (!success && !last) {
             BrkTabPage *page = brk_tab_view_get_nth_page(self, 0);
@@ -615,8 +642,9 @@ select_page_cb(GtkWidget *widget, GVariant *args, BrkTabView *self) {
         }
     }
 
-    if (!success)
+    if (!success) {
         gtk_widget_error_bell(GTK_WIDGET(self));
+    }
 
     return GDK_EVENT_STOP;
 }
@@ -647,31 +675,37 @@ reorder_page_cb(GtkWidget *widget, GVariant *args, BrkTabView *self) {
     gboolean last, success = FALSE;
     BrkTabPage *page = brk_tab_view_get_selected_page(self);
 
-    if (!page)
+    if (!page) {
         return GDK_EVENT_PROPAGATE;
+    }
 
-    if (self->n_pages <= 1)
+    if (self->n_pages <= 1) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     g_variant_get(args, "(hhb)", &mask, &direction, &last);
 
-    if (!(self->shortcuts & mask))
+    if (!(self->shortcuts & mask)) {
         return GDK_EVENT_PROPAGATE;
-
-    if (direction == GTK_DIR_TAB_BACKWARD) {
-        if (last)
-            success = brk_tab_view_reorder_first(self, page);
-        else
-            success = brk_tab_view_reorder_backward(self, page);
-    } else if (direction == GTK_DIR_TAB_FORWARD) {
-        if (last)
-            success = brk_tab_view_reorder_last(self, page);
-        else
-            success = brk_tab_view_reorder_forward(self, page);
     }
 
-    if (!success)
+    if (direction == GTK_DIR_TAB_BACKWARD) {
+        if (last) {
+            success = brk_tab_view_reorder_first(self, page);
+        } else {
+            success = brk_tab_view_reorder_backward(self, page);
+        }
+    } else if (direction == GTK_DIR_TAB_FORWARD) {
+        if (last) {
+            success = brk_tab_view_reorder_last(self, page);
+        } else {
+            success = brk_tab_view_reorder_forward(self, page);
+        }
+    }
+
+    if (!success) {
         gtk_widget_error_bell(GTK_WIDGET(self));
+    }
 
     return GDK_EVENT_STOP;
 }
@@ -702,21 +736,25 @@ select_nth_page_cb(GtkWidget *widget, GVariant *args, BrkTabView *self) {
     BrkTabViewShortcuts mask;
     BrkTabPage *page;
 
-    if (n_page >= self->n_pages)
+    if (n_page >= self->n_pages) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     /* Pages are counted from 0, so page 9 represents Alt+0 */
-    if (n_page == 9)
+    if (n_page == 9) {
         mask = BRK_TAB_VIEW_SHORTCUT_ALT_ZERO;
-    else
+    } else {
         mask = BRK_TAB_VIEW_SHORTCUT_ALT_DIGITS;
+    }
 
-    if (!(self->shortcuts & mask))
+    if (!(self->shortcuts & mask)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     page = brk_tab_view_get_nth_page(self, n_page);
-    if (brk_tab_view_get_selected_page(self) == page)
+    if (brk_tab_view_get_selected_page(self) == page) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     brk_tab_view_set_selected_page(self, page);
 
@@ -788,10 +826,11 @@ init_shortcuts(BrkTabView *self, GtkEventController *controller) {
         GTK_DIR_TAB_FORWARD, TRUE
     );
 
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 10; i++) {
         add_switch_nth_page_shortcut(
             self, controller, GDK_KEY_0 + i, GDK_KEY_KP_0 + i, (i + 9) % 10
         ); /* Alt+0 means page 10, not 0 */
+    }
 }
 
 static void
@@ -824,8 +863,9 @@ brk_tab_view_size_allocate(GtkWidget *widget, int width, int height, int baselin
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
+        if (gtk_widget_get_child_visible(brk_tab_page_get_bin(page))) {
             gtk_widget_allocate(brk_tab_page_get_bin(page), width, height, baseline, NULL);
+        }
     }
 }
 
@@ -836,11 +876,13 @@ unmap_extra_pages(BrkTabView *self) {
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (page == self->selected_page)
+        if (page == self->selected_page) {
             continue;
+        }
 
-        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
+        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page))) {
             continue;
+        }
 
         gtk_widget_set_child_visible(brk_tab_page_get_bin(page), FALSE);
     }
@@ -853,17 +895,20 @@ brk_tab_view_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
     BrkTabView *self = BRK_TAB_VIEW(widget);
     int i;
 
-    if (self->selected_page)
+    if (self->selected_page) {
         gtk_widget_snapshot_child(widget, brk_tab_page_get_bin(self->selected_page), snapshot);
+    }
 
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
+        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page))) {
             continue;
+        }
 
-        if (!self->unmap_extra_pages_cb)
+        if (!self->unmap_extra_pages_cb) {
             self->unmap_extra_pages_cb = g_idle_add_once((GSourceOnceFunc) unmap_extra_pages, self);
+        }
     }
 }
 
@@ -876,8 +921,9 @@ brk_tab_view_dispose(GObject *object) {
         self->unmap_extra_pages_cb = 0;
     }
 
-    if (self->pages)
+    if (self->pages) {
         g_list_model_items_changed(G_LIST_MODEL(self->pages), 0, self->n_pages, 0);
+    }
 
     while (self->n_pages) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, 0);
@@ -1253,12 +1299,13 @@ brk_tab_view_buildable_add_child(
 ) {
     BrkTabView *self = BRK_TAB_VIEW(buildable);
 
-    if (!type && GTK_IS_WIDGET(child))
+    if (!type && GTK_IS_WIDGET(child)) {
         brk_tab_view_append(self, GTK_WIDGET(child));
-    else if (!type && BRK_IS_TAB_PAGE(child))
+    } else if (!type && BRK_IS_TAB_PAGE(child)) {
         insert_page(self, BRK_TAB_PAGE(child), self->n_pages);
-    else
+    } else {
         tab_view_parent_buildable_iface->add_child(buildable, builder, child, type);
+    }
 }
 
 static void
@@ -1272,8 +1319,9 @@ static GtkAccessible *
 brk_tab_view_accessible_get_first_accessible_child(GtkAccessible *accessible) {
     BrkTabView *self = BRK_TAB_VIEW(accessible);
 
-    if (brk_tab_view_get_n_pages(self) > 0)
+    if (brk_tab_view_get_n_pages(self) > 0) {
         return GTK_ACCESSIBLE(g_object_ref(brk_tab_view_get_nth_page(self, 0)));
+    }
 
     return NULL;
 }
@@ -1384,13 +1432,15 @@ brk_tab_view_select_previous_page(BrkTabView *self) {
 
     g_return_val_if_fail(BRK_IS_TAB_VIEW(self), FALSE);
 
-    if (!self->selected_page)
+    if (!self->selected_page) {
         return FALSE;
+    }
 
     pos = brk_tab_view_get_page_position(self, self->selected_page);
 
-    if (pos <= 0)
+    if (pos <= 0) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self, pos - 1);
 
@@ -1416,13 +1466,15 @@ brk_tab_view_select_next_page(BrkTabView *self) {
 
     g_return_val_if_fail(BRK_IS_TAB_VIEW(self), FALSE);
 
-    if (!self->selected_page)
+    if (!self->selected_page) {
         return FALSE;
+    }
 
     pos = brk_tab_view_get_page_position(self, self->selected_page);
 
-    if (pos >= self->n_pages - 1)
+    if (pos >= self->n_pages - 1) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self, pos + 1);
 
@@ -1437,13 +1489,15 @@ brk_tab_view_select_first_page(BrkTabView *self) {
 
     g_return_val_if_fail(BRK_IS_TAB_VIEW(self), FALSE);
 
-    if (!self->selected_page)
+    if (!self->selected_page) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self, 0);
 
-    if (page == self->selected_page)
+    if (page == self->selected_page) {
         return FALSE;
+    }
 
     brk_tab_view_set_selected_page(self, page);
 
@@ -1456,13 +1510,15 @@ brk_tab_view_select_last_page(BrkTabView *self) {
 
     g_return_val_if_fail(BRK_IS_TAB_VIEW(self), FALSE);
 
-    if (!self->selected_page)
+    if (!self->selected_page) {
         return FALSE;
+    }
 
     page = brk_tab_view_get_nth_page(self, 0);
 
-    if (page == self->selected_page)
+    if (page == self->selected_page) {
         return FALSE;
+    }
 
     brk_tab_view_set_selected_page(self, page);
 
@@ -1500,8 +1556,9 @@ brk_tab_view_set_menu_model(BrkTabView *self, GMenuModel *menu_model) {
     g_return_if_fail(BRK_IS_TAB_VIEW(self));
     g_return_if_fail(menu_model == NULL || G_IS_MENU_MODEL(menu_model));
 
-    if (self->menu_model == menu_model)
+    if (self->menu_model == menu_model) {
         return;
+    }
 
     g_set_object(&self->menu_model, menu_model);
 
@@ -1545,8 +1602,9 @@ brk_tab_view_set_shortcuts(BrkTabView *self, BrkTabViewShortcuts shortcuts) {
     g_return_if_fail(BRK_IS_TAB_VIEW(self));
     g_return_if_fail(shortcuts <= BRK_TAB_VIEW_SHORTCUT_ALL_SHORTCUTS);
 
-    if (self->shortcuts == shortcuts)
+    if (self->shortcuts == shortcuts) {
         return;
+    }
 
     self->shortcuts = shortcuts;
 
@@ -1611,8 +1669,9 @@ brk_tab_view_get_page(BrkTabView *self, GtkWidget *child) {
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (brk_tab_page_get_child(page) == child)
+        if (brk_tab_page_get_child(page) == child) {
             return page;
+        }
     }
 
     g_assert_not_reached();
@@ -1662,8 +1721,9 @@ brk_tab_view_get_page_position(BrkTabView *self, BrkTabPage *page) {
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *p = brk_tab_view_get_nth_page(self, i);
 
-        if (page == p)
+        if (page == p) {
             return i;
+        }
     }
 
     g_assert_not_reached();
@@ -1704,8 +1764,9 @@ brk_tab_view_add_page(BrkTabView *self, GtkWidget *child, BrkTabPage *parent) {
         do {
             position++;
 
-            if (position >= self->n_pages)
+            if (position >= self->n_pages) {
                 break;
+            }
 
             page = brk_tab_view_get_nth_page(self, position);
         } while (is_descendant_of(page, parent));
@@ -1864,8 +1925,9 @@ brk_tab_view_close_other_pages(BrkTabView *self, BrkTabPage *page) {
     for (i = self->n_pages - 1; i >= 0; i--) {
         BrkTabPage *p = brk_tab_view_get_nth_page(self, i);
 
-        if (p == page)
+        if (p == page) {
             continue;
+        }
 
         brk_tab_view_close_page(self, p);
     }
@@ -1941,8 +2003,9 @@ brk_tab_view_reorder_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     original_pos = brk_tab_view_get_page_position(self, page);
 
-    if (original_pos == position)
+    if (original_pos == position) {
         return FALSE;
+    }
 
     g_object_ref(page);
 
@@ -1982,8 +2045,9 @@ brk_tab_view_reorder_backward(BrkTabView *self, BrkTabPage *page) {
 
     pos = brk_tab_view_get_page_position(self, page);
 
-    if (pos <= 0)
+    if (pos <= 0) {
         return FALSE;
+    }
 
     return brk_tab_view_reorder_page(self, page, pos - 1);
 }
@@ -2007,8 +2071,9 @@ brk_tab_view_reorder_forward(BrkTabView *self, BrkTabPage *page) {
 
     pos = brk_tab_view_get_page_position(self, page);
 
-    if (pos >= self->n_pages - 1)
+    if (pos >= self->n_pages - 1) {
         return FALSE;
+    }
 
     return brk_tab_view_reorder_page(self, page, pos + 1);
 }
@@ -2072,8 +2137,9 @@ brk_tab_view_attach_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     attach_page(self, page, position);
 
-    if (self->pages)
+    if (self->pages) {
         g_list_model_items_changed(G_LIST_MODEL(self->pages), position, 0, 1);
+    }
 
     brk_tab_view_set_selected_page(self, page);
 
@@ -2124,8 +2190,9 @@ GtkSelectionModel *
 brk_tab_view_get_pages(BrkTabView *self) {
     g_return_val_if_fail(BRK_IS_TAB_VIEW(self), NULL);
 
-    if (self->pages)
+    if (self->pages) {
         return g_object_ref(self->pages);
+    }
 
     g_set_weak_pointer(&self->pages, brk_tab_pages_new(self));
 

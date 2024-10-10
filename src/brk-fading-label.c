@@ -48,14 +48,17 @@ is_rtl(BrkFadingLabel *self) {
     PangoDirection pango_direction = PANGO_DIRECTION_NEUTRAL;
     const char *label = brk_fading_label_get_label(self);
 
-    if (label)
+    if (label) {
         pango_direction = brk_find_base_dir(label, -1);
+    }
 
-    if (pango_direction == PANGO_DIRECTION_RTL)
+    if (pango_direction == PANGO_DIRECTION_RTL) {
         return TRUE;
+    }
 
-    if (pango_direction == PANGO_DIRECTION_LTR)
+    if (pango_direction == PANGO_DIRECTION_LTR) {
         return FALSE;
+    }
 
     return gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL;
 }
@@ -69,8 +72,9 @@ brk_fading_label_measure(
 
     gtk_widget_measure(self->label, orientation, for_size, min, nat, min_baseline, nat_baseline);
 
-    if (orientation == GTK_ORIENTATION_HORIZONTAL && min)
+    if (orientation == GTK_ORIENTATION_HORIZONTAL && min) {
         *min = 0;
+    }
 }
 
 static void
@@ -101,8 +105,9 @@ brk_fading_label_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
     GskRenderNode *node;
     graphene_rect_t bounds;
 
-    if (width <= 0)
+    if (width <= 0) {
         return;
+    }
 
     clipped_size = gtk_widget_get_width(self->label) - width;
 
@@ -254,8 +259,9 @@ void
 brk_fading_label_set_label(BrkFadingLabel *self, const char *label) {
     g_return_if_fail(BRK_IS_FADING_LABEL(self));
 
-    if (!g_strcmp0(label, brk_fading_label_get_label(self)))
+    if (!g_strcmp0(label, brk_fading_label_get_label(self))) {
         return;
+    }
 
     gtk_label_set_label(GTK_LABEL(self->label), label);
 
@@ -275,8 +281,9 @@ brk_fading_label_set_align(BrkFadingLabel *self, float align) {
 
     align = CLAMP(align, 0.0, 1.0);
 
-    if (G_APPROX_VALUE(self->align, align, FLT_EPSILON))
+    if (G_APPROX_VALUE(self->align, align, FLT_EPSILON)) {
         return;
+    }
 
     self->align = align;
 

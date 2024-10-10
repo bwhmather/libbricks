@@ -15,6 +15,7 @@ AlwaysBreakAfterReturnType: All
 AlwaysBreakBeforeMultilineStrings: true
 ExperimentalAutoDetectBinPacking: true
 ReflowComments: false
+InsertBraces: true
 SpaceAfterCStyleCast: true
 IncludeBlocks: Regroup
 IncludeCategories:

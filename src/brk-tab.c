@@ -93,10 +93,11 @@ static guint signals[SIGNAL_LAST_SIGNAL];
 
 static inline void
 set_style_class(GtkWidget *widget, const char *style_class, gboolean enabled) {
-    if (enabled)
+    if (enabled) {
         gtk_widget_add_css_class(widget, style_class);
-    else
+    } else {
         gtk_widget_remove_css_class(widget, style_class);
+    }
 }
 
 static void
@@ -118,8 +119,9 @@ update_state(BrkTab *self) {
 
     new_state = gtk_widget_get_state_flags(GTK_WIDGET(self)) & ~GTK_STATE_FLAG_SELECTED;
 
-    if (self->selected || self->dragging)
+    if (self->selected || self->dragging) {
         new_state |= GTK_STATE_FLAG_SELECTED;
+    }
 
     gtk_widget_set_state_flags(GTK_WIDGET(self), new_state, TRUE);
 
@@ -142,10 +144,11 @@ static void
 update_tooltip(BrkTab *self) {
     const char *tooltip = brk_tab_page_get_tooltip(self->page);
 
-    if (tooltip && g_strcmp0(tooltip, "") != 0)
+    if (tooltip && g_strcmp0(tooltip, "") != 0) {
         gtk_widget_set_tooltip_markup(GTK_WIDGET(self), tooltip);
-    else
+    } else {
         gtk_widget_set_tooltip_text(GTK_WIDGET(self), brk_tab_page_get_title(self->page));
+    }
 }
 
 static void
@@ -155,8 +158,9 @@ update_title(BrkTab *self) {
     GtkTextDirection direction = gtk_widget_get_direction(GTK_WIDGET(self));
     gboolean title_inverted;
 
-    if (title)
+    if (title) {
         title_direction = brk_find_base_dir(title, -1);
+    }
 
     title_inverted = (title_direction == PANGO_DIRECTION_LTR && direction == GTK_TEXT_DIR_RTL) ||
         (title_direction == PANGO_DIRECTION_RTL && direction == GTK_TEXT_DIR_LTR);
@@ -227,8 +231,9 @@ static void
 update_selected(BrkTab *self) {
     self->selected = self->dragging;
 
-    if (self->page)
+    if (self->page) {
         self->selected |= brk_tab_page_get_selected(self->page);
+    }
 
     update_state(self);
     update_indicator(self);
@@ -241,8 +246,9 @@ close_idle_cb(BrkTab *self) {
 
 static void
 close_clicked_cb(BrkTab *self) {
-    if (!self->page)
+    if (!self->page) {
         return;
+    }
 
     /* When animations are disabled, we don't want to immediately remove the
    * whole tab mid-click. Instead, defer it until the click has happened.
@@ -252,22 +258,26 @@ close_clicked_cb(BrkTab *self) {
 
 static void
 indicator_clicked_cb(BrkTab *self) {
-    if (!self->page)
+    if (!self->page) {
         return;
+    }
 
     g_signal_emit_by_name(self->view, "indicator-activated", self->page);
 }
 
 static GdkDragAction
 make_action_unique(GdkDragAction actions) {
-    if (actions & GDK_ACTION_COPY)
+    if (actions & GDK_ACTION_COPY) {
         return GDK_ACTION_COPY;
+    }
 
-    if (actions & GDK_ACTION_MOVE)
+    if (actions & GDK_ACTION_MOVE) {
         return GDK_ACTION_MOVE;
+    }
 
-    if (actions & GDK_ACTION_LINK)
+    if (actions & GDK_ACTION_LINK) {
         return GDK_ACTION_LINK;
+    }
 
     return 0;
 }
@@ -284,11 +294,13 @@ motion_cb(BrkTab *self, double x, double y, GtkEventController *controller) {
     GdkDevice *device = gtk_event_controller_get_current_event_device(controller);
     GdkInputSource input_source = gdk_device_get_source(device);
 
-    if (input_source == GDK_SOURCE_TOUCHSCREEN)
+    if (input_source == GDK_SOURCE_TOUCHSCREEN) {
         return;
+    }
 
-    if (self->hovering)
+    if (self->hovering) {
         return;
+    }
 
     self->hovering = TRUE;
 
@@ -340,8 +352,9 @@ static gboolean
 activate_cb(BrkTab *self, GVariant *args) {
     GtkWidget *child;
 
-    if (!self->page || !self->view)
+    if (!self->page || !self->view) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     child = brk_tab_page_get_child(self->page);
 
@@ -393,22 +406,27 @@ brk_tab_measure(
         nat = MAX(nat, child_nat);
     }
 
-    if (minimum)
+    if (minimum) {
         *minimum = min;
-    if (natural)
+    }
+    if (natural) {
         *natural = nat;
-    if (minimum_baseline)
+    }
+    if (minimum_baseline) {
         *minimum_baseline = -1;
-    if (natural_baseline)
+    }
+    if (natural_baseline) {
         *natural_baseline = -1;
+    }
 }
 
 static inline void
 measure_child(GtkWidget *child, int height, int *width) {
-    if (gtk_widget_get_visible(child))
+    if (gtk_widget_get_visible(child)) {
         gtk_widget_measure(child, GTK_ORIENTATION_HORIZONTAL, height, NULL, width, NULL, NULL);
-    else
+    } else {
         *width = 0;
+    }
 }
 
 static inline void
@@ -417,10 +435,11 @@ allocate_child(
 ) {
     GtkAllocation child_alloc;
 
-    if (gtk_widget_get_direction(child) == GTK_TEXT_DIR_RTL)
+    if (gtk_widget_get_direction(child) == GTK_TEXT_DIR_RTL) {
         child_alloc.x = parent_width - width - x;
-    else
+    } else {
         child_alloc.x = x;
+    }
 
     child_alloc.y = 0;
     child_alloc.width = width;
@@ -478,8 +497,9 @@ brk_tab_size_allocate(GtkWidget *widget, int width, int height, int baseline) {
                 self->close_btn, width, height, width - close_width, close_width, baseline
             );
 
-            if (self->title_inverted)
+            if (self->title_inverted) {
                 end_width = close_width;
+            }
         }
     }
 
@@ -506,8 +526,9 @@ brk_tab_size_allocate(GtkWidget *widget, int width, int height, int baseline) {
         center_width -= icon_width;
     }
 
-    if (gtk_widget_get_visible(self->title))
+    if (gtk_widget_get_visible(self->title)) {
         allocate_child(self->title, width, height, center_x, center_width, baseline);
+    }
 }
 
 static void
@@ -566,8 +587,9 @@ brk_tab_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
     gtk_widget_snapshot_child(widget, self->title, snapshot);
 
-    if (draw_fade)
+    if (draw_fade) {
         gtk_snapshot_pop(snapshot);
+    }
 
     gtk_widget_snapshot_child(widget, self->close_btn, snapshot);
 }
@@ -800,8 +822,9 @@ brk_tab_set_page(BrkTab *self, BrkTabPage *page) {
     g_return_if_fail(BRK_IS_TAB(self));
     g_return_if_fail(page == NULL || BRK_IS_TAB_PAGE(page));
 
-    if (self->page == page)
+    if (self->page == page) {
         return;
+    }
 
     if (self->page) {
         g_signal_handlers_disconnect_by_func(self->page, update_selected, self);
@@ -870,8 +893,9 @@ brk_tab_set_dragging(BrkTab *self, gboolean dragging) {
 
     dragging = !!dragging;
 
-    if (self->dragging == dragging)
+    if (self->dragging == dragging) {
         return;
+    }
 
     self->dragging = dragging;
 
@@ -894,8 +918,9 @@ brk_tab_set_inverted(BrkTab *self, gboolean inverted) {
 
     inverted = !!inverted;
 
-    if (self->inverted == inverted)
+    if (self->inverted == inverted) {
         return;
+    }
 
     self->inverted = inverted;
 
@@ -910,8 +935,9 @@ brk_tab_set_fully_visible(BrkTab *self, gboolean fully_visible) {
 
     fully_visible = !!fully_visible;
 
-    if (self->fully_visible == fully_visible)
+    if (self->fully_visible == fully_visible) {
         return;
+    }
 
     self->fully_visible = fully_visible;
 

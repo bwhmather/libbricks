@@ -82,8 +82,9 @@ static guint
 brk_timed_animation_estimate_duration(BrkAnimation *animation) {
     BrkTimedAnimation *self = BRK_TIMED_ANIMATION(animation);
 
-    if (self->repeat_count == 0)
+    if (self->repeat_count == 0) {
         return BRK_DURATION_INFINITE;
+    }
 
     return self->duration * self->repeat_count;
 }
@@ -96,22 +97,26 @@ brk_timed_animation_calculate_value(BrkAnimation *animation, guint t) {
     double iteration, progress;
     gboolean reverse = false;
 
-    if (self->duration == 0)
+    if (self->duration == 0) {
         return self->value_to;
+    }
 
     progress = modf(((double) t / self->duration), &iteration);
 
-    if (self->alternate)
+    if (self->alternate) {
         reverse = ((int) iteration % 2);
+    }
 
-    if (self->reverse)
+    if (self->reverse) {
         reverse = !reverse;
+    }
 
     /* When the animation ends, return the exact final value, which depends on the
      direction the animation is going at that moment, having into account that
      at the time of this check we're already on the next iteration. */
-    if (t >= brk_timed_animation_estimate_duration(animation))
+    if (t >= brk_timed_animation_estimate_duration(animation)) {
         return self->alternate == reverse ? self->value_to : self->value_from;
+    }
 
     progress = reverse ? (1 - progress) : progress;
 
@@ -372,8 +377,9 @@ void
 brk_timed_animation_set_value_from(BrkTimedAnimation *self, double value) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (G_APPROX_VALUE(self->value_from, value, DBL_EPSILON))
+    if (G_APPROX_VALUE(self->value_from, value, DBL_EPSILON)) {
         return;
+    }
 
     self->value_from = value;
 
@@ -412,8 +418,9 @@ void
 brk_timed_animation_set_value_to(BrkTimedAnimation *self, double value) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (G_APPROX_VALUE(self->value_to, value, DBL_EPSILON))
+    if (G_APPROX_VALUE(self->value_to, value, DBL_EPSILON)) {
         return;
+    }
 
     self->value_to = value;
 
@@ -448,8 +455,9 @@ void
 brk_timed_animation_set_duration(BrkTimedAnimation *self, guint duration) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (self->duration == duration)
+    if (self->duration == duration) {
         return;
+    }
 
     self->duration = duration;
 
@@ -485,8 +493,9 @@ brk_timed_animation_set_easing(BrkTimedAnimation *self, BrkEasing easing) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
     g_return_if_fail(easing <= BRK_EASE_IN_OUT_BOUNCE);
 
-    if (self->easing == easing)
+    if (self->easing == easing) {
         return;
+    }
 
     self->easing = easing;
 
@@ -521,8 +530,9 @@ void
 brk_timed_animation_set_repeat_count(BrkTimedAnimation *self, guint repeat_count) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (self->repeat_count == repeat_count)
+    if (self->repeat_count == repeat_count) {
         return;
+    }
 
     self->repeat_count = repeat_count;
 
@@ -555,8 +565,9 @@ void
 brk_timed_animation_set_reverse(BrkTimedAnimation *self, gboolean reverse) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (self->reverse == reverse)
+    if (self->reverse == reverse) {
         return;
+    }
 
     self->reverse = reverse;
 
@@ -589,8 +600,9 @@ void
 brk_timed_animation_set_alternate(BrkTimedAnimation *self, gboolean alternate) {
     g_return_if_fail(BRK_IS_TIMED_ANIMATION(self));
 
-    if (self->alternate == alternate)
+    if (self->alternate == alternate) {
         return;
+    }
 
     self->alternate = alternate;
 

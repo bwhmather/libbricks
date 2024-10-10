@@ -42,12 +42,13 @@ brk_unichar_direction(gunichar ch) {
 
     fribidi_ch_type = fribidi_get_bidi_type(ch);
 
-    if (!FRIBIDI_IS_STRONG(fribidi_ch_type))
+    if (!FRIBIDI_IS_STRONG(fribidi_ch_type)) {
         return PANGO_DIRECTION_NEUTRAL;
-    else if (FRIBIDI_IS_RTL(fribidi_ch_type))
+    } else if (FRIBIDI_IS_RTL(fribidi_ch_type)) {
         return PANGO_DIRECTION_RTL;
-    else
+    } else {
         return PANGO_DIRECTION_LTR;
+    }
 }
 
 PangoDirection
@@ -63,8 +64,9 @@ brk_find_base_dir(const char *text, int length) {
 
         dir = brk_unichar_direction(wc);
 
-        if (dir != PANGO_DIRECTION_NEUTRAL)
+        if (dir != PANGO_DIRECTION_NEUTRAL) {
             break;
+        }
 
         p = g_utf8_next_char(p);
     }

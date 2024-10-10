@@ -137,16 +137,19 @@ static void
 set_widget(BrkAnimation *self, GtkWidget *widget) {
     BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-    if (priv->widget == widget)
+    if (priv->widget == widget) {
         return;
+    }
 
-    if (priv->widget)
+    if (priv->widget) {
         g_object_weak_unref(G_OBJECT(priv->widget), (GWeakNotify) widget_notify_cb, self);
+    }
 
     priv->widget = widget;
 
-    if (priv->widget)
+    if (priv->widget) {
         g_object_weak_ref(G_OBJECT(priv->widget), (GWeakNotify) widget_notify_cb, self);
+    }
 }
 
 static void
@@ -229,8 +232,9 @@ play(BrkAnimation *self) {
         gdk_frame_clock_get_frame_time(gtk_widget_get_frame_clock(priv->widget)) / 1000;
     priv->start_time -= priv->paused_time;
 
-    if (priv->tick_cb_id)
+    if (priv->tick_cb_id) {
         return;
+    }
 
     priv->unmap_cb_id =
         g_signal_connect_swapped(priv->widget, "unmap", G_CALLBACK(brk_animation_skip), self);
@@ -256,8 +260,9 @@ brk_animation_dispose(GObject *object) {
     BrkAnimation *self = BRK_ANIMATION(object);
     BrkAnimationPrivate *priv = brk_animation_get_instance_private(self);
 
-    if (priv->state == BRK_ANIMATION_PLAYING)
+    if (priv->state == BRK_ANIMATION_PLAYING) {
         brk_animation_skip(self);
+    }
 
     g_clear_object(&priv->target);
 
@@ -485,8 +490,9 @@ brk_animation_set_target(BrkAnimation *self, BrkAnimationTarget *target) {
 
     priv = brk_animation_get_instance_private(self);
 
-    if (target == priv->target)
+    if (target == priv->target) {
         return;
+    }
 
     g_set_object(&priv->target, target);
 
@@ -589,8 +595,9 @@ brk_animation_pause(BrkAnimation *self) {
 
     priv = brk_animation_get_instance_private(self);
 
-    if (priv->state != BRK_ANIMATION_PLAYING)
+    if (priv->state != BRK_ANIMATION_PLAYING) {
         return;
+    }
 
     g_object_freeze_notify(G_OBJECT(self));
 
@@ -656,8 +663,9 @@ brk_animation_skip(BrkAnimation *self) {
 
     priv = brk_animation_get_instance_private(self);
 
-    if (priv->state == BRK_ANIMATION_FINISHED)
+    if (priv->state == BRK_ANIMATION_FINISHED) {
         return;
+    }
 
     g_object_freeze_notify(G_OBJECT(self));
 
@@ -677,8 +685,9 @@ brk_animation_skip(BrkAnimation *self) {
 
     g_signal_emit(self, signals[SIGNAL_DONE], 0);
 
-    if (was_playing)
+    if (was_playing) {
         g_object_unref(self);
+    }
 }
 
 /**
@@ -698,8 +707,9 @@ brk_animation_reset(BrkAnimation *self) {
 
     priv = brk_animation_get_instance_private(self);
 
-    if (priv->state == BRK_ANIMATION_IDLE)
+    if (priv->state == BRK_ANIMATION_IDLE) {
         return;
+    }
 
     g_object_freeze_notify(G_OBJECT(self));
 
@@ -716,8 +726,9 @@ brk_animation_reset(BrkAnimation *self) {
 
     g_object_thaw_notify(G_OBJECT(self));
 
-    if (was_playing)
+    if (was_playing) {
         g_object_unref(self);
+    }
 }
 
 /**
@@ -768,13 +779,15 @@ brk_animation_set_follow_enable_animations_setting(BrkAnimation *self, gboolean 
 
     setting = !!setting;
 
-    if (setting == priv->follow_enable_animations_setting)
+    if (setting == priv->follow_enable_animations_setting) {
         return;
+    }
 
     priv->follow_enable_animations_setting = setting;
 
-    if (setting && !brk_get_enable_animations(priv->widget) && priv->state != BRK_ANIMATION_IDLE)
+    if (setting && !brk_get_enable_animations(priv->widget) && priv->state != BRK_ANIMATION_IDLE) {
         brk_animation_skip(g_object_ref(self));
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_FOLLOW_ENABLE_ANIMATIONS_SETTING]);
 }

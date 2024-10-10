@@ -253,25 +253,29 @@ update_collapse_style(GtkWidget *box) {
 
     for (child = gtk_widget_get_first_child(box); child;
          child = gtk_widget_get_next_sibling(child)) {
-        if (gtk_widget_get_visible(child))
+        if (gtk_widget_get_visible(child)) {
             n_visible++;
+        }
 
-        if (n_visible > 1)
+        if (n_visible > 1) {
             break;
+        }
     }
 
-    if (n_visible > 1)
+    if (n_visible > 1) {
         gtk_widget_add_css_class(box, "collapse-spacing");
-    else
+    } else {
         gtk_widget_remove_css_class(box, "collapse-spacing");
+    }
 }
 
 static GtkSizeRequestMode
 brk_toolbar_view_get_request_mode(GtkWidget *widget) {
     BrkToolbarView *self = BRK_TOOLBAR_VIEW(widget);
 
-    if (self->content)
+    if (self->content) {
         return gtk_widget_get_request_mode(self->content);
+    }
 
     return GTK_SIZE_REQUEST_CONSTANT_SIZE;
 }
@@ -289,16 +293,19 @@ brk_toolbar_view_measure(
 
     gtk_widget_measure(self->bottom_bar, orientation, -1, &bottom_min, &bottom_nat, NULL, NULL);
 
-    if (self->content)
+    if (self->content) {
         gtk_widget_measure(
             self->content, orientation, for_size, &content_min, &content_nat, NULL, NULL
         );
+    }
 
     if (orientation == GTK_ORIENTATION_HORIZONTAL) {
-        if (minimum)
+        if (minimum) {
             *minimum = MAX(content_min, MAX(top_min, bottom_min));
-        if (natural)
+        }
+        if (natural) {
             *natural = MAX(content_nat, MAX(top_nat, bottom_nat));
+        }
     } else {
         int min = content_min;
         int nat = content_nat;
@@ -317,16 +324,20 @@ brk_toolbar_view_measure(
             nat += top_nat + bottom_nat;
         }
 
-        if (minimum)
+        if (minimum) {
             *minimum = min;
-        if (natural)
+        }
+        if (natural) {
             *natural = nat;
+        }
     }
 
-    if (minimum_baseline)
+    if (minimum_baseline) {
         *minimum_baseline = -1;
-    if (natural_baseline)
+    }
+    if (natural_baseline) {
         *natural_baseline = -1;
+    }
 }
 
 static void
@@ -341,16 +352,19 @@ brk_toolbar_view_size_allocate(GtkWidget *widget, int width, int height, int bas
         self->bottom_bar, GTK_ORIENTATION_VERTICAL, -1, &bottom_min, &bottom_nat, NULL, NULL
     );
 
-    if (self->content)
+    if (self->content) {
         gtk_widget_measure(
             self->content, GTK_ORIENTATION_VERTICAL, -1, &content_min, NULL, NULL, NULL
         );
+    }
 
-    if (self->extend_content_to_top_edge)
+    if (self->extend_content_to_top_edge) {
         content_min -= top_min;
+    }
 
-    if (self->extend_content_to_bottom_edge)
+    if (self->extend_content_to_bottom_edge) {
         content_min -= bottom_min;
+    }
 
     content_min = MAX(content_min, 0);
 
@@ -365,8 +379,9 @@ brk_toolbar_view_size_allocate(GtkWidget *widget, int width, int height, int bas
         content_offset = top_height;
     }
 
-    if (!self->extend_content_to_bottom_edge)
+    if (!self->extend_content_to_bottom_edge) {
         content_height -= bottom_height;
+    }
 
     if (self->top_bar_height != top_height) {
         self->top_bar_height = top_height;
@@ -384,11 +399,12 @@ brk_toolbar_view_size_allocate(GtkWidget *widget, int width, int height, int bas
         gsk_transform_translate(NULL, &GRAPHENE_POINT_INIT(0, height - bottom_height))
     );
 
-    if (self->content)
+    if (self->content) {
         gtk_widget_allocate(
             self->content, width, content_height, -1,
             gsk_transform_translate(NULL, &GRAPHENE_POINT_INIT(0, content_offset))
         );
+    }
 
     update_undershoots(self);
 }
@@ -734,14 +750,15 @@ brk_toolbar_view_buildable_add_child(
 ) {
     BrkToolbarView *self = BRK_TOOLBAR_VIEW(buildable);
 
-    if (g_strcmp0(type, "top") == 0)
+    if (g_strcmp0(type, "top") == 0) {
         brk_toolbar_view_add_top_bar(self, GTK_WIDGET(child));
-    else if (g_strcmp0(type, "bottom") == 0)
+    } else if (g_strcmp0(type, "bottom") == 0) {
         brk_toolbar_view_add_bottom_bar(self, GTK_WIDGET(child));
-    else if (!type && GTK_IS_WIDGET(child))
+    } else if (!type && GTK_IS_WIDGET(child)) {
         brk_toolbar_view_set_content(self, GTK_WIDGET(child));
-    else
+    } else {
         parent_buildable_iface->add_child(buildable, builder, child, type);
+    }
 }
 
 static void
@@ -796,19 +813,23 @@ brk_toolbar_view_set_content(BrkToolbarView *self, GtkWidget *content) {
     g_return_if_fail(BRK_IS_TOOLBAR_VIEW(self));
     g_return_if_fail(content == NULL || GTK_IS_WIDGET(content));
 
-    if (content)
+    if (content) {
         g_return_if_fail(gtk_widget_get_parent(content) == NULL);
+    }
 
-    if (content == self->content)
+    if (content == self->content) {
         return;
+    }
 
-    if (self->content)
+    if (self->content) {
         gtk_widget_unparent(self->content);
+    }
 
     self->content = content;
 
-    if (self->content)
+    if (self->content) {
         gtk_widget_insert_before(self->content, GTK_WIDGET(self), self->top_bar);
+    }
 
     g_object_notify_by_pspec(G_OBJECT(self), props[PROP_CONTENT]);
 }
@@ -950,8 +971,9 @@ brk_toolbar_view_set_top_bar_style(BrkToolbarView *self, BrkToolbarStyle style) 
     g_return_if_fail(BRK_IS_TOOLBAR_VIEW(self));
     g_return_if_fail(style <= BRK_TOOLBAR_RAISED_BORDER);
 
-    if (self->top_bar_style == style)
+    if (self->top_bar_style == style) {
         return;
+    }
 
     self->top_bar_style = style;
 
@@ -1034,8 +1056,9 @@ brk_toolbar_view_set_bottom_bar_style(BrkToolbarView *self, BrkToolbarStyle styl
     g_return_if_fail(BRK_IS_TOOLBAR_VIEW(self));
     g_return_if_fail(style <= BRK_TOOLBAR_RAISED_BORDER);
 
-    if (self->bottom_bar_style == style)
+    if (self->bottom_bar_style == style) {
         return;
+    }
 
     self->bottom_bar_style = style;
 
@@ -1103,8 +1126,9 @@ brk_toolbar_view_set_reveal_top_bars(BrkToolbarView *self, gboolean reveal) {
 
     reveal = !!reveal;
 
-    if (reveal == brk_toolbar_view_get_reveal_top_bars(self))
+    if (reveal == brk_toolbar_view_get_reveal_top_bars(self)) {
         return;
+    }
 
     gtk_revealer_set_reveal_child(GTK_REVEALER(self->top_bar), reveal);
 
@@ -1151,8 +1175,9 @@ brk_toolbar_view_set_reveal_bottom_bars(BrkToolbarView *self, gboolean reveal) {
 
     reveal = !!reveal;
 
-    if (reveal == brk_toolbar_view_get_reveal_bottom_bars(self))
+    if (reveal == brk_toolbar_view_get_reveal_bottom_bars(self)) {
         return;
+    }
 
     gtk_revealer_set_reveal_child(GTK_REVEALER(self->bottom_bar), reveal);
 
@@ -1196,8 +1221,9 @@ brk_toolbar_view_set_extend_content_to_top_edge(BrkToolbarView *self, gboolean e
 
     extend = !!extend;
 
-    if (extend == self->extend_content_to_top_edge)
+    if (extend == self->extend_content_to_top_edge) {
         return;
+    }
 
     self->extend_content_to_top_edge = extend;
 
@@ -1246,8 +1272,9 @@ brk_toolbar_view_set_extend_content_to_bottom_edge(BrkToolbarView *self, gboolea
 
     extend = !!extend;
 
-    if (extend == self->extend_content_to_bottom_edge)
+    if (extend == self->extend_content_to_bottom_edge) {
         return;
+    }
 
     self->extend_content_to_bottom_edge = extend;
 

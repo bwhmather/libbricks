@@ -217,8 +217,9 @@ remove_and_free_tab_info(TabInfo *info) {
 
 static inline int
 get_tab_position(BrkTabBox *self, TabInfo *info, gboolean final) {
-    if (info == self->reordered_tab)
+    if (info == self->reordered_tab) {
         return self->reorder_window_x;
+    }
 
     return final ? info->final_pos : info->pos;
 }
@@ -231,8 +232,9 @@ find_tab_info_at(BrkTabBox *self, double x) {
         int pos = get_tab_position(self, self->reordered_tab, FALSE);
 
         if ((G_APPROX_VALUE(pos, x, DBL_EPSILON) || pos < x) &&
-            x < pos + self->reordered_tab->width)
+            x < pos + self->reordered_tab->width) {
             return self->reordered_tab;
+        }
     }
 
     for (l = self->tabs; l; l = l->next) {
@@ -240,8 +242,9 @@ find_tab_info_at(BrkTabBox *self, double x) {
 
         if (info != self->reordered_tab &&
             (G_APPROX_VALUE(info->pos, x, DBL_EPSILON) || info->pos < x) &&
-            x < info->pos + info->width)
+            x < info->pos + info->width) {
             return info;
+        }
     }
 
     return NULL;
@@ -254,8 +257,9 @@ find_link_for_page(BrkTabBox *self, BrkTabPage *page) {
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
 
-        if (info->page == page)
+        if (info->page == page) {
             return l;
+        }
     }
 
     return NULL;
@@ -275,11 +279,13 @@ find_nth_alive_tab(BrkTabBox *self, guint position) {
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
 
-        if (!info->page)
+        if (!info->page) {
             continue;
+        }
 
-        if (!position--)
+        if (!position--) {
             return l;
+        }
     }
 
     return NULL;
@@ -303,8 +309,9 @@ get_base_tab_width(BrkTabBox *self, gboolean target_end_padding, gboolean target
         max_progress = 1;
         n = self->n_tabs;
 
-        if (!target_end_padding)
+        if (!target_end_padding) {
             end_padding = self->final_end_padding;
+        }
     } else {
         for (l = self->tabs; l; l = l->next) {
             TabInfo *info = l->data;
@@ -313,16 +320,18 @@ get_base_tab_width(BrkTabBox *self, gboolean target_end_padding, gboolean target
             n += info->appear_progress;
         }
 
-        if (!target_end_padding)
+        if (!target_end_padding) {
             end_padding = self->end_padding;
+        }
     }
 
     used_width = (self->allocated_width - (n + 1) * SPACING - end_padding) * max_progress;
 
     ret = (int) ceil(used_width / n);
 
-    if (!self->expand_tabs)
+    if (!self->expand_tabs) {
         ret = MIN(ret, MAX_TAB_WIDTH_NON_EXPAND - SPACING);
+    }
 
     return ret;
 }
@@ -335,8 +344,9 @@ predict_tab_width(BrkTabBox *self, TabInfo *info, gboolean assume_placeholder) {
 
     n = brk_tab_view_get_n_pages(self->view);
 
-    if (assume_placeholder)
+    if (assume_placeholder) {
         n++;
+    }
 
     width -= SPACING * (n + 1) + self->end_padding;
 
@@ -345,23 +355,26 @@ predict_tab_width(BrkTabBox *self, TabInfo *info, gboolean assume_placeholder) {
         GTK_WIDGET(info->container), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &min, NULL, NULL
     );
 
-    if (self->expand_tabs)
+    if (self->expand_tabs) {
         return MAX((int) floor(width / (double) n), min);
-    else
+    } else {
         return CLAMP((int) floor(width / (double) n), min, MAX_TAB_WIDTH_NON_EXPAND);
+    }
 }
 
 static int
 calculate_tab_offset(BrkTabBox *self, TabInfo *info, gboolean target) {
     int width;
 
-    if (!self->reordered_tab)
+    if (!self->reordered_tab) {
         return 0;
+    }
 
     width = (target ? self->reordered_tab->final_width : self->reordered_tab->width) + SPACING;
 
-    if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
+    if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
         width = -width;
+    }
 
     return (int) round(width * (target ? info->end_reorder_offset : info->reorder_offset));
 }
@@ -379,11 +392,13 @@ get_visible_range(BrkTabBox *self, int *lower, int *upper) {
         max = MIN(max, (int) ceil(value + page_size) - SPACING);
     }
 
-    if (lower)
+    if (lower) {
         *lower = min;
+    }
 
-    if (upper)
+    if (upper) {
         *upper = max;
+    }
 }
 
 static inline gboolean
@@ -407,41 +422,49 @@ update_separators(BrkTabBox *self) {
         TabInfo *visually_prev = NULL;
         GtkStateFlags flags;
 
-        if (l->prev)
+        if (l->prev) {
             prev = l->prev->data;
+        }
 
-        if (l->prev && l->prev->prev)
+        if (l->prev && l->prev->prev) {
             prev_prev = l->prev->prev->data;
+        }
 
         if (prev && prev_prev) {
             /* Since the reordered tab has been moved away, the 2 tabs around it are
        * now adjacent. Treat them as such for the separator purposes. */
-            if (prev == self->reordered_tab && prev_prev->end_reorder_offset > 0)
+            if (prev == self->reordered_tab && prev_prev->end_reorder_offset > 0) {
                 visually_prev = prev_prev;
+            }
 
-            if (prev == self->reordered_tab && info->end_reorder_offset < 0)
+            if (prev == self->reordered_tab && info->end_reorder_offset < 0) {
                 visually_prev = prev_prev;
+            }
         }
 
         if (prev && self->reordered_tab) {
             /* There's a gap between the current and the previous tab. This means the
        * reordered tab is between them, so treat is as the previous tab. */
-            if (info->end_reorder_offset - prev->end_reorder_offset > 0)
+            if (info->end_reorder_offset - prev->end_reorder_offset > 0) {
                 visually_prev = self->reordered_tab;
+            }
         }
 
-        if (!visually_prev)
+        if (!visually_prev) {
             visually_prev = prev;
+        }
 
         flags = gtk_widget_get_state_flags(GTK_WIDGET(info->tab));
 
-        if (visually_prev)
+        if (visually_prev) {
             flags |= gtk_widget_get_state_flags(GTK_WIDGET(visually_prev->tab));
+        }
 
-        if ((flags & mask) || !visually_prev)
+        if ((flags & mask) || !visually_prev) {
             gtk_widget_add_css_class(info->separator, "hidden");
-        else
+        } else {
             gtk_widget_remove_css_class(info->separator, "hidden");
+        }
     }
 }
 
@@ -450,10 +473,11 @@ update_separators(BrkTabBox *self) {
 static void
 update_single_tab_style(BrkTabBox *self) {
     if (self->view && brk_tab_view_get_n_pages(self->view) <= 1 && self->expand_tabs &&
-        self->tab_resize_mode == TAB_RESIZE_NORMAL)
+        self->tab_resize_mode == TAB_RESIZE_NORMAL) {
         gtk_widget_add_css_class(GTK_WIDGET(self), "single-tab");
-    else
+    } else {
         gtk_widget_remove_css_class(GTK_WIDGET(self), "single-tab");
+    }
 }
 
 /* Tab resize delay */
@@ -493,8 +517,9 @@ static void
 set_tab_resize_mode(BrkTabBox *self, TabResizeMode mode) {
     gboolean notify;
 
-    if (self->tab_resize_mode == mode)
+    if (self->tab_resize_mode == mode) {
         return;
+    }
 
     if (mode == TAB_RESIZE_FIXED_TAB_WIDTH) {
         GList *l;
@@ -504,10 +529,11 @@ set_tab_resize_mode(BrkTabBox *self, TabResizeMode mode) {
         for (l = self->tabs; l; l = l->next) {
             TabInfo *info = l->data;
 
-            if (info->appear_animation)
+            if (info->appear_animation) {
                 info->last_width = info->final_width;
-            else
+            } else {
                 info->last_width = info->width;
+            }
         }
     } else {
         self->last_width = 0;
@@ -525,16 +551,18 @@ set_tab_resize_mode(BrkTabBox *self, TabResizeMode mode) {
 
     update_single_tab_style(self);
 
-    if (notify)
+    if (notify) {
         g_object_notify_by_pspec(G_OBJECT(self), props[PROP_RESIZE_FROZEN]);
+    }
 }
 
 /* Hover */
 
 static void
 update_hover(BrkTabBox *self) {
-    if (!self->dragging && !self->hovering)
+    if (!self->dragging && !self->hovering) {
         set_tab_resize_mode(self, TAB_RESIZE_NORMAL);
+    }
 }
 
 static void
@@ -542,11 +570,13 @@ motion_cb(BrkTabBox *self, double x, double y, GtkEventController *controller) {
     GdkDevice *device = gtk_event_controller_get_current_event_device(controller);
     GdkInputSource input_source = gdk_device_get_source(device);
 
-    if (input_source == GDK_SOURCE_TOUCHSCREEN)
+    if (input_source == GDK_SOURCE_TOUCHSCREEN) {
         return;
+    }
 
-    if (self->hovering)
+    if (self->hovering) {
         return;
+    }
 
     self->hovering = TRUE;
 
@@ -567,33 +597,38 @@ focus_tab_cb(BrkTabBox *self, GVariant *args) {
     GtkDirectionType direction;
     gboolean last, is_rtl, success;
 
-    if (!self->view || !self->selected_tab)
+    if (!self->view || !self->selected_tab) {
         return;
+    }
 
     g_variant_get(args, "(hb)", &direction, &last);
 
     is_rtl = gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL;
     success = last;
 
-    if (direction == GTK_DIR_LEFT)
+    if (direction == GTK_DIR_LEFT) {
         direction = is_rtl ? GTK_DIR_TAB_FORWARD : GTK_DIR_TAB_BACKWARD;
-    else if (direction == GTK_DIR_RIGHT)
+    } else if (direction == GTK_DIR_RIGHT) {
         direction = is_rtl ? GTK_DIR_TAB_BACKWARD : GTK_DIR_TAB_FORWARD;
-
-    if (direction == GTK_DIR_TAB_BACKWARD) {
-        if (last)
-            success = brk_tab_view_select_first_page(self->view);
-        else
-            success = brk_tab_view_select_previous_page(self->view);
-    } else if (direction == GTK_DIR_TAB_FORWARD) {
-        if (last)
-            success = brk_tab_view_select_last_page(self->view);
-        else
-            success = brk_tab_view_select_next_page(self->view);
     }
 
-    if (!success)
+    if (direction == GTK_DIR_TAB_BACKWARD) {
+        if (last) {
+            success = brk_tab_view_select_first_page(self->view);
+        } else {
+            success = brk_tab_view_select_previous_page(self->view);
+        }
+    } else if (direction == GTK_DIR_TAB_FORWARD) {
+        if (last) {
+            success = brk_tab_view_select_last_page(self->view);
+        } else {
+            success = brk_tab_view_select_next_page(self->view);
+        }
+    }
+
+    if (!success) {
         gtk_widget_error_bell(GTK_WIDGET(self));
+    }
 }
 
 static void
@@ -601,33 +636,38 @@ reorder_tab_cb(BrkTabBox *self, GVariant *args) {
     GtkDirectionType direction;
     gboolean last, is_rtl, success;
 
-    if (!self->view || !self->selected_tab || !self->selected_tab->page)
+    if (!self->view || !self->selected_tab || !self->selected_tab->page) {
         return;
+    }
 
     g_variant_get(args, "(hb)", &direction, &last);
 
     is_rtl = gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL;
     success = last;
 
-    if (direction == GTK_DIR_LEFT)
+    if (direction == GTK_DIR_LEFT) {
         direction = is_rtl ? GTK_DIR_TAB_FORWARD : GTK_DIR_TAB_BACKWARD;
-    else if (direction == GTK_DIR_RIGHT)
+    } else if (direction == GTK_DIR_RIGHT) {
         direction = is_rtl ? GTK_DIR_TAB_BACKWARD : GTK_DIR_TAB_FORWARD;
-
-    if (direction == GTK_DIR_TAB_BACKWARD) {
-        if (last)
-            success = brk_tab_view_reorder_first(self->view, self->selected_tab->page);
-        else
-            success = brk_tab_view_reorder_backward(self->view, self->selected_tab->page);
-    } else if (direction == GTK_DIR_TAB_FORWARD) {
-        if (last)
-            success = brk_tab_view_reorder_last(self->view, self->selected_tab->page);
-        else
-            success = brk_tab_view_reorder_forward(self->view, self->selected_tab->page);
     }
 
-    if (!success)
+    if (direction == GTK_DIR_TAB_BACKWARD) {
+        if (last) {
+            success = brk_tab_view_reorder_first(self->view, self->selected_tab->page);
+        } else {
+            success = brk_tab_view_reorder_backward(self->view, self->selected_tab->page);
+        }
+    } else if (direction == GTK_DIR_TAB_FORWARD) {
+        if (last) {
+            success = brk_tab_view_reorder_last(self->view, self->selected_tab->page);
+        } else {
+            success = brk_tab_view_reorder_forward(self->view, self->selected_tab->page);
+        }
+    }
+
+    if (!success) {
         gtk_widget_error_bell(GTK_WIDGET(self));
+    }
 }
 
 static void
@@ -666,8 +706,9 @@ static void
 activate_tab(BrkTabBox *self) {
     GtkWidget *child;
 
-    if (!self->selected_tab || !self->selected_tab->page)
+    if (!self->selected_tab || !self->selected_tab->page) {
         return;
+    }
 
     child = brk_tab_page_get_child(self->selected_tab->page);
 
@@ -682,21 +723,24 @@ update_visible(BrkTabBox *self) {
     GList *l;
     double value, page_size;
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return;
+    }
 
     value = gtk_adjustment_get_value(self->adjustment);
     page_size = gtk_adjustment_get_page_size(self->adjustment);
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return;
+    }
 
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
         int pos;
 
-        if (!info->page)
+        if (!info->page) {
             continue;
+        }
 
         pos = get_tab_position(self, info, FALSE);
 
@@ -707,15 +751,18 @@ update_visible(BrkTabBox *self) {
                  pos + info->width + SPACING < value + page_size)
         );
 
-        if (!brk_tab_page_get_needs_attention(info->page))
+        if (!brk_tab_page_get_needs_attention(info->page)) {
             continue;
+        }
 
-        if (pos + info->width / 2.0 <= value)
+        if (pos + info->width / 2.0 <= value) {
             left = TRUE;
+        }
 
         if (G_APPROX_VALUE(pos + info->width / 2.0, value + page_size, DBL_EPSILON) ||
-            pos + info->width / 2.0 > value + page_size)
+            pos + info->width / 2.0 > value + page_size) {
             right = TRUE;
+        }
     }
 
     gtk_revealer_set_reveal_child(GTK_REVEALER(self->needs_attention_left), left);
@@ -729,8 +776,9 @@ get_scroll_animation_value(BrkTabBox *self) {
     g_assert(self->scroll_animation);
 
     if (brk_animation_get_state(self->scroll_animation) != BRK_ANIMATION_PLAYING &&
-        brk_animation_get_state(self->scroll_animation) != BRK_ANIMATION_FINISHED)
+        brk_animation_get_state(self->scroll_animation) != BRK_ANIMATION_FINISHED) {
         return gtk_adjustment_get_value(self->adjustment);
+    }
 
     to = self->scroll_animation_offset;
 
@@ -754,11 +802,13 @@ drop_switch_timeout_cb(BrkTabBox *self) {
 
 static void
 set_drop_target_tab(BrkTabBox *self, TabInfo *info) {
-    if (self->drop_target_tab == info)
+    if (self->drop_target_tab == info) {
         return;
+    }
 
-    if (self->drop_target_tab)
+    if (self->drop_target_tab) {
         g_clear_handle_id(&self->drop_switch_timeout_id, g_source_remove);
+    }
 
     self->drop_target_tab = info;
 
@@ -781,8 +831,9 @@ adjustment_value_changed_cb(BrkTabBox *self) {
 
     self->adjustment_prev_value = value;
 
-    if (self->block_scrolling)
+    if (self->block_scrolling) {
         return;
+    }
 
     brk_animation_pause(self->scroll_animation);
 
@@ -791,8 +842,9 @@ adjustment_value_changed_cb(BrkTabBox *self) {
 
 static void
 animate_scroll(BrkTabBox *self, TabInfo *info, double offset, guint duration) {
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return;
+    }
 
     g_signal_emit(self, signals[SIGNAL_STOP_KINETIC_SCROLLING], 0);
 
@@ -812,8 +864,9 @@ animate_scroll_relative(BrkTabBox *self, double delta, guint duration) {
     if (brk_animation_get_state(self->scroll_animation) == BRK_ANIMATION_PLAYING) {
         current_value = self->scroll_animation_offset;
 
-        if (self->scroll_animation_tab)
+        if (self->scroll_animation_tab) {
             current_value += get_tab_position(self, self->scroll_animation_tab, TRUE);
+        }
     }
 
     animate_scroll(self, NULL, current_value + delta, duration);
@@ -826,26 +879,30 @@ scroll_to_tab_full(
     int tab_width;
     double padding, value, page_size;
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return FALSE;
+    }
 
     tab_width = info->width;
 
-    if (info->appear_animation)
+    if (info->appear_animation) {
         tab_width = info->final_width;
+    }
 
     value = gtk_adjustment_get_value(self->adjustment);
     page_size = gtk_adjustment_get_page_size(self->adjustment);
 
     padding = MIN(tab_width, page_size - tab_width) / 2.0;
 
-    if (pos < 0)
+    if (pos < 0) {
         pos = get_tab_position(self, info, TRUE);
+    }
 
-    if (pos - SPACING < value)
+    if (pos - SPACING < value) {
         animate_scroll(self, info, -padding, duration);
-    else if (pos + tab_width + SPACING > value + page_size)
+    } else if (pos + tab_width + SPACING > value + page_size) {
         animate_scroll(self, info, tab_width + padding - page_size, duration);
+    }
 
     return TRUE;
 }
@@ -861,14 +918,16 @@ scroll_cb(BrkTabBox *self, double dx, double dy, GtkEventController *controller)
     GdkDevice *source_device;
     GdkInputSource input_source;
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     source_device = gtk_event_controller_get_current_event_device(controller);
     input_source = gdk_device_get_source(source_device);
 
-    if (input_source != GDK_SOURCE_MOUSE)
+    if (input_source != GDK_SOURCE_MOUSE) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     page_size = gtk_adjustment_get_page_size(self->adjustment);
 
@@ -876,8 +935,9 @@ scroll_cb(BrkTabBox *self, double dx, double dy, GtkEventController *controller)
     pow_unit = pow(page_size, 2.0 / 3.0);
     scroll_unit = MIN(pow_unit, page_size / 2.0);
 
-    if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
+    if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
         dy = -dy;
+    }
 
     animate_scroll_relative(self, dy * scroll_unit, SCROLL_ANIMATION_DURATION);
 
@@ -897,8 +957,9 @@ scroll_animation_done_cb(BrkTabBox *self) {
 
 static void
 set_hadjustment(BrkTabBox *self, GtkAdjustment *adjustment) {
-    if (adjustment == self->adjustment)
+    if (adjustment == self->adjustment) {
         return;
+    }
 
     if (self->adjustment) {
         g_signal_handlers_disconnect_by_func(self->adjustment, adjustment_value_changed_cb, self);
@@ -927,17 +988,20 @@ static void
 force_end_reordering(BrkTabBox *self) {
     GList *l;
 
-    if (self->dragging || !self->reordered_tab)
+    if (self->dragging || !self->reordered_tab) {
         return;
+    }
 
-    if (self->reorder_animation)
+    if (self->reorder_animation) {
         brk_animation_skip(self->reorder_animation);
+    }
 
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
 
-        if (info->reorder_animation)
+        if (info->reorder_animation) {
             brk_animation_skip(info->reorder_animation);
+        }
     }
 }
 
@@ -945,17 +1009,20 @@ static void
 check_end_reordering(BrkTabBox *self) {
     GList *l;
 
-    if (self->dragging || !self->reordered_tab || self->continue_reorder)
+    if (self->dragging || !self->reordered_tab || self->continue_reorder) {
         return;
+    }
 
-    if (self->reorder_animation)
+    if (self->reorder_animation) {
         return;
+    }
 
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
 
-        if (info->reorder_animation)
+        if (info->reorder_animation) {
             return;
+        }
     }
 
     for (l = self->tabs; l; l = l->next) {
@@ -996,8 +1063,9 @@ static int
 get_reorder_position(BrkTabBox *self) {
     int lower, upper;
 
-    if (self->reordered_tab->reorder_ignore_bounds)
+    if (self->reordered_tab->reorder_ignore_bounds) {
         return self->reorder_x;
+    }
 
     get_visible_range(self, &lower, &upper);
 
@@ -1013,8 +1081,9 @@ reorder_animation_value_cb(double value, TabInfo *dest_tab) {
     x1 = get_reorder_position(self);
     x2 = dest_tab->pos - calculate_tab_offset(self, dest_tab, FALSE);
 
-    if (dest_tab->end_reorder_offset * (is_rtl ? 1 : -1) > 0)
+    if (dest_tab->end_reorder_offset * (is_rtl ? 1 : -1) > 0) {
         x2 += dest_tab->width - self->reordered_tab->width;
+    }
 
     self->reorder_window_x = (int) round(brk_lerp(x1, x2, value));
 
@@ -1031,8 +1100,9 @@ static void
 animate_reordering(BrkTabBox *self, TabInfo *dest_tab) {
     BrkAnimationTarget *target;
 
-    if (self->reorder_animation)
+    if (self->reorder_animation) {
         brk_animation_skip(self->reorder_animation);
+    }
 
     target = brk_callback_animation_target_new(
         (BrkAnimationTargetFunc) reorder_animation_value_cb, dest_tab, NULL
@@ -1073,14 +1143,16 @@ animate_reorder_offset(BrkTabBox *self, TabInfo *info, double offset) {
 
     offset *= (is_rtl ? -1 : 1);
 
-    if (G_APPROX_VALUE(info->end_reorder_offset, offset, DBL_EPSILON))
+    if (G_APPROX_VALUE(info->end_reorder_offset, offset, DBL_EPSILON)) {
         return;
+    }
 
     info->end_reorder_offset = offset;
     start_offset = info->reorder_offset;
 
-    if (info->reorder_animation)
+    if (info->reorder_animation) {
         brk_animation_skip(info->reorder_animation);
+    }
 
     target = brk_callback_animation_target_new(
         (BrkAnimationTargetFunc) reorder_offset_animation_value_cb, info, NULL
@@ -1101,23 +1173,26 @@ reset_reorder_animations(BrkTabBox *self) {
     int i, original_index;
     GList *l;
 
-    if (!brk_get_enable_animations(GTK_WIDGET(self)))
+    if (!brk_get_enable_animations(GTK_WIDGET(self))) {
         return;
+    }
 
     l = find_link_for_page(self, self->reordered_tab->page);
     original_index = g_list_position(self->tabs, l);
 
-    if (self->reorder_index > original_index)
+    if (self->reorder_index > original_index) {
         for (i = 0; i < self->reorder_index - original_index; i++) {
             l = l->next;
             animate_reorder_offset(self, l->data, 0);
         }
+    }
 
-    if (self->reorder_index < original_index)
+    if (self->reorder_index < original_index) {
         for (i = 0; i < original_index - self->reorder_index; i++) {
             l = l->prev;
             animate_reorder_offset(self, l->data, 0);
         }
+    }
 
     update_separators(self);
 }
@@ -1131,31 +1206,35 @@ page_reordered_cb(BrkTabBox *self, BrkTabPage *page, int index) {
 
     self->continue_reorder = self->reordered_tab && page == self->reordered_tab->page;
 
-    if (self->continue_reorder)
+    if (self->continue_reorder) {
         reset_reorder_animations(self);
-    else
+    } else {
         force_end_reordering(self);
+    }
 
     link = find_link_for_page(self, page);
     info = link->data;
     original_index = g_list_position(self->tabs, link);
 
-    if (!self->continue_reorder)
+    if (!self->continue_reorder) {
         start_reordering(self, info);
+    }
 
-    if (self->continue_reorder)
+    if (self->continue_reorder) {
         self->reorder_x = self->reorder_window_x;
-    else
+    } else {
         self->reorder_x = info->pos;
+    }
 
     self->reorder_index = index;
 
     dest_tab = g_list_nth_data(self->tabs, self->reorder_index);
 
-    if (info == self->selected_tab)
+    if (info == self->selected_tab) {
         scroll_to_tab_full(
             self, self->selected_tab, dest_tab->final_pos, REORDER_ANIMATION_DURATION, FALSE
         );
+    }
 
     animate_reordering(self, dest_tab);
 
@@ -1169,17 +1248,19 @@ page_reordered_cb(BrkTabBox *self, BrkTabPage *page, int index) {
     if (brk_get_enable_animations(GTK_WIDGET(self)) && gtk_widget_get_mapped(GTK_WIDGET(self))) {
         int i;
 
-        if (self->reorder_index > original_index)
+        if (self->reorder_index > original_index) {
             for (i = 0; i < self->reorder_index - original_index; i++) {
                 link = link->next;
                 animate_reorder_offset(self, link->data, is_rtl ? 1 : -1);
             }
+        }
 
-        if (self->reorder_index < original_index)
+        if (self->reorder_index < original_index) {
             for (i = 0; i < original_index - self->reorder_index; i++) {
                 link = link->prev;
                 animate_reorder_offset(self, link->data, is_rtl ? -1 : 1);
             }
+        }
     }
 
     self->continue_reorder = FALSE;
@@ -1196,8 +1277,9 @@ update_drag_reodering(BrkTabBox *self) {
     int width;
     GList *l;
 
-    if (!self->dragging)
+    if (!self->dragging) {
         return;
+    }
 
     x = get_reorder_position(self);
 
@@ -1213,25 +1295,30 @@ update_drag_reodering(BrkTabBox *self) {
         TabInfo *info = l->data;
         int center;
 
-        if (is_rtl)
+        if (is_rtl) {
             center = info->unshifted_pos - info->final_width / 2;
-        else
+        } else {
             center = info->unshifted_pos + info->final_width / 2;
+        }
 
-        if (info == self->reordered_tab)
+        if (info == self->reordered_tab) {
             old_index = i;
+        }
 
-        if (x + width + SPACING > center && center > x - SPACING && new_index < 0)
+        if (x + width + SPACING > center && center > x - SPACING && new_index < 0) {
             new_index = i;
+        }
 
-        if (old_index >= 0 && new_index >= 0)
+        if (old_index >= 0 && new_index >= 0) {
             break;
+        }
 
         i++;
     }
 
-    if (new_index < 0)
+    if (new_index < 0) {
         new_index = g_list_length(self->tabs) - 1;
+    }
 
     i = 0;
 
@@ -1239,11 +1326,13 @@ update_drag_reodering(BrkTabBox *self) {
         TabInfo *info = l->data;
         double offset = 0;
 
-        if (i > old_index && i <= new_index)
+        if (i > old_index && i <= new_index) {
             offset = is_rtl ? 1 : -1;
+        }
 
-        if (i < old_index && i >= new_index)
+        if (i < old_index && i >= new_index) {
             offset = is_rtl ? -1 : 1;
+        }
 
         i++;
 
@@ -1293,22 +1382,25 @@ drag_autoscroll_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkTabBox *sel
     end_threshold = value + page_size - tab_width - autoscroll_area;
     autoscroll_factor = 0;
 
-    if (x < start_threshold)
+    if (x < start_threshold) {
         autoscroll_factor = -(start_threshold - x) / autoscroll_area;
-    else if (x > end_threshold)
+    } else if (x > end_threshold) {
         autoscroll_factor = (x - end_threshold) / autoscroll_area;
+    }
 
     autoscroll_factor = CLAMP(autoscroll_factor, -1, 1);
     autoscroll_factor = brk_easing_ease(BRK_EASE_IN_CUBIC, autoscroll_factor);
     self->drag_autoscroll_prev_time = time;
 
-    if (G_APPROX_VALUE(autoscroll_factor, 0, DBL_EPSILON))
+    if (G_APPROX_VALUE(autoscroll_factor, 0, DBL_EPSILON)) {
         return G_SOURCE_CONTINUE;
+    }
 
-    if (autoscroll_factor > 0)
+    if (autoscroll_factor > 0) {
         offset = (int) ceil(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
-    else
+    } else {
         offset = (int) floor(autoscroll_factor * delta_ms * AUTOSCROLL_SPEED);
+    }
 
     self->reorder_x += offset;
     gtk_adjustment_set_value(self->adjustment, value + offset);
@@ -1321,11 +1413,13 @@ static void
 start_autoscroll(BrkTabBox *self) {
     GdkFrameClock *frame_clock;
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return;
+    }
 
-    if (self->drag_autoscroll_cb_id)
+    if (self->drag_autoscroll_cb_id) {
         return;
+    }
 
     frame_clock = gtk_widget_get_frame_clock(GTK_WIDGET(self));
 
@@ -1345,38 +1439,44 @@ end_autoscroll(BrkTabBox *self) {
 
 static void
 start_drag_reodering(BrkTabBox *self, TabInfo *info, double x, double y) {
-    if (self->dragging)
+    if (self->dragging) {
         return;
+    }
 
-    if (!info)
+    if (!info) {
         return;
+    }
 
     self->continue_reorder = info == self->reordered_tab;
 
     if (self->continue_reorder) {
-        if (self->reorder_animation)
+        if (self->reorder_animation) {
             brk_animation_skip(self->reorder_animation);
+        }
 
         reset_reorder_animations(self);
 
         self->reorder_x = (int) round(x - self->drag_offset_x);
         self->reorder_y = (int) round(y - self->drag_offset_y);
-    } else
+    } else {
         force_end_reordering(self);
+    }
 
     start_autoscroll(self);
     self->dragging = TRUE;
 
-    if (!self->continue_reorder)
+    if (!self->continue_reorder) {
         start_reordering(self, info);
+    }
 }
 
 static void
 end_drag_reodering(BrkTabBox *self) {
     TabInfo *dest_tab;
 
-    if (!self->dragging)
+    if (!self->dragging) {
         return;
+    }
 
     self->dragging = FALSE;
 
@@ -1406,8 +1506,9 @@ reorder_begin_cb(BrkTabBox *self, double start_x, double start_y, GtkGesture *ge
 
     self->pressed_tab = find_tab_info_at(self, start_x);
 
-    if (!self->pressed_tab)
+    if (!self->pressed_tab) {
         return;
+    }
 
     self->drag_offset_x = start_x - get_tab_position(self, self->pressed_tab, FALSE);
     self->drag_offset_y = start_y;
@@ -1461,8 +1562,9 @@ reorder_update_cb(BrkTabBox *self, double offset_x, double offset_y, GtkGesture 
     }
 
     if (!self->dragging &&
-        !gtk_drag_check_threshold_double(GTK_WIDGET(self), 0, 0, offset_x, offset_y))
+        !gtk_drag_check_threshold_double(GTK_WIDGET(self), 0, 0, offset_x, offset_y)) {
         return;
+    }
 
     gtk_gesture_drag_get_start_point(GTK_GESTURE_DRAG(gesture), &start_x, &start_y);
 
@@ -1522,19 +1624,22 @@ select_page(BrkTabBox *self, BrkTabPage *page) {
     self->selected_tab = find_info_for_page(self, page);
 
     if (!self->selected_tab) {
-        if (gtk_widget_get_focus_child(GTK_WIDGET(self)))
+        if (gtk_widget_get_focus_child(GTK_WIDGET(self))) {
             reset_focus(self);
+        }
 
         return;
     }
 
-    if (brk_tab_bar_tabs_have_visible_focus(self->tab_bar))
+    if (brk_tab_bar_tabs_have_visible_focus(self->tab_bar)) {
         gtk_widget_grab_focus(self->selected_tab->container);
+    }
 
     gtk_widget_set_focus_child(GTK_WIDGET(self), self->selected_tab->container);
 
-    if (self->selected_tab->width >= 0)
+    if (self->selected_tab->width >= 0) {
         scroll_to_tab(self, self->selected_tab, FOCUS_ANIMATION_DURATION);
+    }
 }
 
 /* Opening */
@@ -1563,8 +1668,9 @@ static void
 appear_animation_value_cb(double value, TabInfo *info) {
     info->appear_progress = value;
 
-    if (GTK_IS_WIDGET(info->container))
+    if (GTK_IS_WIDGET(info->container)) {
         gtk_widget_queue_resize(info->container);
+    }
 }
 
 static void
@@ -1583,8 +1689,9 @@ measure_tab(
         child, orientation, for_size, minimum, natural, minimum_baseline, natural_baseline
     );
 
-    if (orientation == GTK_ORIENTATION_HORIZONTAL && minimum)
+    if (orientation == GTK_ORIENTATION_HORIZONTAL && minimum) {
         *minimum = 0;
+    }
 }
 
 static void
@@ -1605,8 +1712,9 @@ state_flags_changed_cb(GtkWidget *tab, GtkStateFlags previous, BrkTabBox *self) 
     GtkStateFlags flags = gtk_widget_get_state_flags(tab);
     GtkStateFlags mask = GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_SELECTED;
 
-    if ((flags ^ previous) & mask)
+    if ((flags ^ previous) & mask) {
         update_separators(self);
+    }
 }
 
 static TabInfo *
@@ -1687,10 +1795,11 @@ page_attached_cb(BrkTabBox *self, BrkTabPage *page, int position) {
 
     brk_animation_play(info->appear_animation);
 
-    if (page == brk_tab_view_get_selected_page(self->view))
+    if (page == brk_tab_view_get_selected_page(self->view)) {
         brk_tab_box_select_page(self, page);
-    else
+    } else {
         scroll_to_tab_full(self, info, -1, OPEN_ANIMATION_DURATION, TRUE);
+    }
 
     update_separators(self);
 }
@@ -1705,17 +1814,21 @@ close_animation_done_cb(TabInfo *info) {
 
     self->tabs = g_list_remove(self->tabs, info);
 
-    if (info->reorder_animation)
+    if (info->reorder_animation) {
         brk_animation_skip(info->reorder_animation);
+    }
 
-    if (self->reorder_animation)
+    if (self->reorder_animation) {
         brk_animation_skip(self->reorder_animation);
+    }
 
-    if (self->pressed_tab == info)
+    if (self->pressed_tab == info) {
         self->pressed_tab = NULL;
+    }
 
-    if (self->reordered_tab == info)
+    if (self->reordered_tab == info) {
         self->reordered_tab = NULL;
+    }
 
     remove_and_free_tab_info(info);
 
@@ -1732,8 +1845,9 @@ page_detached_cb(BrkTabBox *self, BrkTabPage *page) {
 
     page_link = find_link_for_page(self, page);
 
-    if (!page_link)
+    if (!page_link) {
         return;
+    }
 
     info = page_link->data;
     page_link = page_link->next;
@@ -1753,21 +1867,24 @@ page_detached_cb(BrkTabBox *self, BrkTabPage *page) {
             }
         }
 
-        if (is_last)
+        if (is_last) {
             set_tab_resize_mode(
                 self, self->inverted ? TAB_RESIZE_NORMAL : TAB_RESIZE_FIXED_END_PADDING
             );
-        else
+        } else {
             set_tab_resize_mode(self, TAB_RESIZE_FIXED_TAB_WIDTH);
+        }
     }
 
     g_assert(info->page);
 
-    if (gtk_widget_is_focus(info->container))
+    if (gtk_widget_is_focus(info->container)) {
         brk_tab_box_try_focus_selected_tab(self);
+    }
 
-    if (info == self->selected_tab)
+    if (info == self->selected_tab) {
         brk_tab_box_select_page(self, NULL);
+    }
 
     brk_tab_set_page(info->tab, NULL);
 
@@ -1778,8 +1895,9 @@ page_detached_cb(BrkTabBox *self, BrkTabPage *page) {
 
     info->page = NULL;
 
-    if (info->appear_animation)
+    if (info->appear_animation) {
         brk_animation_skip(info->appear_animation);
+    }
 
     target = brk_callback_animation_target_new(
         (BrkAnimationTargetFunc) appear_animation_value_cb, info, NULL
@@ -1895,8 +2013,9 @@ calculate_placeholder_index(BrkTabBox *self, int x) {
 
         int end = pos + tab_width + calculate_tab_offset(self, info, FALSE);
 
-        if ((x <= end && !is_rtl) || (x >= end && is_rtl))
+        if ((x <= end && !is_rtl) || (x >= end && is_rtl)) {
             break;
+        }
 
         pos += tab_width + (is_rtl ? -SPACING : SPACING);
         i++;
@@ -1923,8 +2042,9 @@ insert_placeholder(BrkTabBox *self, BrkTabPage *page, int pos) {
     if (info) {
         initial_progress = info->appear_progress;
 
-        if (info->appear_animation)
+        if (info->appear_animation) {
             brk_animation_skip(info->appear_animation);
+        }
     } else {
         int index;
 
@@ -2044,14 +2164,16 @@ remove_animation_done_cb(TabInfo *info) {
     if (self->reordered_tab == info) {
         force_end_reordering(self);
 
-        if (info->reorder_animation)
+        if (info->reorder_animation) {
             brk_animation_skip(info->reorder_animation);
+        }
 
         self->reordered_tab = NULL;
     }
 
-    if (self->pressed_tab == info)
+    if (self->pressed_tab == info) {
         self->pressed_tab = NULL;
+    }
 
     self->tabs = g_list_remove(self->tabs, info);
 
@@ -2075,14 +2197,16 @@ remove_placeholder(BrkTabBox *self) {
     TabInfo *info = self->reorder_placeholder;
     BrkAnimationTarget *target;
 
-    if (!info || !info->page)
+    if (!info || !info->page) {
         return;
+    }
 
     brk_tab_set_page(info->tab, NULL);
     info->page = NULL;
 
-    if (info->appear_animation)
+    if (info->appear_animation) {
         brk_animation_skip(info->appear_animation);
+    }
 
     g_idle_add_once((GSourceOnceFunc) remove_placeholder_scroll_cb, self);
 
@@ -2105,8 +2229,9 @@ get_source_tab_box(GtkDropTarget *target) {
     GdkDrop *drop = gtk_drop_target_get_current_drop(target);
     GdkDrag *drag = gdk_drop_get_drag(drop);
 
-    if (!drag)
+    if (!drag) {
         return NULL;
+    }
 
     return BRK_TAB_BOX(g_object_get_data(G_OBJECT(drag), "brk-tab-bar-drag-origin"));
 }
@@ -2143,10 +2268,11 @@ detach_into_new_window(BrkTabBox *self) {
 
     new_view = brk_tab_view_create_window(self->view);
 
-    if (BRK_IS_TAB_VIEW(new_view))
+    if (BRK_IS_TAB_VIEW(new_view)) {
         brk_tab_view_attach_page(new_view, page, 0);
-    else
+    } else {
         brk_tab_view_attach_page(self->view, page, self->detached_index);
+    }
 
     self->should_detach_into_new_window = FALSE;
 }
@@ -2188,8 +2314,9 @@ tab_drop_performed_cb(BrkTabBox *self, GdkDrag *drag) {
 
 static void
 tab_dnd_finished_cb(BrkTabBox *self, GdkDrag *drag) {
-    if (self->should_detach_into_new_window)
+    if (self->should_detach_into_new_window) {
         detach_into_new_window(self);
+    }
 
     drag_end(self, drag, TRUE);
 }
@@ -2265,8 +2392,9 @@ static void
 resize_drag_icon(BrkTabBox *self, int width) {
     DragIcon *icon = self->drag_icon;
 
-    if (width == icon->target_width)
+    if (width == icon->target_width) {
         return;
+    }
 
     icon->target_width = width;
 
@@ -2342,11 +2470,13 @@ tab_drag_enter_motion_cb(BrkTabBox *self, double x, double y, GtkDropTarget *tar
 
     source_tab_box = get_source_tab_box(target);
 
-    if (!source_tab_box)
+    if (!source_tab_box) {
         return 0;
+    }
 
-    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view))
+    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view)) {
         return 0;
+    }
 
     x += gtk_adjustment_get_value(self->adjustment);
 
@@ -2385,16 +2515,19 @@ static void
 tab_drag_leave_cb(BrkTabBox *self, GtkDropTarget *target) {
     BrkTabBox *source_tab_box;
 
-    if (!self->indirect_reordering)
+    if (!self->indirect_reordering) {
         return;
+    }
 
     source_tab_box = get_source_tab_box(target);
 
-    if (!source_tab_box)
+    if (!source_tab_box) {
         return;
+    }
 
-    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view))
+    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view)) {
         return;
+    }
 
     self->can_remove_placeholder = TRUE;
 
@@ -2410,11 +2543,13 @@ tab_drag_drop_cb(BrkTabBox *self, const GValue *value, double x, double y, GtkDr
 
     source_tab_box = get_source_tab_box(target);
 
-    if (!source_tab_box)
+    if (!source_tab_box) {
         return GDK_EVENT_PROPAGATE;
+    }
 
-    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view))
+    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     do_drag_drop(self, source_tab_box);
 
@@ -2427,11 +2562,13 @@ view_drag_drop_cb(BrkTabBox *self, const GValue *value, double x, double y, GtkD
 
     source_tab_box = get_source_tab_box(target);
 
-    if (!source_tab_box)
+    if (!source_tab_box) {
         return GDK_EVENT_PROPAGATE;
+    }
 
-    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view))
+    if (!self->view || !is_view_in_the_same_group(self, source_tab_box->view)) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     self->reorder_index = brk_tab_view_get_n_pages(self->view);
 
@@ -2456,12 +2593,14 @@ drag_leave_cb(BrkTabBox *self, GtkDropControllerMotion *controller) {
 
     source = drag ? g_object_get_data(G_OBJECT(drag), "brk-tab-bar-drag-origin") : NULL;
 
-    if (source)
+    if (source) {
         return;
+    }
 
-    if (!self->reset_drop_target_tab_id)
+    if (!self->reset_drop_target_tab_id) {
         self->reset_drop_target_tab_id =
             g_idle_add_once((GSourceOnceFunc) reset_drop_target_tab_cb, self);
+    }
 
     end_autoscroll(self);
 }
@@ -2475,8 +2614,9 @@ drag_enter_motion_cb(BrkTabBox *self, double x, double y, GtkDropControllerMotio
 
     source = drag ? g_object_get_data(G_OBJECT(drag), "brk-tab-bar-drag-origin") : NULL;
 
-    if (source)
+    if (source) {
         return;
+    }
 
     x += gtk_adjustment_get_value(self->adjustment);
 
@@ -2503,8 +2643,9 @@ reset_setup_menu_cb(BrkTabBox *self) {
 
 static void
 touch_menu_notify_visible_cb(BrkTabBox *self) {
-    if (!self->context_menu || gtk_widget_get_visible(self->context_menu))
+    if (!self->context_menu || gtk_widget_get_visible(self->context_menu)) {
         return;
+    }
 
     self->hovering = FALSE;
     update_hover(self);
@@ -2517,8 +2658,9 @@ do_popup(BrkTabBox *self, TabInfo *info, double x, double y) {
     GMenuModel *model = brk_tab_view_get_menu_model(self->view);
     GdkRectangle rect;
 
-    if (!G_IS_MENU_MODEL(model))
+    if (!G_IS_MENU_MODEL(model)) {
         return;
+    }
 
     g_signal_emit_by_name(self->view, "setup-menu", info->page);
 
@@ -2528,10 +2670,11 @@ do_popup(BrkTabBox *self, TabInfo *info, double x, double y) {
         gtk_popover_set_position(GTK_POPOVER(self->context_menu), GTK_POS_BOTTOM);
         gtk_popover_set_has_arrow(GTK_POPOVER(self->context_menu), FALSE);
 
-        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
+        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
             gtk_widget_set_halign(self->context_menu, GTK_ALIGN_END);
-        else
+        } else {
             gtk_widget_set_halign(self->context_menu, GTK_ALIGN_START);
+        }
 
         g_signal_connect_object(
             self->context_menu, "notify::visible", G_CALLBACK(touch_menu_notify_visible_cb), self,
@@ -2547,8 +2690,9 @@ do_popup(BrkTabBox *self, TabInfo *info, double x, double y) {
         rect.x = info->pos;
         rect.y = gtk_widget_get_height(info->container);
 
-        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
+        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
             rect.x += info->width;
+        }
     }
 
     rect.x -= gtk_adjustment_get_value(self->adjustment);
@@ -2583,8 +2727,9 @@ static void
 popup_menu_cb(GtkWidget *widget, const char *action_name, GVariant *parameter) {
     BrkTabBox *self = BRK_TAB_BOX(widget);
 
-    if (self->selected_tab && self->selected_tab->page)
+    if (self->selected_tab && self->selected_tab->page) {
         do_popup(self, self->selected_tab, -1, -1);
+    }
 }
 
 /* Clicking */
@@ -2611,15 +2756,17 @@ handle_click(BrkTabBox *self, TabInfo *info, GtkGesture *gesture) {
 
     can_grab_focus = brk_tab_bar_tabs_have_visible_focus(self->tab_bar);
 
-    if (info == self->selected_tab)
+    if (info == self->selected_tab) {
         can_grab_focus = TRUE;
-    else
+    } else {
         brk_tab_view_set_selected_page(self->view, info->page);
+    }
 
-    if (can_grab_focus)
+    if (can_grab_focus) {
         gtk_widget_grab_focus(info->container);
-    else
+    } else {
         activate_tab(self);
+    }
 }
 
 static void
@@ -2629,8 +2776,9 @@ pressed_cb(BrkTabBox *self, int n_press, double x, double y, GtkGesture *gesture
     GdkEventSequence *current;
     guint button;
 
-    if (is_touchscreen(gesture))
+    if (is_touchscreen(gesture)) {
         return;
+    }
 
     x += gtk_adjustment_get_value(self->adjustment);
 
@@ -2699,8 +2847,9 @@ released_cb(BrkTabBox *self, int n_press, double x, double y, GtkGesture *gestur
         return;
     }
 
-    if (is_touchscreen(gesture))
+    if (is_touchscreen(gesture)) {
         handle_click(self, info, gesture);
+    }
 }
 
 /* Overrides */
@@ -2712,11 +2861,13 @@ measure_tab_box(
     int min, nat;
 
     if (self->n_tabs == 0) {
-        if (minimum)
+        if (minimum) {
             *minimum = 0;
+        }
 
-        if (natural)
+        if (natural) {
             *natural = 0;
+        }
 
         return;
     }
@@ -2731,10 +2882,11 @@ measure_tab_box(
 
             gtk_widget_measure(info->container, orientation, -1, NULL, &child_width, NULL, NULL);
 
-            if (animated)
+            if (animated) {
                 width += calculate_tab_width(info, child_width) + SPACING;
-            else
+            } else {
                 width += child_width + SPACING;
+            }
         }
 
         width += SPACING;
@@ -2776,11 +2928,13 @@ measure_tab_box(
         min = MAX(min, child_min);
     }
 
-    if (minimum)
+    if (minimum) {
         *minimum = min;
+    }
 
-    if (natural)
+    if (natural) {
         *natural = nat;
+    }
 }
 
 static void
@@ -2792,11 +2946,13 @@ brk_tab_box_measure(
 
     measure_tab_box(self, orientation, minimum, natural, TRUE);
 
-    if (minimum_baseline)
+    if (minimum_baseline) {
         *minimum_baseline = -1;
+    }
 
-    if (natural_baseline)
+    if (natural_baseline) {
         *natural_baseline = -1;
+    }
 }
 
 static void
@@ -2815,11 +2971,13 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
     );
     self->allocated_width = MAX(self->allocated_width, width);
 
-    if (self->context_menu)
+    if (self->context_menu) {
         gtk_popover_present(GTK_POPOVER(self->context_menu));
+    }
 
-    if (!self->n_tabs)
+    if (!self->n_tabs) {
         return;
+    }
 
     is_rtl = gtk_widget_get_direction(widget) == GTK_TEXT_DIR_RTL;
 
@@ -2856,8 +3014,9 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
         for (l = self->tabs; l; l = l->next) {
             TabInfo *info = l->data;
 
-            if (excess >= 0 && final_excess >= 0)
+            if (excess >= 0 && final_excess >= 0) {
                 break;
+            }
 
             if (excess < 0) {
                 info->width--;
@@ -2991,14 +3150,17 @@ snapshot_tabs(BrkTabBox *self, GtkSnapshot *snapshot) {
         pos = get_tab_position(self, info, FALSE);
         width = gtk_widget_get_width(info->container);
 
-        if (pos + width < scroll_start)
+        if (pos + width < scroll_start) {
             continue;
+        }
 
-        if (pos > scroll_end)
+        if (pos > scroll_end) {
             continue;
+        }
 
-        if (info == self->reordered_tab)
+        if (info == self->reordered_tab) {
             continue;
+        }
 
         if (is_clipping && reordered_pos > 0 && reordered_width > 0 &&
             ((is_rtl && pos < reordered_pos) ||
@@ -3023,8 +3185,9 @@ snapshot_tabs(BrkTabBox *self, GtkSnapshot *snapshot) {
         gtk_widget_snapshot_child(GTK_WIDGET(self), info->separator, snapshot);
     }
 
-    if (is_clipping)
+    if (is_clipping) {
         gtk_snapshot_pop(snapshot);
+    }
 }
 
 static void
@@ -3036,8 +3199,9 @@ brk_tab_box_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
     gboolean fadeLeft = value > 0;
     gboolean fadeRight = value + page_size < upper;
 
-    if (!self->n_tabs)
+    if (!self->n_tabs) {
         return;
+    }
 
     if (fadeLeft || fadeRight) {
         int width = gtk_widget_get_width(widget);
@@ -3083,8 +3247,9 @@ brk_tab_box_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
     snapshot_tabs(self, snapshot);
 
-    if (fadeLeft || fadeRight)
+    if (fadeLeft || fadeRight) {
         gtk_snapshot_pop(snapshot);
+    }
 
     if (self->reordered_tab && gtk_widget_get_opacity(self->reordered_tab->container) > 0) {
         gtk_widget_snapshot_child(GTK_WIDGET(self), self->reordered_tab->container, snapshot);
@@ -3099,8 +3264,9 @@ static gboolean
 brk_tab_box_focus(GtkWidget *widget, GtkDirectionType direction) {
     BrkTabBox *self = BRK_TAB_BOX(widget);
 
-    if (!self->selected_tab)
+    if (!self->selected_tab) {
         return GDK_EVENT_PROPAGATE;
+    }
 
     return gtk_widget_grab_focus(self->selected_tab->container);
 }
@@ -3127,11 +3293,13 @@ brk_tab_box_direction_changed(GtkWidget *widget, GtkTextDirection previous_direc
     BrkTabBox *self = BRK_TAB_BOX(widget);
     double upper, page_size;
 
-    if (!self->adjustment)
+    if (!self->adjustment) {
         return;
+    }
 
-    if (gtk_widget_get_direction(widget) == previous_direction)
+    if (gtk_widget_get_direction(widget) == previous_direction) {
         return;
+    }
 
     upper = gtk_adjustment_get_upper(self->adjustment);
     page_size = gtk_adjustment_get_page_size(self->adjustment);
@@ -3139,10 +3307,11 @@ brk_tab_box_direction_changed(GtkWidget *widget, GtkTextDirection previous_direc
     gtk_adjustment_set_value(self->adjustment, upper - page_size - self->adjustment_prev_value);
 
     if (self->context_menu) {
-        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL)
+        if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
             gtk_widget_set_halign(self->context_menu, GTK_ALIGN_END);
-        else
+        } else {
             gtk_widget_set_halign(self->context_menu, GTK_ALIGN_START);
+        }
     }
 }
 
@@ -3427,8 +3596,9 @@ brk_tab_box_set_view(BrkTabBox *self, BrkTabView *view) {
     g_return_if_fail(BRK_IS_TAB_BOX(self));
     g_return_if_fail(view == NULL || BRK_IS_TAB_VIEW(view));
 
-    if (view == self->view)
+    if (view == self->view) {
         return;
+    }
 
     if (self->view) {
         force_end_reordering(self);
@@ -3449,8 +3619,9 @@ brk_tab_box_set_view(BrkTabBox *self, BrkTabView *view) {
     if (self->view) {
         int i, n_pages = brk_tab_view_get_n_pages(self->view);
 
-        for (i = n_pages - 1; i >= 0; i--)
+        for (i = n_pages - 1; i >= 0; i--) {
             page_attached_cb(self, brk_tab_view_get_nth_page(self->view, i), 0);
+        }
 
         g_signal_connect_object(
             self->view, "page-attached", G_CALLBACK(page_attached_cb), self, G_CONNECT_SWAPPED
@@ -3512,8 +3683,9 @@ void
 brk_tab_box_try_focus_selected_tab(BrkTabBox *self) {
     g_return_if_fail(BRK_IS_TAB_BOX(self));
 
-    if (self->selected_tab)
+    if (self->selected_tab) {
         gtk_widget_grab_focus(self->selected_tab->container);
+    }
 }
 
 gboolean
@@ -3565,8 +3737,9 @@ brk_tab_box_set_expand_tabs(BrkTabBox *self, gboolean expand_tabs) {
 
     expand_tabs = !!expand_tabs;
 
-    if (expand_tabs == self->expand_tabs)
+    if (expand_tabs == self->expand_tabs) {
         return;
+    }
 
     self->expand_tabs = expand_tabs;
 
@@ -3590,8 +3763,9 @@ brk_tab_box_set_inverted(BrkTabBox *self, gboolean inverted) {
 
     inverted = !!inverted;
 
-    if (inverted == self->inverted)
+    if (inverted == self->inverted) {
         return;
+    }
 
     self->inverted = inverted;
 
@@ -3615,8 +3789,9 @@ brk_tab_box_set_extra_drag_preload(BrkTabBox *self, gboolean preload) {
 
     g_return_if_fail(BRK_IS_TAB_BOX(self));
 
-    if (preload == self->extra_drag_preload)
+    if (preload == self->extra_drag_preload) {
         return;
+    }
 
     self->extra_drag_preload = preload;
 

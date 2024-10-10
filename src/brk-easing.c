@@ -102,8 +102,9 @@ static inline double
 ease_in_out_quad(double t, double d) {
     double p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * p * p;
+    }
 
     p -= 1;
 
@@ -128,8 +129,9 @@ static inline double
 ease_in_out_cubic(double t, double d) {
     double p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * p * p * p;
+    }
 
     p -= 2;
 
@@ -154,8 +156,9 @@ static inline double
 ease_in_out_quart(double t, double d) {
     double p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * p * p * p * p;
+    }
 
     p -= 2;
 
@@ -180,8 +183,9 @@ static inline double
 ease_in_out_quint(double t, double d) {
     double p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * p * p * p * p * p;
+    }
 
     p -= 2;
 
@@ -217,16 +221,19 @@ static inline double
 ease_in_out_expo(double t, double d) {
     double p;
 
-    if (G_APPROX_VALUE(t, 0, DBL_EPSILON))
+    if (G_APPROX_VALUE(t, 0, DBL_EPSILON)) {
         return 0.0;
+    }
 
-    if (G_APPROX_VALUE(t, d, DBL_EPSILON))
+    if (G_APPROX_VALUE(t, d, DBL_EPSILON)) {
         return 1.0;
+    }
 
     p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * pow(2, 10 * (p - 1));
+    }
 
     p -= 1;
 
@@ -251,8 +258,9 @@ static inline double
 ease_in_out_circ(double t, double d) {
     double p = t / (d / 2);
 
-    if (p < 1)
+    if (p < 1) {
         return -0.5 * (sqrt(1 - p * p) - 1);
+    }
 
     p -= 2;
 
@@ -265,8 +273,9 @@ ease_in_elastic(double t, double d) {
     double s = p / 4;
     double q = t / d;
 
-    if (G_APPROX_VALUE(q, 1, DBL_EPSILON))
+    if (G_APPROX_VALUE(q, 1, DBL_EPSILON)) {
         return 1.0;
+    }
 
     q -= 1;
 
@@ -279,8 +288,9 @@ ease_out_elastic(double t, double d) {
     double s = p / 4;
     double q = t / d;
 
-    if (G_APPROX_VALUE(q, 1, DBL_EPSILON))
+    if (G_APPROX_VALUE(q, 1, DBL_EPSILON)) {
         return 1.0;
+    }
 
     return pow(2, -10 * q) * sin((q * d - s) * (2 * G_PI) / p) + 1.0;
 }
@@ -291,8 +301,9 @@ ease_in_out_elastic(double t, double d) {
     double s = p / 4;
     double q = t / (d / 2);
 
-    if (G_APPROX_VALUE(q, 2, DBL_EPSILON))
+    if (G_APPROX_VALUE(q, 2, DBL_EPSILON)) {
         return 1.0;
+    }
 
     if (q < 1) {
         q -= 1;
@@ -324,8 +335,9 @@ ease_in_out_back(double t, double d) {
     double p = t / (d / 2);
     double s = 1.70158 * 1.525;
 
-    if (p < 1)
+    if (p < 1) {
         return 0.5 * (p * p * ((s + 1) * p - s));
+    }
 
     p -= 2;
 
@@ -360,10 +372,11 @@ ease_in_bounce(double t, double d) {
 
 static inline double
 ease_in_out_bounce(double t, double d) {
-    if (t < d / 2)
+    if (t < d / 2) {
         return ease_in_bounce(t * 2, d) * 0.5;
-    else
+    } else {
         return ease_out_bounce(t * 2 - d, d) * 0.5 + 1.0 * 0.5;
+    }
 }
 
 /**

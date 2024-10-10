@@ -38,46 +38,51 @@ brk_gizmo_measure(
 ) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->measure_func)
+    if (self->measure_func) {
         self->measure_func(
             self, orientation, for_size, minimum, natural, minimum_baseline, natural_baseline
         );
+    }
 }
 
 static void
 brk_gizmo_size_allocate(GtkWidget *widget, int width, int height, int baseline) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->allocate_func)
+    if (self->allocate_func) {
         self->allocate_func(self, width, height, baseline);
+    }
 }
 
 static void
 brk_gizmo_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->snapshot_func)
+    if (self->snapshot_func) {
         self->snapshot_func(self, snapshot);
-    else
+    } else {
         GTK_WIDGET_CLASS(brk_gizmo_parent_class)->snapshot(widget, snapshot);
+    }
 }
 
 static gboolean
 brk_gizmo_contains(GtkWidget *widget, double x, double y) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->contains_func)
+    if (self->contains_func) {
         return self->contains_func(self, x, y);
-    else
+    } else {
         return GTK_WIDGET_CLASS(brk_gizmo_parent_class)->contains(widget, x, y);
+    }
 }
 
 static gboolean
 brk_gizmo_focus(GtkWidget *widget, GtkDirectionType direction) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->focus_func)
+    if (self->focus_func) {
         return self->focus_func(self, direction);
+    }
 
     return FALSE;
 }
@@ -86,8 +91,9 @@ static gboolean
 brk_gizmo_grab_focus(GtkWidget *widget) {
     BrkGizmo *self = BRK_GIZMO(widget);
 
-    if (self->grab_focus_func)
+    if (self->grab_focus_func) {
         return self->grab_focus_func(self);
+    }
 
     return FALSE;
 }
