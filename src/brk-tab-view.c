@@ -22,9 +22,10 @@
 #include "brk-bin.h"
 #include "brk-enums.h"
 #include "brk-marshalers.h"
+#include "brk-tab-page-private.h"
+#include "brk-tab-page.h"
 #include "brk-tab-view-private.h"
 #include "brk-widget-utils-private.h"
-#include "brk-tab-page.h"
 
 /* FIXME replace with groups */
 static GSList *tab_view_list;
@@ -240,7 +241,7 @@ brk_tab_pages_is_selected(GtkSelectionModel *model, guint position) {
 
     page = brk_tab_view_get_nth_page(self->view, position);
 
-    return page->selected;
+    return brk_tab_page_get_selected(page);
 }
 
 static gboolean
@@ -353,7 +354,7 @@ page_belongs_to_this_view(BrkTabView *self, BrkTabPage *page) {
     if (!page)
         return FALSE;
 
-    return gtk_widget_get_parent(page->bin) == GTK_WIDGET(self);
+    return gtk_widget_get_parent(brk_tab_page_get_bin(page)) == GTK_WIDGET(self);
 }
 
 static inline gboolean
@@ -385,10 +386,11 @@ attach_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     g_list_store_insert(self->children, position, page);
 
-    gtk_widget_set_child_visible(page->bin, FALSE);
-    gtk_widget_set_parent(page->bin, GTK_WIDGET(self));
+    gtk_widget_set_child_visible(brk_tab_page_get_bin(page), FALSE);
+    gtk_widget_set_parent(brk_tab_page_get_bin(page), GTK_WIDGET(self));
     page->transfer_binding = g_object_bind_property(
-        self, "is-transferring-page", page->bin, "can-target",
+        self, "is-transferring-page",
+        brk_tab_page_get_bin(page), "can-target",
         G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN
     );
     gtk_widget_queue_resize(GTK_WIDGET(self));
@@ -401,8 +403,9 @@ attach_page(BrkTabView *self, BrkTabPage *page, int position) {
 
     parent = brk_tab_page_get_parent(page);
 
-    if (parent && !page_belongs_to_this_view(self, parent))
-        set_page_parent(page, NULL);
+    if (parent && !page_belongs_to_this_view(self, parent)) {
+        brk_tab_page_set_parent(page, NULL);
+    }
 
     g_signal_emit(self, signals[SIGNAL_PAGE_ATTACHED], 0, page, position);
 }
@@ -417,24 +420,20 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
         return;
 
     if (self->selected_page) {
-        GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self));
-        GtkWidget *focus = root ? gtk_root_get_focus(root) : NULL;
-
-        if (notify_pages && self->pages)
+        if (notify_pages && self->pages) {
             old_position = brk_tab_view_get_page_position(self, self->selected_page);
+        }
 
-        if (!gtk_widget_in_destruction(GTK_WIDGET(self)) && focus && self->selected_page &&
-            self->selected_page->bin && gtk_widget_is_ancestor(focus, self->selected_page->bin)) {
+        if (brk_tab_page_get_has_focus(self->selected_page)) {
             contains_focus = TRUE;
-
-            g_set_weak_pointer(&self->selected_page->last_focus, focus);
+            brk_tab_page_save_focus(self->selected_page);
         }
 
-        if (self->selected_page->bin && selected_page) {
-            gtk_widget_set_child_visible(self->selected_page->bin, FALSE);
+        if (brk_tab_page_get_bin(self->selected_page) && selected_page) {
+            gtk_widget_set_child_visible(brk_tab_page_get_bin(self->selected_page), FALSE);
         }
 
-        set_page_selected(self->selected_page, FALSE);
+        brk_tab_page_set_selected(self->selected_page, FALSE);
     }
 
     self->selected_page = selected_page;
@@ -444,19 +443,16 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
             new_position = brk_tab_view_get_page_position(self, self->selected_page);
 
         if (!gtk_widget_in_destruction(GTK_WIDGET(self))) {
-            gtk_widget_set_child_visible(selected_page->bin, TRUE);
+            gtk_widget_set_child_visible(brk_tab_page_get_bin(self->selected_page), TRUE);
 
             if (contains_focus) {
-                if (selected_page->last_focus)
-                    gtk_widget_grab_focus(selected_page->last_focus);
-                else
-                    gtk_widget_child_focus(selected_page->bin, GTK_DIR_TAB_FORWARD);
+                brk_tab_page_grab_focus(self->selected_page);
             }
 
             gtk_widget_queue_allocate(GTK_WIDGET(self));
         }
 
-        set_page_selected(self->selected_page, TRUE);
+        brk_tab_page_set_selected(self->selected_page, TRUE);
     }
 
     if (notify_pages && self->pages) {
@@ -512,7 +508,7 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
 
     g_object_ref(self);
     g_object_ref(page);
-    g_object_ref(page->bin);
+    g_object_ref(brk_tab_page_get_bin(page));
 
     if (self->n_pages == 1)
         set_selected_page(self, NULL, !in_dispose);
@@ -526,7 +522,7 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
     g_object_thaw_notify(G_OBJECT(self));
 
     g_clear_pointer(&page->transfer_binding, g_binding_unbind);
-    gtk_widget_unparent(page->bin);
+    gtk_widget_unparent(brk_tab_page_get_bin(page));
 
     if (!in_dispose)
         gtk_widget_queue_resize(GTK_WIDGET(self));
@@ -536,7 +532,7 @@ detach_page(BrkTabView *self, BrkTabPage *page, gboolean in_dispose) {
     if (!in_dispose && self->pages)
         g_list_model_items_changed(G_LIST_MODEL(self->pages), pos, 1, 0);
 
-    g_object_unref(page->bin);
+    g_object_unref(brk_tab_page_get_bin(page));
     g_object_unref(page);
     g_object_unref(self);
 }
@@ -813,7 +809,7 @@ brk_tab_view_measure(
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
         int child_min, child_nat;
 
-        gtk_widget_measure(page->bin, orientation, for_size, &child_min, &child_nat, NULL, NULL);
+        gtk_widget_measure(brk_tab_page_get_bin(page), orientation, for_size, &child_min, &child_nat, NULL, NULL);
 
         *minimum = MAX(*minimum, child_min);
         *natural = MAX(*natural, child_nat);
@@ -828,8 +824,8 @@ brk_tab_view_size_allocate(GtkWidget *widget, int width, int height, int baselin
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (gtk_widget_get_child_visible(page->bin))
-            gtk_widget_allocate(page->bin, width, height, baseline, NULL);
+        if (gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
+            gtk_widget_allocate(brk_tab_page_get_bin(page), width, height, baseline, NULL);
     }
 }
 
@@ -843,10 +839,10 @@ unmap_extra_pages(BrkTabView *self) {
         if (page == self->selected_page)
             continue;
 
-        if (!gtk_widget_get_child_visible(page->bin))
+        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
             continue;
 
-        gtk_widget_set_child_visible(page->bin, FALSE);
+        gtk_widget_set_child_visible(brk_tab_page_get_bin(page), FALSE);
     }
 
     self->unmap_extra_pages_cb = 0;
@@ -858,12 +854,12 @@ brk_tab_view_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
     int i;
 
     if (self->selected_page)
-        gtk_widget_snapshot_child(widget, self->selected_page->bin, snapshot);
+        gtk_widget_snapshot_child(widget, brk_tab_page_get_bin(self->selected_page), snapshot);
 
     for (i = 0; i < self->n_pages; i++) {
         BrkTabPage *page = brk_tab_view_get_nth_page(self, i);
 
-        if (!gtk_widget_get_child_visible(page->bin))
+        if (!gtk_widget_get_child_visible(brk_tab_page_get_bin(page)))
             continue;
 
         if (!self->unmap_extra_pages_cb)
@@ -1285,408 +1281,6 @@ brk_tab_view_accessible_get_first_accessible_child(GtkAccessible *accessible) {
 static void
 brk_tab_view_accessible_init(GtkAccessibleInterface *iface) {
     iface->get_first_accessible_child = brk_tab_view_accessible_get_first_accessible_child;
-}
-
-/**
- * brk_tab_page_get_child: (attributes org.gtk.Method.get_property=child)
- * @self: a tab page
- *
- * Gets the child of @self.
- *
- * Returns: (transfer none): the child of @self
- */
-GtkWidget *
-brk_tab_page_get_child(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->child;
-}
-
-/**
- * brk_tab_page_get_parent: (attributes org.gtk.Method.get_property=parent)
- * @self: a tab page
- *
- * Gets the parent page of @self.
- *
- * See [method@TabView.add_page] and [method@TabView.close_page].
- *
- * Returns: (transfer none) (nullable): the parent page
- */
-BrkTabPage *
-brk_tab_page_get_parent(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->parent;
-}
-
-/**
- * brk_tab_page_get_selected: (attributes org.gtk.Method.get_property=selected)
- * @self: a tab page
- *
- * Gets whether @self is selected.
- *
- * Returns: whether @self is selected
- */
-gboolean
-brk_tab_page_get_selected(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), FALSE);
-
-    return self->selected;
-}
-
-/**
- * brk_tab_page_get_title: (attributes org.gtk.Method.get_property=title)
- * @self: a tab page
- *
- * Gets the title of @self.
- *
- * Returns: the title of @self
- */
-const char *
-brk_tab_page_get_title(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->title;
-}
-
-/**
- * brk_tab_page_set_title: (attributes org.gtk.Method.set_property=title)
- * @self: a tab page
- * @title: the title of @self
- *
- * [class@TabBar] will display it in the center of the tab and will use it as a
- * tooltip unless [property@TabPage:tooltip] is set.
- *
- * Sets the title of @self.
- */
-void
-brk_tab_page_set_title(BrkTabPage *self, const char *title) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    if (!g_set_str(&self->title, title ? title : ""))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_TITLE]);
-
-    gtk_accessible_update_property(
-        GTK_ACCESSIBLE(self), GTK_ACCESSIBLE_PROPERTY_LABEL, self->title, -1
-    );
-}
-
-/**
- * brk_tab_page_get_tooltip: (attributes org.gtk.Method.get_property=tooltip)
- * @self: a tab page
- *
- * Gets the tooltip of @self.
- *
- * Returns: (nullable): the tooltip of @self
- */
-const char *
-brk_tab_page_get_tooltip(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->tooltip;
-}
-
-/**
- * brk_tab_page_set_tooltip: (attributes org.gtk.Method.set_property=tooltip)
- * @self: a tab page
- * @tooltip: the tooltip of @self
- *
- * Sets the tooltip of @self.
- *
- * The tooltip can be marked up with the Pango text markup language.
- */
-void
-brk_tab_page_set_tooltip(BrkTabPage *self, const char *tooltip) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    if (!g_set_str(&self->tooltip, tooltip ? tooltip : ""))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_TOOLTIP]);
-}
-
-/**
- * brk_tab_page_get_icon: (attributes org.gtk.Method.get_property=icon)
- * @self: a tab page
- *
- * Gets the icon of @self.
- *
- * Returns: (transfer none) (nullable): the icon of @self
- */
-GIcon *
-brk_tab_page_get_icon(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->icon;
-}
-
-/**
- * brk_tab_page_set_icon: (attributes org.gtk.Method.set_property=icon)
- * @self: a tab page
- * @icon: (nullable): the icon of @self
- *
- * Sets the icon of @self.
- *
- * [class@TabBar] displays the icon next to the title,  unless
- * [property@TabPage:loading] is set to `TRUE`.
- */
-void
-brk_tab_page_set_icon(BrkTabPage *self, GIcon *icon) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-    g_return_if_fail(icon == NULL || G_IS_ICON(icon));
-
-    if (!g_set_object(&self->icon, icon))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_ICON]);
-}
-
-/**
- * brk_tab_page_get_loading: (attributes org.gtk.Method.get_property=loading)
- * @self: a tab page
- *
- * Gets whether @self is loading.
- *
- * Returns: whether @self is loading
- */
-gboolean
-brk_tab_page_get_loading(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), FALSE);
-
-    return self->loading;
-}
-
-/**
- * brk_tab_page_set_loading: (attributes org.gtk.Method.set_property=loading)
- * @self: a tab page
- * @loading: whether @self is loading
- *
- * Sets whether @self is loading.
- *
- * If set to `TRUE`, [class@TabBar] will display a spinner in place of icon.
- */
-void
-brk_tab_page_set_loading(BrkTabPage *self, gboolean loading) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    loading = !!loading;
-
-    if (self->loading == loading)
-        return;
-
-    self->loading = loading;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_LOADING]);
-}
-
-/**
- * brk_tab_page_get_indicator_icon:  (attributes org.gtk.Method.get_property=indicator-icon)
- * @self: a tab page
- *
- * Gets the indicator icon of @self.
- *
- * Returns: (transfer none) (nullable): the indicator icon of @self
- */
-GIcon *
-brk_tab_page_get_indicator_icon(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->indicator_icon;
-}
-
-/**
- * brk_tab_page_set_indicator_icon:  (attributes org.gtk.Method.set_property=indicator-icon)
- * @self: a tab page
- * @indicator_icon: (nullable): the indicator icon of @self
- *
- * Sets the indicator icon of @self.
- *
- * A common use case is an audio or camera indicator in a web browser.
- *
- * [class@TabBar] will show it at the beginning of the tab, alongside icon
- * representing [property@TabPage:icon] or loading spinner.
- *
- * [property@TabPage:indicator-tooltip] can be used to set the tooltip on the
- * indicator icon.
- *
- * If [property@TabPage:indicator-activatable] is set to `TRUE`, the
- * indicator icon can act as a button.
- */
-void
-brk_tab_page_set_indicator_icon(BrkTabPage *self, GIcon *indicator_icon) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-    g_return_if_fail(indicator_icon == NULL || G_IS_ICON(indicator_icon));
-
-    if (!g_set_object(&self->indicator_icon, indicator_icon))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_INDICATOR_ICON]);
-}
-
-/**
- * brk_tab_page_get_indicator_tooltip:  (attributes org.gtk.Method.get_property=indicator-tooltip)
- * @self: a tab page
- *
- * Gets the tooltip of the indicator icon of @self.
- *
- * Returns: (transfer none): the indicator tooltip of @self
- *
- * Since: 1.2
- */
-const char *
-brk_tab_page_get_indicator_tooltip(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->indicator_tooltip;
-}
-
-/**
- * brk_tab_page_set_indicator_tooltip:  (attributes org.gtk.Method.set_property=indicator-tooltip)
- * @self: a tab page
- * @tooltip: the indicator tooltip of @self
- *
- * Sets the tooltip of the indicator icon of @self.
- *
- * The tooltip can be marked up with the Pango text markup language.
- *
- * See [property@TabPage:indicator-icon].
- *
- * Since: 1.2
- */
-void
-brk_tab_page_set_indicator_tooltip(BrkTabPage *self, const char *tooltip) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-    g_return_if_fail(tooltip != NULL);
-
-    if (!g_set_str(&self->indicator_tooltip, tooltip ? tooltip : ""))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_INDICATOR_TOOLTIP]);
-}
-
-/**
- * brk_tab_page_get_indicator_activatable:  (attributes org.gtk.Method.get_property=indicator-activatable)
- * @self: a tab page
- *
- *
- * Gets whether the indicator of @self is activatable.
- *
- * Returns: whether the indicator is activatable
- */
-gboolean
-brk_tab_page_get_indicator_activatable(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), FALSE);
-
-    return self->indicator_activatable;
-}
-
-/**
- * brk_tab_page_set_indicator_activatable:  (attributes org.gtk.Method.set_property=indicator-activatable)
- * @self: a tab page
- * @activatable: whether the indicator is activatable
- *
- * Sets whether the indicator of @self is activatable.
- *
- * If set to `TRUE`, [signal@TabView::indicator-activated] will be emitted
- * when the indicator icon is clicked.
- *
- * If [property@TabPage:indicator-icon] is not set, does nothing.
- */
-void
-brk_tab_page_set_indicator_activatable(BrkTabPage *self, gboolean activatable) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    activatable = !!activatable;
-
-    if (self->indicator_activatable == activatable)
-        return;
-
-    self->indicator_activatable = activatable;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_INDICATOR_ACTIVATABLE]);
-}
-
-/**
- * brk_tab_page_get_needs_attention:  (attributes org.gtk.Method.get_property=needs-attention)
- * @self: a tab page
- *
- * Gets whether @self needs attention.
- *
- * Returns: whether @self needs attention
- */
-gboolean
-brk_tab_page_get_needs_attention(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), FALSE);
-
-    return self->needs_attention;
-}
-
-/**
- * brk_tab_page_set_needs_attention:  (attributes org.gtk.Method.set_property=needs-attention)
- * @self: a tab page
- * @needs_attention: whether @self needs attention
- *
- * Sets whether @self needs attention.
- *
- * [class@TabBar] will display a line under the tab representing the page if
- * set to `TRUE`. If the tab is not visible, the corresponding edge of the tab
- * bar will be highlighted.
- *
- * [class@TabButton] will display a dot if any of the pages that aren't
- * selected have [property@TabPage:needs-attention] set to `TRUE`.
- */
-void
-brk_tab_page_set_needs_attention(BrkTabPage *self, gboolean needs_attention) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    needs_attention = !!needs_attention;
-
-    if (self->needs_attention == needs_attention)
-        return;
-
-    self->needs_attention = needs_attention;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_NEEDS_ATTENTION]);
-}
-
-/**
- * brk_tab_page_get_keyword: (attributes org.gtk.Method.get_property=keyword)
- * @self: a tab page
- *
- * Gets the search keyword of @self.
- *
- * Returns: (nullable): the search keyword of @self
- *
- * Since: 1.3
- */
-const char *
-brk_tab_page_get_keyword(BrkTabPage *self) {
-    g_return_val_if_fail(BRK_IS_TAB_PAGE(self), NULL);
-
-    return self->keyword;
-}
-
-/**
- * brk_tab_page_set_keyword: (attributes org.gtk.Method.set_property=keyword)
- * @self: a tab page
- * @keyword: the search keyword
- *
- * Sets the search keyword for @self.
- *
- * Keywords allow to include e.g. page URLs into tab search in a web browser.
- *
- * Since: 1.3
- */
-void
-brk_tab_page_set_keyword(BrkTabPage *self, const char *keyword) {
-    g_return_if_fail(BRK_IS_TAB_PAGE(self));
-
-    if (!g_set_str(&self->keyword, keyword))
-        return;
-
-    g_object_notify_by_pspec(G_OBJECT(self), page_props[PAGE_PROP_KEYWORD]);
 }
 
 /**
@@ -2214,10 +1808,11 @@ brk_tab_view_close_page(BrkTabView *self, BrkTabPage *page) {
     g_return_if_fail(BRK_IS_TAB_PAGE(page));
     g_return_if_fail(page_belongs_to_this_view(self, page));
 
-    if (page->closing)
+    if (brk_tab_page_get_closing(page)) {
         return;
+    }
 
-    page->closing = TRUE;
+    brk_tab_page_set_closing(page, TRUE);
     g_signal_emit(self, signals[SIGNAL_CLOSE_PAGE], 0, page, &ret);
 }
 
@@ -2241,12 +1836,12 @@ brk_tab_view_close_page_finish(BrkTabView *self, BrkTabPage *page, gboolean conf
     g_return_if_fail(BRK_IS_TAB_VIEW(self));
     g_return_if_fail(BRK_IS_TAB_PAGE(page));
     g_return_if_fail(page_belongs_to_this_view(self, page));
-    g_return_if_fail(page->closing);
 
-    page->closing = FALSE;
+    brk_tab_page_set_closing(page, FALSE);
 
-    if (!confirm)
+    if (!confirm) {
         return;
+    }
 
     detach_page(self, page, FALSE);
 }

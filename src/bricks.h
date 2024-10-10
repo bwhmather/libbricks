@@ -22,6 +22,7 @@ G_BEGIN_DECLS
 #define _BRICKS_INSIDE
 
 #include "brk-tab-bar.h"
+#include "brk-tab-page.h"
 #include "brk-tab-view.h"
 #include "brk-toolbar-view.h"
 #include "brk-toolbar.h"

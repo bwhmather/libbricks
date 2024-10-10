@@ -7,34 +7,37 @@ libbricks_public_headers = files([
   'brk-toolbar.h',
   'brk-toolbar-view.h',
   'brk-tab-bar.h',
+  'brk-tab-page.h',
   'brk-tab-view.h',
   'brk-easing.h',
 ])
 
 libbricks_private_headers = files([
+  'brk-animation-target.h',
+  'brk-animation-util.h',
+  'brk-bidi-private.h',
+  'brk-fading-label-private.h',
   'brk-gizmo-private.h',
-  'brk-widget-utils-private.h',
   'brk-tab-bar-private.h',
   'brk-tab-box-private.h',
+  'brk-tab-page-private.h',
   'brk-tab-private.h',
   'brk-tab-view-private.h',
-  'brk-animation-util.h',
-  'brk-fading-label-private.h',
   'brk-timed-animation.h',
-  'brk-animation-target.h',
-  'brk-bidi-private.h',
+  'brk-widget-utils-private.h',
 ])
 
 libbricks_public_sources = files([
+  'bricks.c',
   'brk-animation.c',
+  'brk-animation-target.c',
   'brk-bin.c',
-  'brk-toolbar.c',
-  'brk-toolbar-view.c',
   'brk-tab-bar.c',
+  'brk-tab-page.c',
   'brk-tab-view.c',
   'brk-timed-animation.c',
-  'brk-animation-target.c',
-  'bricks.c',
+  'brk-toolbar.c',
+  'brk-toolbar-view.c',
   'brk-version.c',
 ])
 libbricks_private_sources = files([
