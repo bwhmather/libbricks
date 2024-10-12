@@ -44,14 +44,14 @@ libbricks_public_sources = files([
   'brk-version.c',
 ])
 libbricks_private_sources = files([
-  'brk-gizmo.c',
-  'brk-widget-utils.c',
-  'brk-tab-box.c',
-  'brk-tab.c',
   'brk-animation-util.c',
+  'brk-bidi.c',
   'brk-easing.c',
   'brk-fading-label.c',
-  'brk-bidi.c',
+  'brk-gizmo.c',
+  'brk-tab-box.c',
+  'brk-tab.c',
+  'brk-widget-utils.c',
 ])
 
 libbricks_generated_headers = []
