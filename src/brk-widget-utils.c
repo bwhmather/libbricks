@@ -458,17 +458,6 @@ brk_widget_focus_child(GtkWidget *widget, GtkDirectionType direction) {
 }
 
 gboolean
-brk_widget_grab_focus_self(GtkWidget *widget) {
-    if (!gtk_widget_get_focusable(widget)) {
-        return FALSE;
-    }
-
-    gtk_root_set_focus(gtk_widget_get_root(widget), widget);
-
-    return TRUE;
-}
-
-gboolean
 brk_widget_grab_focus_child(GtkWidget *widget) {
     GtkWidget *child;
 
@@ -480,15 +469,6 @@ brk_widget_grab_focus_child(GtkWidget *widget) {
     }
 
     return FALSE;
-}
-
-gboolean
-brk_widget_grab_focus_child_or_self(GtkWidget *widget) {
-    if (brk_widget_grab_focus_child(widget)) {
-        return TRUE;
-    }
-
-    return brk_widget_grab_focus_self(widget);
 }
 
 void
@@ -505,22 +485,6 @@ brk_widget_compute_expand(GtkWidget *widget, gboolean *hexpand_p, gboolean *vexp
 
     *hexpand_p = hexpand;
     *vexpand_p = vexpand;
-}
-
-void
-brk_widget_compute_expand_horizontal_only(
-    GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p
-) {
-    GtkWidget *child;
-    gboolean hexpand = FALSE;
-
-    for (child = gtk_widget_get_first_child(widget); child != NULL;
-         child = gtk_widget_get_next_sibling(child)) {
-        hexpand = hexpand || gtk_widget_compute_expand(child, GTK_ORIENTATION_HORIZONTAL);
-    }
-
-    *hexpand_p = hexpand;
-    *vexpand_p = FALSE;
 }
 
 GtkSizeRequestMode
@@ -550,48 +514,4 @@ brk_widget_get_request_mode(GtkWidget *widget) {
     } else {
         return wfh > hfw ? GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT : GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH;
     }
-}
-
-/* FIXME: Replace this with public color API and make public */
-gboolean
-brk_widget_lookup_color(GtkWidget *widget, const char *name, GdkRGBA *rgba) {
-    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-    GtkStyleContext *context = gtk_widget_get_style_context(widget);
-
-    return gtk_style_context_lookup_color(context, name, rgba);
-    G_GNUC_END_IGNORE_DEPRECATIONS
-}
-
-gboolean
-brk_decoration_layout_prefers_start(const char *layout) {
-    int counts[2];
-    char **sides;
-    int i;
-
-    sides = g_strsplit(layout, ":", 2);
-
-    for (i = 0; i < 2; i++) {
-        char **elements;
-        int j;
-
-        counts[i] = 0;
-
-        if (sides[i] == NULL) {
-            continue;
-        }
-
-        elements = g_strsplit(sides[i], ",", -1);
-
-        for (j = 0; elements[j]; j++) {
-            if (!g_strcmp0(elements[j], "close")) {
-                counts[i]++;
-            }
-        }
-
-        g_strfreev(elements);
-    }
-
-    g_strfreev(sides);
-
-    return counts[0] > counts[1];
 }

@@ -42,27 +42,12 @@ gboolean
 brk_widget_focus_child(GtkWidget *widget, GtkDirectionType direction);
 
 gboolean
-brk_widget_grab_focus_self(GtkWidget *widget);
-gboolean
 brk_widget_grab_focus_child(GtkWidget *widget);
-gboolean
-brk_widget_grab_focus_child_or_self(GtkWidget *widget);
 
 void
 brk_widget_compute_expand(GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p);
 
-void
-brk_widget_compute_expand_horizontal_only(
-    GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p
-);
-
 GtkSizeRequestMode
 brk_widget_get_request_mode(GtkWidget *widget);
-
-gboolean
-brk_widget_lookup_color(GtkWidget *widget, const char *name, GdkRGBA *rgba);
-
-gboolean
-brk_decoration_layout_prefers_start(const char *layout);
 
 G_END_DECLS
