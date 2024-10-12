@@ -3,18 +3,22 @@ libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
 
 libbricks_public_headers = files([
   'bricks.h',
+  'brk-animation.h',
+  'brk-animation-target.h',
+  'brk-animation-util.h',
   'brk-bin.h',
-  'brk-toolbar.h',
-  'brk-toolbar-view.h',
+  'brk-easing.h',
   'brk-tab-bar.h',
   'brk-tab-page.h',
   'brk-tab-view.h',
-  'brk-easing.h',
+  'brk-timed-animation.h',
+  'brk-toolbar.h',
+  'brk-toolbar-view.h',
 ])
 
 libbricks_private_headers = files([
-  'brk-animation-target.h',
-  'brk-animation-util.h',
+  'brk-animation-private.h',
+  'brk-animation-target-private.h',
   'brk-bidi-private.h',
   'brk-fading-label-private.h',
   'brk-gizmo-private.h',
@@ -23,7 +27,6 @@ libbricks_private_headers = files([
   'brk-tab-page-private.h',
   'brk-tab-private.h',
   'brk-tab-view-private.h',
-  'brk-timed-animation.h',
   'brk-widget-utils-private.h',
 ])
 
