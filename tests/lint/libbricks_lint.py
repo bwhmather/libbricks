@@ -153,28 +153,14 @@ def source_path_for_header_path(header_path, /):
     return source_path
 
 
-def object_path_for_source_path(source_path):
-    assert is_source_path(source_path)
-    assert source_path.is_relative_to(SOURCE_ROOT)
-
-    # TODO make this more portable.
-    return (
-        BUILD_ROOT
-        / "src"
-        / "libbricks-1.so.0.p"
-        / (
-            str(source_path.relative_to(SOURCE_ROOT)).replace("/", "_")
-            + ".o"
-        )
-    )
-
-
 @functools.lru_cache(maxsize=None)
 def _object_path_to_source_path_index():
-    return {
-        object_path_for_source_path(source_path): source_path
-        for source_path in enumerate_source_paths()
-    }
+    index = {}
+    for command in _raw_commands:
+        input_path = (BUILD_ROOT / command["file"]).resolve()
+        output_path = (BUILD_ROOT / command["output"]).resolve()
+        index[output_path] = input_path
+    return index
 
 
 def source_path_for_object_path(object_path, /):
