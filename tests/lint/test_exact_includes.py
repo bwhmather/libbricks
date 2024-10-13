@@ -132,7 +132,7 @@ def test():
                 unused.discard(ref_include)
                 if ref_include not in includes:
                     missing_primary = ref_include
-                indirect.discard(ref_include)
+                indirect.pop(ref_include, None)
             unused.discard("config.h")
             if "config.h" not in includes:
                 missing_config = "config.h"
