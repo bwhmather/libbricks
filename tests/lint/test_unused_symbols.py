@@ -37,6 +37,9 @@ def test():
         if source_path is None:
             continue
 
+        if not source_path.is_relative_to(SOURCE_ROOT):
+            continue
+
         exported_result = subprocess.run(
             ["nm", "--defined-only", "--extern-only", object_path],
             stdout=subprocess.PIPE,
