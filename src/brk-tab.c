@@ -11,6 +11,7 @@
 
 #include <config.h>
 
+#include <brk-tab-page.h>
 #include <gdk/gdk.h>
 #include <gio/gio.h>
 #include <glib-object.h>

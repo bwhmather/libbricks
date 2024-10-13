@@ -17,6 +17,7 @@
 
 #include <glib.h>
 
+#include "brk-tab-page.h"
 #include "brk-tab-view.h"
 
 G_BEGIN_DECLS

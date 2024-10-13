@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
+#include "brk-tab-page.h"
 #include "brk-tab-view.h"
 
 G_BEGIN_DECLS

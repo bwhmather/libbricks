@@ -18,7 +18,6 @@
 #include <config.h>
 
 #include <float.h>
-#include <gdk/gdk.h>
 #include <glib.h>
 #include <graphene.h>
 #include <gtk/gtk.h>

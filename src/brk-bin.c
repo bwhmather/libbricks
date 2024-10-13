@@ -17,8 +17,6 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-widget-utils-private.h"
-
 /**
  * BrkBin:
  *

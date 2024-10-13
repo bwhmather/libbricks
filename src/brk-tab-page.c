@@ -9,12 +9,8 @@
 #include <gtk/gtk.h>
 
 #include "brk-bin.h"
-#include "brk-enums.h"
-#include "brk-marshalers.h"
 #include "brk-tab-page-private.h"
-#include "brk-tab-view-private.h"
 #include "brk-tab-view.h"
-#include "brk-widget-utils-private.h"
 
 struct _BrkTabPage {
     GObject parent_instance;

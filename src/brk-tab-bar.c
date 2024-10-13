@@ -21,6 +21,7 @@
 #include "brk-bin.h"
 #include "brk-tab-bar-private.h"
 #include "brk-tab-box-private.h"
+#include "brk-tab-page.h"
 #include "brk-tab-view.h"
 #include "brk-widget-utils-private.h"
 /**

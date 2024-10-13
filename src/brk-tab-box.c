@@ -30,6 +30,7 @@
 #include "brk-tab-bar-private.h"
 #include "brk-tab-bar.h"
 #include "brk-tab-box-private.h"
+#include "brk-tab-page.h"
 #include "brk-tab-private.h"
 #include "brk-tab-view-private.h"
 #include "brk-tab-view.h"

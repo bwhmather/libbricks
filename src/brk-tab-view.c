@@ -19,7 +19,6 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-bin.h"
 #include "brk-enums.h"
 #include "brk-marshalers.h"
 #include "brk-tab-page-private.h"
