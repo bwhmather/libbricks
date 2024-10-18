@@ -1,6 +1,7 @@
 test_suites = {
   'lint': [
     'exact-includes',
+    'entrypoint',
     'no-circular-includes',
     'source-and-header-contents-match',
     'source-and-header-orders-match',

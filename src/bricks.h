@@ -21,9 +21,16 @@ G_BEGIN_DECLS
 
 #define _BRICKS_INSIDE
 
+#include "brk-animation-target.h"
+#include "brk-animation-util.h"
+#include "brk-animation.h"
+#include "brk-bin.h"
+#include "brk-easing.h"
+#include "brk-enums.h"
 #include "brk-tab-bar.h"
 #include "brk-tab-page.h"
 #include "brk-tab-view.h"
+#include "brk-timed-animation.h"
 #include "brk-toolbar-view.h"
 #include "brk-toolbar.h"
 #include "brk-version.h"
