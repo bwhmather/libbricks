@@ -10,13 +10,11 @@
 
 #pragma once
 
-#if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
-#error "Only <bricks.h> can be included directly."
+#if !defined(BRICKS_COMPILATION)
+#error "Private headers can only be included when building libbricks."
 #endif
 
 #include <glib.h>
-
-#include "brk-version.h"
 
 G_BEGIN_DECLS
 
@@ -54,7 +52,6 @@ typedef enum {
     BRK_EASE_IN_OUT_BOUNCE,
 } BrkEasing;
 
-BRK_AVAILABLE_IN_ALL
 double
 brk_easing_ease(BrkEasing self, double value);
 

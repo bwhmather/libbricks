@@ -10,22 +10,18 @@
 
 #pragma once
 
-#if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
-#error "Only <bricks.h> can be included directly."
+#if !defined(BRICKS_COMPILATION)
+#error "Private headers can only be included when building libbricks."
 #endif
 
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-version.h"
-
 G_BEGIN_DECLS
 
-BRK_AVAILABLE_IN_ALL
 double
 brk_lerp(double a, double b, double t);
 
-BRK_AVAILABLE_IN_ALL
 gboolean
 brk_get_enable_animations(GtkWidget *widget);
 

@@ -3,15 +3,10 @@ libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
 
 libbricks_public_headers = files([
   'bricks.h',
-  'brk-animation.h',
-  'brk-animation-target.h',
-  'brk-animation-util.h',
   'brk-bin.h',
-  'brk-easing.h',
   'brk-tab-bar.h',
   'brk-tab-page.h',
   'brk-tab-view.h',
-  'brk-timed-animation.h',
   'brk-toolbar.h',
   'brk-toolbar-view.h',
 ])
@@ -19,7 +14,9 @@ libbricks_public_headers = files([
 libbricks_private_headers = files([
   'brk-animation-private.h',
   'brk-animation-target-private.h',
+  'brk-animation-util-private.h',
   'brk-bidi-private.h',
+  'brk-easing-private.h',
   'brk-fading-label-private.h',
   'brk-gizmo-private.h',
   'brk-tab-bar-private.h',
@@ -27,23 +24,23 @@ libbricks_private_headers = files([
   'brk-tab-page-private.h',
   'brk-tab-private.h',
   'brk-tab-view-private.h',
+  'brk-timed-animation-private.h',
   'brk-widget-utils-private.h',
 ])
 
 libbricks_public_sources = files([
   'bricks.c',
-  'brk-animation.c',
-  'brk-animation-target.c',
   'brk-bin.c',
   'brk-tab-bar.c',
   'brk-tab-page.c',
   'brk-tab-view.c',
-  'brk-timed-animation.c',
   'brk-toolbar.c',
   'brk-toolbar-view.c',
   'brk-version.c',
 ])
 libbricks_private_sources = files([
+  'brk-animation.c',
+  'brk-animation-target.c',
   'brk-animation-util.c',
   'brk-bidi.c',
   'brk-easing.c',
@@ -51,11 +48,14 @@ libbricks_private_sources = files([
   'brk-gizmo.c',
   'brk-tab-box.c',
   'brk-tab.c',
+  'brk-timed-animation.c',
   'brk-widget-utils.c',
 ])
 
-libbricks_generated_headers = []
-libbricks_generated_sources = []
+libbricks_public_generated_headers = []
+libbricks_public_generated_sources = []
+libbricks_private_generated_headers = []
+libbricks_private_generated_sources = []
 
 libbricks_resources = gnome.compile_resources(
   'brk-resources',
@@ -64,8 +64,8 @@ libbricks_resources = gnome.compile_resources(
   gresource_bundle: false,
   c_name: 'brk',
 )
-libbricks_generated_headers += [libbricks_resources[1]]
-libbricks_generated_sources += [libbricks_resources[0]]
+libbricks_private_generated_headers += [libbricks_resources[1]]
+libbricks_private_generated_sources += [libbricks_resources[0]]
 
 libbricks_public_enums = gnome.mkenums_simple(
   'brk-enums',
@@ -81,24 +81,23 @@ libbricks_public_enums = gnome.mkenums_simple(
   decorator: 'BRK_AVAILABLE_IN_ALL',
   install_dir: libbricks_header_dir,
 )
-libbricks_generated_headers += [libbricks_public_enums[1]]
-libbricks_generated_sources += [libbricks_public_enums[0]]
+libbricks_public_generated_headers += [libbricks_public_enums[1]]
+libbricks_public_generated_sources += [libbricks_public_enums[0]]
 
 libbricks_private_enums = gnome.mkenums_simple(
   'brk-enums-private',
   sources: libbricks_private_headers,
   body_prefix: '#include "config.h"',
   header_prefix: '''
-#if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
-#error "Only <bricks.h> can be included directly."
+#if !defined(BRICKS_COMPILATION)
+#error "Private headers can only be included when building libbricks."
 #endif
 
 #include "brk-version.h"
 ''',
-  install_dir: libbricks_header_dir,
 )
-libbricks_generated_headers += [libbricks_private_enums[1]]
-libbricks_generated_sources += [libbricks_private_enums[0]]
+libbricks_private_generated_headers += [libbricks_private_enums[1]]
+libbricks_private_generated_sources += [libbricks_private_enums[0]]
 
 libbricks_marshalers = gnome.genmarshal(
   'brk-marshalers',
@@ -106,8 +105,8 @@ libbricks_marshalers = gnome.genmarshal(
   prefix: 'brk_marshal',
   valist_marshallers: true,
 )
-libbricks_generated_headers += [libbricks_marshalers[1]]
-libbricks_generated_sources += [libbricks_marshalers[0]]
+libbricks_private_generated_headers += [libbricks_marshalers[1]]
+libbricks_private_generated_sources += [libbricks_marshalers[0]]
 
 version_data = configuration_data()
 version_data.set('BRK_MAJOR_VERSION', bricks_version_major)
@@ -120,7 +119,7 @@ libbricks_version_h = configure_file(
   install_dir: libbricks_header_dir,
   configuration: version_data,
 )
-libbricks_generated_headers += [libbricks_version_h]
+libbricks_public_generated_headers += [libbricks_version_h]
 
 config_data = configuration_data()
 config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
@@ -128,7 +127,7 @@ config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
 config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 config_data.set('_BRK_EXTERN', '__attribute__((visibility("default"))) extern')
 libbricks_config_h = configure_file(output: 'config.h', configuration: config_data)
-libbricks_generated_headers += []
+libbricks_private_generated_headers += [libbricks_config_h]
 
 install_headers(libbricks_public_headers, subdir: libbricks_header_subdir)
 
@@ -148,7 +147,8 @@ libbricks_public_deps = [
 
 libbricks = library(
   'bricks-' + apiversion,
-  libbricks_private_sources + libbricks_public_sources + libbricks_generated_headers + libbricks_generated_sources,
+  libbricks_public_sources + libbricks_private_sources +
+  libbricks_public_generated_sources + libbricks_private_generated_sources,
   soversion: soversion,
   dependencies: libbricks_deps,
   include_directories: include_directories('.'),
@@ -170,7 +170,7 @@ if generate_gir
 
   libbricks_gir = gnome.generate_gir(
     libbricks,
-    sources: libbricks_public_sources + libbricks_generated_headers + libbricks_generated_sources,
+    sources: libbricks_public_sources + libbricks_public_headers + libbricks_public_generated_sources + libbricks_public_generated_headers,
     nsversion: apiversion,
     namespace: 'Brk',
     export_packages: package_api_name,

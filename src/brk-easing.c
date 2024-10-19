@@ -10,11 +10,11 @@
 
 #include <config.h>
 
-#include "brk-easing.h"
-
 #include <float.h>
 #include <glib.h>
 #include <math.h>
+
+#include "brk-easing-private.h"
 
 /*
  * Copied from:

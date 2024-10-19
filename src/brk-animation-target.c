@@ -9,8 +9,6 @@
 
 #include <config.h>
 
-#include "brk-animation-target.h"
-
 #include <glib-object.h>
 #include <glib.h>
 

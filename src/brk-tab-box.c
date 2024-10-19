@@ -21,10 +21,10 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
-#include "brk-animation-target.h"
-#include "brk-animation-util.h"
-#include "brk-animation.h"
-#include "brk-easing.h"
+#include "brk-animation-private.h"
+#include "brk-animation-target-private.h"
+#include "brk-animation-util-private.h"
+#include "brk-easing-private.h"
 #include "brk-gizmo-private.h"
 #include "brk-marshalers.h"
 #include "brk-tab-bar-private.h"
@@ -34,7 +34,7 @@
 #include "brk-tab-private.h"
 #include "brk-tab-view-private.h"
 #include "brk-tab-view.h"
-#include "brk-timed-animation.h"
+#include "brk-timed-animation-private.h"
 #include "brk-widget-utils-private.h"
 
 #define SPACING 5

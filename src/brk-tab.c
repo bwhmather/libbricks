@@ -21,15 +21,15 @@
 #include <gtk/gtk.h>
 #include <pango/pango.h>
 
-#include "brk-animation-target.h"
-#include "brk-animation.h"
+#include "brk-animation-private.h"
+#include "brk-animation-target-private.h"
 #include "brk-bidi-private.h"
-#include "brk-easing.h"
+#include "brk-easing-private.h"
 #include "brk-fading-label-private.h"
 #include "brk-gizmo-private.h"
 #include "brk-tab-private.h"
 #include "brk-tab-view.h"
-#include "brk-timed-animation.h"
+#include "brk-timed-animation-private.h"
 
 #define FADE_WIDTH 18.0f
 #define CLOSE_BTN_ANIMATION_DURATION 150

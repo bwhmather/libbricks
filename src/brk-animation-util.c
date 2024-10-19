@@ -10,11 +10,11 @@
 
 #include <config.h>
 
-#include "brk-animation-util.h"
-
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+
+#include "brk-animation-util-private.h"
 /**
  * brk_lerp:
  * @a: the start
