@@ -67,17 +67,9 @@ libbricks_resources = gnome.compile_resources(
 libbricks_generated_headers += [libbricks_resources[1]]
 libbricks_generated_sources += [libbricks_resources[0]]
 
-libbricks_public_enum_headers = [
-  'brk-animation.h',
-  'brk-animation-target.h',
-  'brk-toolbar-view.h',
-  'brk-tab-bar.h',
-  'brk-tab-view.h',
-  'brk-easing.h',
-]
 libbricks_public_enums = gnome.mkenums_simple(
   'brk-enums',
-  sources: libbricks_public_enum_headers,
+  sources: libbricks_public_headers,
   body_prefix: '#include "config.h"',
   header_prefix: '''
 #if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
@@ -91,6 +83,22 @@ libbricks_public_enums = gnome.mkenums_simple(
 )
 libbricks_generated_headers += [libbricks_public_enums[1]]
 libbricks_generated_sources += [libbricks_public_enums[0]]
+
+libbricks_private_enums = gnome.mkenums_simple(
+  'brk-enums-private',
+  sources: libbricks_private_headers,
+  body_prefix: '#include "config.h"',
+  header_prefix: '''
+#if !defined(_BRICKS_INSIDE) && !defined(BRICKS_COMPILATION)
+#error "Only <bricks.h> can be included directly."
+#endif
+
+#include "brk-version.h"
+''',
+  install_dir: libbricks_header_dir,
+)
+libbricks_generated_headers += [libbricks_private_enums[1]]
+libbricks_generated_sources += [libbricks_private_enums[0]]
 
 libbricks_marshalers = gnome.genmarshal(
   'brk-marshalers',
