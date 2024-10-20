@@ -44,25 +44,6 @@ brk_callback_animation_target_new(
     BrkAnimationTargetFunc callback, gpointer user_data, GDestroyNotify destroy
 ) G_GNUC_WARN_UNUSED_RESULT;
 
-#define BRK_TYPE_PROPERTY_ANIMATION_TARGET (brk_property_animation_target_get_type())
-
-GDK_DECLARE_INTERNAL_TYPE(
-    BrkPropertyAnimationTarget, brk_property_animation_target, BRK, PROPERTY_ANIMATION_TARGET,
-    BrkAnimationTarget
-)
-
-BrkAnimationTarget *
-brk_property_animation_target_new(GObject *object, const char *property_name)
-    G_GNUC_WARN_UNUSED_RESULT;
-BrkAnimationTarget *
-brk_property_animation_target_new_for_pspec(GObject *object, GParamSpec *pspec)
-    G_GNUC_WARN_UNUSED_RESULT;
-
-GObject *
-brk_property_animation_target_get_object(BrkPropertyAnimationTarget *self);
-GParamSpec *
-brk_property_animation_target_get_pspec(BrkPropertyAnimationTarget *self);
-
 void
 brk_animation_target_set_value(BrkAnimationTarget *self, double value);
 
