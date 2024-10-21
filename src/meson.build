@@ -148,6 +148,7 @@ libbricks_public_deps = [
 libbricks = library(
   'bricks-' + apiversion,
   libbricks_public_sources + libbricks_private_sources +
+  libbricks_public_generated_headers + libbricks_private_generated_headers +
   libbricks_public_generated_sources + libbricks_private_generated_sources,
   soversion: soversion,
   dependencies: libbricks_deps,
