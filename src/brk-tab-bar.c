@@ -18,7 +18,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-bin.h"
+#include "brk-bin-private.h"
 #include "brk-tab-bar-private.h"
 #include "brk-tab-box-private.h"
 #include "brk-tab-page.h"

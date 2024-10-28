@@ -8,7 +8,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#include "brk-bin.h"
+#include "brk-bin-private.h"
 #include "brk-tab-page-private.h"
 #include "brk-tab-view.h"
 

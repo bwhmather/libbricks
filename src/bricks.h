@@ -21,7 +21,6 @@ G_BEGIN_DECLS
 
 #define _BRICKS_INSIDE
 
-#include "brk-bin.h"
 #include "brk-enums.h"
 #include "brk-tab-bar.h"
 #include "brk-tab-page.h"
