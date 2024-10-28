@@ -131,16 +131,16 @@ libbricks_private_generated_headers += [libbricks_config_h]
 
 install_headers(libbricks_public_headers, subdir: libbricks_header_subdir)
 
-libbricks_link_args =[]
-libbricks_symbols_file = 'libbricks.syms'
-
 libbricks_deps = [
   fribidi_dep,
-  glib_dep,
-  gtk_dep,
   math_dep,
+  glib_dep,
+  gio_dep,
+  gtk_dep,
 ]
+
 libbricks_public_deps = [
+  glib_dep,
   gio_dep,
   gtk_dep,
 ]
