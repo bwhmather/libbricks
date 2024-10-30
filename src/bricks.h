@@ -31,4 +31,10 @@ G_BEGIN_DECLS
 
 #undef _BRICKS_INSIDE
 
+void
+brk_init(void);
+
+gboolean
+brk_is_initialized(void);
+
 G_END_DECLS
