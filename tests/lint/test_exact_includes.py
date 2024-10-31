@@ -48,6 +48,7 @@ INCLUDE_ALIASES = {
 }
 
 BUILTIN_SYMBOLS = {
+    "size_t": "stddef.h",
     "ssize_t": "sys/types.h",
     "pid_t": "sys/types.h",
 }
