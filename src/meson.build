@@ -3,6 +3,7 @@ libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
 
 libbricks_public_headers = files([
   'bricks.h',
+  'brk-main.h',
   'brk-tab-bar.h',
   'brk-tab-page.h',
   'brk-tab-view.h',
@@ -32,6 +33,7 @@ libbricks_private_headers = files([
 libbricks_public_sources = files([
   'bricks.c',
   'brk-bin.c',
+  'brk-main.c',
   'brk-tab-bar.c',
   'brk-tab-page.c',
   'brk-tab-view.c',
@@ -128,6 +130,7 @@ config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
 config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
 config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 config_data.set('_BRK_EXTERN', '__attribute__((visibility("default"))) extern')
+config_data.set_quoted('BRK_DATA_PREFIX', get_option('prefix'))
 libbricks_config_h = configure_file(output: 'config.h', configuration: config_data)
 libbricks_private_generated_headers += [libbricks_config_h]
 

@@ -22,6 +22,7 @@ G_BEGIN_DECLS
 #define _BRICKS_INSIDE
 
 #include "brk-enums.h"
+#include "brk-main.h"
 #include "brk-tab-bar.h"
 #include "brk-tab-page.h"
 #include "brk-tab-view.h"
@@ -30,11 +31,5 @@ G_BEGIN_DECLS
 #include "brk-version.h"
 
 #undef _BRICKS_INSIDE
-
-void
-brk_init(void);
-
-gboolean
-brk_is_initialized(void);
 
 G_END_DECLS
