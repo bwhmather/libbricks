@@ -143,9 +143,9 @@ brk_style_manager_load_named(BrkStyleManager *self, char const *name, char const
 
     // Try to load from the set of built-in themes.
     if (variant != NULL) {
-        resource_path = g_strdup_printf("/com/bwhmather/libbricks/theme/%s/brk-%s.css", name, variant);
+        resource_path = g_strdup_printf("/com/bwhmather/Bricks/theme/%s/brk-%s.css", name, variant);
     } else {
-        resource_path = g_strdup_printf("/com/bwhmather/libbricks/theme/%s/brk.css", name);
+        resource_path = g_strdup_printf("/com/bwhmather/Bricks/theme/%s/brk.css", name);
     }
     if (g_resources_get_info(resource_path, 0, NULL, NULL, NULL)) {
         gtk_css_provider_load_from_resource(self->provider, resource_path);
