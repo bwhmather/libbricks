@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 
 #include "brk-enums.h"
+#include "brk-main.h"
 #include "brk-marshalers.h"
 #include "brk-tab-page-private.h"
 #include "brk-tab-page.h"
@@ -1282,6 +1283,8 @@ brk_tab_view_class_init(BrkTabViewClass *klass) {
 static void
 brk_tab_view_init(BrkTabView *self) {
     GtkEventController *controller;
+
+    g_warn_if_fail(brk_is_initialized());
 
     self->children = g_list_store_new(BRK_TYPE_TAB_PAGE);
     self->shortcuts = BRK_TAB_VIEW_SHORTCUT_ALL_SHORTCUTS;

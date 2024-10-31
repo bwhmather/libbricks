@@ -16,6 +16,7 @@
 #include <glib-object.h>
 #include <glib.h>
 #include <graphene.h>
+#include "brk-main.h"
 #include <gsk/gsk.h>
 #include <gtk/gtk.h>
 
@@ -708,6 +709,8 @@ brk_toolbar_view_class_init(BrkToolbarViewClass *klass) {
 static void
 brk_toolbar_view_init(BrkToolbarView *self) {
     GtkWidget *top_handle, *bottom_handle;
+
+    g_warn_if_fail(brk_is_initialized());
 
     self->top_bar_style = BRK_TOOLBAR_FLAT;
     self->bottom_bar_style = BRK_TOOLBAR_FLAT;

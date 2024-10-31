@@ -12,6 +12,8 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
+#include "brk-main.h"
+
 /**
  * BrkToolbar:
  *
@@ -95,6 +97,8 @@ brk_toolbar_class_init(BrkToolbarClass *class) {
 
 static void
 brk_toolbar_init(BrkToolbar *self) {
+    g_warn_if_fail(brk_is_initialized());
+
     gtk_accessible_update_property(
         GTK_ACCESSIBLE(self),
         GTK_ACCESSIBLE_PROPERTY_ORIENTATION, GTK_ORIENTATION_HORIZONTAL,

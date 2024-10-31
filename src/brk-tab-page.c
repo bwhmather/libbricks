@@ -9,6 +9,7 @@
 #include <gtk/gtk.h>
 
 #include "brk-bin-private.h"
+#include "brk-main.h"
 #include "brk-tab-page-private.h"
 #include "brk-tab-view.h"
 
@@ -509,6 +510,8 @@ brk_tab_page_class_init(BrkTabPageClass *klass) {
 
 static void
 brk_tab_page_init(BrkTabPage *self) {
+    g_warn_if_fail(brk_is_initialized());
+
     self->title = g_strdup("");
     self->tooltip = g_strdup("");
     self->indicator_tooltip = g_strdup("");

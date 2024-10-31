@@ -19,6 +19,7 @@
 #include <gtk/gtk.h>
 
 #include "brk-bin-private.h"
+#include "brk-main.h"
 #include "brk-tab-bar-private.h"
 #include "brk-tab-box-private.h"
 #include "brk-tab-page.h"
@@ -580,6 +581,8 @@ brk_tab_bar_class_init(BrkTabBarClass *klass) {
 static void
 brk_tab_bar_init(BrkTabBar *self) {
     GtkAdjustment *adj;
+
+    g_warn_if_fail(brk_is_initialized());
 
     self->autohide = TRUE;
 
