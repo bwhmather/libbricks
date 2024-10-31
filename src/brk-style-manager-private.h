@@ -11,6 +11,7 @@
 #endif
 
 #include <gdk/gdk.h>
+#include <glib-object.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
