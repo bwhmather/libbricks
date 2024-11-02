@@ -238,6 +238,8 @@ update_selected(BrkTab *self) {
 
     update_state(self);
     update_indicator(self);
+
+    set_style_class(GTK_WIDGET(self), "selected", self->selected);
 }
 
 static void
