@@ -52,3 +52,12 @@ tabbar tab.selected {
     );
     margin-top: 0px;
 }
+
+tabbar tab button.tab-close-button {
+    padding: 0;
+    margin: 5px;
+}
+
+tabbar tab.selected button.tab-close-button {
+    margin-top: 7px;
+}

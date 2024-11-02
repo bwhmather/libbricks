@@ -64,10 +64,8 @@ struct _BrkTab {
     gboolean inverted;
     gboolean title_inverted;
     gboolean close_overlap;
-    gboolean show_close;
     gboolean fully_visible;
 
-    BrkAnimation *close_btn_animation;
     BrkAnimation *needs_attention_animation;
 };
 
@@ -102,13 +100,6 @@ set_style_class(GtkWidget *widget, const char *style_class, gboolean enabled) {
 }
 
 static void
-close_btn_animation_value_cb(double value, BrkTab *self) {
-    gtk_widget_set_opacity(self->close_btn, value);
-    gtk_widget_set_can_target(self->close_btn, value > 0);
-    gtk_widget_queue_draw(GTK_WIDGET(self));
-}
-
-static void
 attention_indicator_animation_value_cb(double value, BrkTab *self) {
     gtk_widget_queue_allocate(GTK_WIDGET(self));
 }
@@ -116,7 +107,6 @@ attention_indicator_animation_value_cb(double value, BrkTab *self) {
 static void
 update_state(BrkTab *self) {
     GtkStateFlags new_state;
-    gboolean show_close;
 
     new_state = gtk_widget_get_state_flags(GTK_WIDGET(self)) & ~GTK_STATE_FLAG_SELECTED;
 
@@ -125,20 +115,6 @@ update_state(BrkTab *self) {
     }
 
     gtk_widget_set_state_flags(GTK_WIDGET(self), new_state, TRUE);
-
-    show_close = (self->hovering && self->fully_visible) || self->selected || self->dragging;
-
-    if (self->show_close != show_close) {
-        self->show_close = show_close;
-
-        brk_timed_animation_set_value_from(
-            BRK_TIMED_ANIMATION(self->close_btn_animation), gtk_widget_get_opacity(self->close_btn)
-        );
-        brk_timed_animation_set_value_to(
-            BRK_TIMED_ANIMATION(self->close_btn_animation), self->show_close ? 1 : 0
-        );
-        brk_animation_play(self->close_btn_animation);
-    }
 }
 
 static void
@@ -675,7 +651,6 @@ brk_tab_dispose(GObject *object) {
 
     brk_tab_set_page(self, NULL);
 
-    g_clear_object(&self->close_btn_animation);
     g_clear_object(&self->needs_attention_animation);
 
     gtk_widget_dispose_template(GTK_WIDGET(self), BRK_TYPE_TAB);
@@ -783,16 +758,6 @@ brk_tab_init(BrkTab *self) {
     BrkAnimationTarget *target;
 
     gtk_widget_init_template(GTK_WIDGET(self));
-
-    target = brk_callback_animation_target_new(
-        (BrkAnimationTargetFunc) close_btn_animation_value_cb, self, NULL
-    );
-    self->close_btn_animation =
-        brk_timed_animation_new(GTK_WIDGET(self), 0, 0, CLOSE_BTN_ANIMATION_DURATION, target);
-
-    brk_timed_animation_set_easing(
-        BRK_TIMED_ANIMATION(self->close_btn_animation), BRK_EASE_IN_OUT_CUBIC
-    );
 
     target = brk_callback_animation_target_new(
         (BrkAnimationTargetFunc) attention_indicator_animation_value_cb, self, NULL
