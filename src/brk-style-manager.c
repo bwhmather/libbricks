@@ -300,7 +300,7 @@ brk_style_manager_constructed(GObject *object) {
     gtk_style_context_add_provider_for_display(
         self->display,
         GTK_STYLE_PROVIDER(self->provider),
-        GTK_STYLE_PROVIDER_PRIORITY_THEME
+        (GTK_STYLE_PROVIDER_PRIORITY_THEME + GTK_STYLE_PROVIDER_PRIORITY_APPLICATION) / 2
     );
 
     brk_style_manager_update_stylesheet(self);
