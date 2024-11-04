@@ -37,7 +37,6 @@
 #include "brk-timed-animation-private.h"
 #include "brk-widget-utils-private.h"
 
-#define SPACING 5
 #define DND_THRESHOLD_MULTIPLIER 4
 #define DROP_SWITCH_TIMEOUT 500
 
@@ -292,7 +291,7 @@ find_nth_alive_tab(BrkTabBox *self, guint position) {
 
 static inline int
 calculate_tab_width(TabInfo *info, int base_width) {
-    return (int) floor((base_width + SPACING) * info->appear_progress) - SPACING;
+    return (int) floor(base_width * info->appear_progress);
 }
 
 static int
@@ -324,12 +323,12 @@ get_base_tab_width(BrkTabBox *self, gboolean target_end_padding, gboolean target
         }
     }
 
-    used_width = (self->allocated_width - (n + 1) * SPACING - end_padding) * max_progress;
+    used_width = (self->allocated_width - end_padding) * max_progress;
 
     ret = (int) ceil(used_width / n);
 
     if (!self->expand_tabs) {
-        ret = MIN(ret, MAX_TAB_WIDTH_NON_EXPAND - SPACING);
+        ret = MIN(ret, MAX_TAB_WIDTH_NON_EXPAND);
     }
 
     return ret;
@@ -347,7 +346,7 @@ predict_tab_width(BrkTabBox *self, TabInfo *info, gboolean assume_placeholder) {
         n++;
     }
 
-    width -= SPACING * (n + 1) + self->end_padding;
+    width -= self->end_padding;
 
     /* Tabs have 0 minimum width, we need natural width instead */
     gtk_widget_measure(
@@ -369,7 +368,7 @@ calculate_tab_offset(BrkTabBox *self, TabInfo *info, gboolean target) {
         return 0;
     }
 
-    width = (target ? self->reordered_tab->final_width : self->reordered_tab->width) + SPACING;
+    width = (target ? self->reordered_tab->final_width : self->reordered_tab->width);
 
     if (gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL) {
         width = -width;
@@ -380,15 +379,15 @@ calculate_tab_offset(BrkTabBox *self, TabInfo *info, gboolean target) {
 
 static void
 get_visible_range(BrkTabBox *self, int *lower, int *upper) {
-    int min = SPACING;
-    int max = self->allocated_width - SPACING;
+    int min = 0;
+    int max = self->allocated_width;
 
     if (self->adjustment) {
         double value = gtk_adjustment_get_value(self->adjustment);
         double page_size = gtk_adjustment_get_page_size(self->adjustment);
 
-        min = MAX(min, (int) floor(value) + SPACING);
-        max = MIN(max, (int) ceil(value + page_size) - SPACING);
+        min = MAX(min, (int) floor(value));
+        max = MIN(max, (int) ceil(value + page_size));
     }
 
     if (lower) {
@@ -431,12 +430,12 @@ resize_animation_value_cb(double value, BrkTabBox *self) {
         int predicted_tab_width = get_base_tab_width(self, TRUE, FALSE);
         GList *l;
 
-        target_end_padding = self->allocated_width - SPACING;
+        target_end_padding = self->allocated_width;
 
         for (l = self->tabs; l; l = l->next) {
             TabInfo *info = l->data;
 
-            target_end_padding -= calculate_tab_width(info, predicted_tab_width) + SPACING;
+            target_end_padding -= calculate_tab_width(info, predicted_tab_width);
         }
 
         target_end_padding = MAX(target_end_padding, 0);
@@ -687,9 +686,9 @@ update_visible(BrkTabBox *self) {
 
         brk_tab_set_fully_visible(
             info->tab,
-            (G_APPROX_VALUE(pos - SPACING, value, DBL_EPSILON) || pos - SPACING > value) &&
-                (G_APPROX_VALUE(pos + info->width + SPACING, value + page_size, DBL_EPSILON) ||
-                 pos + info->width + SPACING < value + page_size)
+            (G_APPROX_VALUE(pos, value, DBL_EPSILON) || pos > value) &&
+                (G_APPROX_VALUE(pos + info->width, value + page_size, DBL_EPSILON) ||
+                 pos + info->width < value + page_size)
         );
 
         if (!brk_tab_page_get_needs_attention(info->page)) {
@@ -839,9 +838,9 @@ scroll_to_tab_full(
         pos = get_tab_position(self, info, TRUE);
     }
 
-    if (pos - SPACING < value) {
+    if (pos < value) {
         animate_scroll(self, info, -padding, duration);
-    } else if (pos + tab_width + SPACING > value + page_size) {
+    } else if (pos + tab_width > value + page_size) {
         animate_scroll(self, info, tab_width + padding - page_size, duration);
     }
 
@@ -1237,7 +1236,7 @@ update_drag_reodering(BrkTabBox *self) {
             old_index = i;
         }
 
-        if (x + width + SPACING > center && center > x - SPACING && new_index < 0) {
+        if (x + width > center && center > x && new_index < 0) {
             new_index = i;
         }
 
@@ -1288,7 +1287,7 @@ drag_autoscroll_cb(GtkWidget *widget, GdkFrameClock *frame_clock, BrkTabBox *sel
             self->reordered_tab->container, GTK_ORIENTATION_HORIZONTAL, -1, NULL, &tab_width, NULL,
             NULL
         );
-        x = (double) self->reorder_x - SPACING;
+        x = (double) self->reorder_x;
     } else if (self->drop_target_tab) {
         gtk_widget_measure(
             self->drop_target_tab->container, GTK_ORIENTATION_HORIZONTAL, -1, NULL, &tab_width,
@@ -1913,7 +1912,7 @@ calculate_placeholder_index(BrkTabBox *self, int x) {
 
     is_rtl = gtk_widget_get_direction(GTK_WIDGET(self)) == GTK_TEXT_DIR_RTL;
 
-    pos = (is_rtl ? self->allocated_width - SPACING : SPACING);
+    pos = (is_rtl ? self->allocated_width : 0);
     i = 0;
 
     for (l = self->tabs; l; l = l->next) {
@@ -1926,7 +1925,7 @@ calculate_placeholder_index(BrkTabBox *self, int x) {
             break;
         }
 
-        pos += tab_width + (is_rtl ? -SPACING : SPACING);
+        pos += tab_width;
         i++;
     }
 
@@ -2650,7 +2649,7 @@ handle_click(BrkTabBox *self, TabInfo *info, GtkGesture *gesture) {
         double page_size = gtk_adjustment_get_page_size(self->adjustment);
 
         if (value + page_size < upper &&
-            (pos - SPACING < value || pos + SPACING + info->width > value + page_size)) {
+            (pos < value || pos + info->width > value + page_size)) {
             gtk_gesture_set_state(gesture, GTK_EVENT_SEQUENCE_CLAIMED);
 
             scroll_to_tab(self, info, SCROLL_ANIMATION_DURATION);
@@ -2788,13 +2787,11 @@ measure_tab_box(
             gtk_widget_measure(info->container, orientation, -1, NULL, &child_width, NULL, NULL);
 
             if (animated) {
-                width += calculate_tab_width(info, child_width) + SPACING;
+                width += calculate_tab_width(info, child_width);
             } else {
-                width += child_width + SPACING;
+                width += child_width;
             }
         }
-
-        width += SPACING;
 
         width = MAX(self->last_width, width);
 
@@ -2883,22 +2880,22 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
     is_rtl = gtk_widget_get_direction(widget) == GTK_TEXT_DIR_RTL;
 
     if (self->tab_resize_mode == TAB_RESIZE_FIXED_TAB_WIDTH) {
-        self->end_padding = self->allocated_width - SPACING;
+        self->end_padding = self->allocated_width;
         self->final_end_padding = self->end_padding;
 
         for (l = self->tabs; l; l = l->next) {
             TabInfo *info = l->data;
 
             info->width = calculate_tab_width(info, info->last_width);
-            self->end_padding -= info->width + SPACING;
+            self->end_padding -= info->width;
 
             info->final_width = info->last_width;
-            self->final_end_padding -= info->final_width + SPACING;
+            self->final_end_padding -= info->final_width;
         }
     } else {
         int tab_width = get_base_tab_width(self, FALSE, FALSE);
         int final_tab_width = get_base_tab_width(self, FALSE, TRUE);
-        int excess = self->allocated_width - SPACING - self->end_padding;
+        int excess = self->allocated_width - self->end_padding;
         int final_excess = excess;
 
         for (l = self->tabs; l; l = l->next) {
@@ -2907,8 +2904,8 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
             info->width = calculate_tab_width(info, tab_width);
             info->final_width = final_tab_width;
 
-            excess -= info->width + SPACING;
-            final_excess -= info->final_width + SPACING;
+            excess -= info->width;
+            final_excess -= info->final_width;
         }
 
         /* Now spread excess width across the tabs */
@@ -2931,7 +2928,7 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
         }
     }
 
-    pos = is_rtl ? self->allocated_width - SPACING : SPACING;
+    pos = is_rtl ? self->allocated_width : 0;
     final_pos = pos;
 
     for (l = self->tabs; l; l = l->next) {
@@ -2946,8 +2943,8 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
             info->final_pos -= info->final_width;
         }
 
-        pos += (is_rtl ? -1 : 1) * (info->width + SPACING);
-        final_pos += (is_rtl ? -1 : 1) * (info->final_width + SPACING);
+        pos += (is_rtl ? -1 : 1) * (info->width);
+        final_pos += (is_rtl ? -1 : 1) * (info->final_width);
     }
 
     value = get_scroll_animation_value(self);
