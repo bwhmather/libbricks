@@ -94,15 +94,11 @@ brk_tab_page_get_has_focus(BrkTabPage *self) {
 
     g_return_val_if_fail(BRK_IS_TAB_PAGE(self), FALSE);
 
-    if (gtk_widget_in_destruction(GTK_WIDGET(self))) {
-        return FALSE;
-    }
-
     if (!self->selected) {
         return FALSE;
     }
 
-    root = gtk_widget_get_root(GTK_WIDGET(self));
+    root = gtk_widget_get_root(brk_tab_page_get_bin(self));
     if (root == NULL) {
         return FALSE;
     }
@@ -126,15 +122,11 @@ brk_tab_page_save_focus(BrkTabPage *self) {
 
     g_return_if_fail(BRK_IS_TAB_PAGE(self));
 
-    if (gtk_widget_in_destruction(GTK_WIDGET(self))) {
-        return;
-    }
-
     if (!self->selected) {
         return;
     }
 
-    root = gtk_widget_get_root(GTK_WIDGET(self));
+    root = gtk_widget_get_root(brk_tab_page_get_bin(self));
     if (root == NULL) {
         return;
     }
@@ -524,6 +516,7 @@ brk_tab_page_buildable_add_child(
 ) {
     if (GTK_IS_WIDGET(child)) {
         brk_bin_set_child(BRK_BIN(BRK_TAB_PAGE(buildable)->bin), GTK_WIDGET(child));
+        g_set_object(&BRK_TAB_PAGE(buildable)->child, GTK_WIDGET(child));
     } else {
         tab_page_parent_buildable_iface->add_child(buildable, builder, child, type);
     }

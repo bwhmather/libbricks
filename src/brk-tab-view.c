@@ -445,7 +445,7 @@ set_selected_page(BrkTabView *self, BrkTabPage *selected_page, gboolean notify_p
             old_position = brk_tab_view_get_page_position(self, self->selected_page);
         }
 
-        if (brk_tab_page_get_has_focus(self->selected_page)) {
+        if (!gtk_widget_in_destruction(GTK_WIDGET(self)) && brk_tab_page_get_has_focus(self->selected_page)) {
             contains_focus = TRUE;
             brk_tab_page_save_focus(self->selected_page);
         }
