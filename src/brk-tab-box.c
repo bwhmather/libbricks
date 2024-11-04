@@ -80,7 +80,6 @@ typedef struct {
     BrkTabPage *page;
     BrkTab *tab;
     GtkWidget *container;
-    GtkWidget *separator;
 
     int final_pos;
     int final_width;
@@ -211,7 +210,6 @@ static guint signals[SIGNAL_LAST_SIGNAL];
 static void
 remove_and_free_tab_info(TabInfo *info) {
     gtk_widget_unparent(GTK_WIDGET(info->container));
-    gtk_widget_unparent(GTK_WIDGET(info->separator));
 
     g_free(info);
 }
@@ -409,64 +407,6 @@ is_touchscreen(GtkGesture *gesture) {
     GdkInputSource input_source = gdk_device_get_source(device);
 
     return input_source == GDK_SOURCE_TOUCHSCREEN;
-}
-
-static void
-update_separators(BrkTabBox *self) {
-    GList *l;
-    GtkStateFlags mask = GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_SELECTED;
-
-    for (l = self->tabs; l; l = l->next) {
-        TabInfo *info = l->data;
-        TabInfo *prev = NULL;
-        TabInfo *prev_prev = NULL;
-        TabInfo *visually_prev = NULL;
-        GtkStateFlags flags;
-
-        if (l->prev) {
-            prev = l->prev->data;
-        }
-
-        if (l->prev && l->prev->prev) {
-            prev_prev = l->prev->prev->data;
-        }
-
-        if (prev && prev_prev) {
-            /* Since the reordered tab has been moved away, the 2 tabs around it are
-       * now adjacent. Treat them as such for the separator purposes. */
-            if (prev == self->reordered_tab && prev_prev->end_reorder_offset > 0) {
-                visually_prev = prev_prev;
-            }
-
-            if (prev == self->reordered_tab && info->end_reorder_offset < 0) {
-                visually_prev = prev_prev;
-            }
-        }
-
-        if (prev && self->reordered_tab) {
-            /* There's a gap between the current and the previous tab. This means the
-       * reordered tab is between them, so treat is as the previous tab. */
-            if (info->end_reorder_offset - prev->end_reorder_offset > 0) {
-                visually_prev = self->reordered_tab;
-            }
-        }
-
-        if (!visually_prev) {
-            visually_prev = prev;
-        }
-
-        flags = gtk_widget_get_state_flags(GTK_WIDGET(info->tab));
-
-        if (visually_prev) {
-            flags |= gtk_widget_get_state_flags(GTK_WIDGET(visually_prev->tab));
-        }
-
-        if ((flags & mask) || !visually_prev) {
-            gtk_widget_add_css_class(info->separator, "hidden");
-        } else {
-            gtk_widget_remove_css_class(info->separator, "hidden");
-        }
-    }
 }
 
 /* Single tab style */
@@ -1041,8 +981,6 @@ check_end_reordering(BrkTabBox *self) {
     gtk_widget_queue_allocate(GTK_WIDGET(self));
 
     self->reordered_tab = NULL;
-
-    update_separators(self);
 }
 
 static void
@@ -1052,9 +990,6 @@ start_reordering(BrkTabBox *self, TabInfo *info) {
     /* The reordered tab should be displayed above everything else */
     gtk_widget_insert_before(
         GTK_WIDGET(self->reordered_tab->container), GTK_WIDGET(self), self->needs_attention_left
-    );
-    gtk_widget_insert_before(
-        GTK_WIDGET(self->reordered_tab->separator), GTK_WIDGET(self), self->needs_attention_left
     );
 
     gtk_widget_queue_allocate(GTK_WIDGET(self));
@@ -1194,8 +1129,6 @@ reset_reorder_animations(BrkTabBox *self) {
             animate_reorder_offset(self, l->data, 0);
         }
     }
-
-    update_separators(self);
 }
 
 static void
@@ -1265,8 +1198,6 @@ page_reordered_cb(BrkTabBox *self, BrkTabPage *page, int index) {
     }
 
     self->continue_reorder = FALSE;
-
-    update_separators(self);
 }
 
 static void
@@ -1341,8 +1272,6 @@ update_drag_reodering(BrkTabBox *self) {
     }
 
     self->reorder_index = new_index;
-
-    update_separators(self);
 }
 
 static gboolean
@@ -1708,16 +1637,6 @@ allocate_tab(BrkGizmo *widget, int width, int height, int baseline) {
     );
 }
 
-static void
-state_flags_changed_cb(GtkWidget *tab, GtkStateFlags previous, BrkTabBox *self) {
-    GtkStateFlags flags = gtk_widget_get_state_flags(tab);
-    GtkStateFlags mask = GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_SELECTED;
-
-    if ((flags ^ previous) & mask) {
-        update_separators(self);
-    }
-}
-
 static TabInfo *
 create_tab_info(BrkTabBox *self, BrkTabPage *page) {
     TabInfo *info;
@@ -1746,19 +1665,12 @@ create_tab_info(BrkTabBox *self, BrkTabPage *page) {
     );
     brk_tab_set_extra_drag_preload(info->tab, self->extra_drag_preload);
 
-    info->separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    gtk_widget_set_can_target(info->separator, FALSE);
-
     gtk_widget_set_parent(GTK_WIDGET(info->tab), info->container);
-    gtk_widget_insert_before(info->separator, GTK_WIDGET(self), self->needs_attention_left);
     gtk_widget_insert_before(info->container, GTK_WIDGET(self), self->needs_attention_left);
 
     g_signal_connect_object(info->tab, "extra-drag-drop", G_CALLBACK(extra_drag_drop_cb), self, 0);
     g_signal_connect_object(
         info->tab, "extra-drag-value", G_CALLBACK(extra_drag_value_cb), self, 0
-    );
-    g_signal_connect_object(
-        info->tab, "state-flags-changed", G_CALLBACK(state_flags_changed_cb), self, 0
     );
 
     return info;
@@ -1801,8 +1713,6 @@ page_attached_cb(BrkTabBox *self, BrkTabPage *page, int position) {
     } else {
         scroll_to_tab_full(self, info, -1, OPEN_ANIMATION_DURATION, TRUE);
     }
-
-    update_separators(self);
 }
 
 /* Closing */
@@ -1834,8 +1744,6 @@ close_animation_done_cb(TabInfo *info) {
     remove_and_free_tab_info(info);
 
     self->n_tabs--;
-
-    update_separators(self);
 }
 
 static void
@@ -2097,8 +2005,6 @@ insert_placeholder(BrkTabBox *self, BrkTabPage *page, int pos) {
     );
 
     brk_animation_play(info->appear_animation);
-
-    update_separators(self);
 }
 
 static void
@@ -2183,8 +2089,6 @@ remove_animation_done_cb(TabInfo *info) {
     self->n_tabs--;
 
     self->reorder_placeholder = NULL;
-
-    update_separators(self);
 }
 
 static void
@@ -2910,10 +2814,6 @@ measure_tab_box(
 
             min = MAX(min, child_min);
             nat = MAX(nat, child_nat);
-
-            gtk_widget_measure(info->separator, orientation, -1, &child_min, NULL, NULL, NULL);
-
-            min = MAX(min, child_min);
         }
 
         gtk_widget_measure(
@@ -3069,8 +2969,6 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
 
     for (l = self->tabs; l; l = l->next) {
         TabInfo *info = l->data;
-        GtkAllocation separator_allocation;
-        int separator_width;
 
         child_allocation.x = ((info == self->reordered_tab) ? self->reorder_window_x : info->pos) -
             (int) floor(value);
@@ -3078,23 +2976,7 @@ brk_tab_box_size_allocate(GtkWidget *widget, int width, int height, int baseline
         child_allocation.width = MAX(0, info->width);
         child_allocation.height = height;
 
-        gtk_widget_measure(
-            info->separator, GTK_ORIENTATION_HORIZONTAL, -1, &separator_width, NULL, NULL, NULL
-        );
-        separator_allocation.x = child_allocation.x + child_allocation.width;
-        if (is_rtl) {
-            separator_allocation.x = child_allocation.x + child_allocation.width;
-            separator_allocation.x += (SPACING - separator_width) / 2;
-        } else {
-            separator_allocation.x = child_allocation.x;
-            separator_allocation.x -= (SPACING + separator_width) / 2;
-        }
-        separator_allocation.y = 0;
-        separator_allocation.width = separator_width;
-        separator_allocation.height = height;
-
         gtk_widget_size_allocate(info->container, &child_allocation, baseline);
-        gtk_widget_size_allocate(info->separator, &separator_allocation, baseline);
     }
 
     gtk_widget_measure(
@@ -3183,7 +3065,6 @@ snapshot_tabs(BrkTabBox *self, GtkSnapshot *snapshot) {
         }
 
         gtk_widget_snapshot_child(GTK_WIDGET(self), info->container, snapshot);
-        gtk_widget_snapshot_child(GTK_WIDGET(self), info->separator, snapshot);
     }
 
     if (is_clipping) {
@@ -3254,7 +3135,6 @@ brk_tab_box_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
     if (self->reordered_tab && gtk_widget_get_opacity(self->reordered_tab->container) > 0) {
         gtk_widget_snapshot_child(GTK_WIDGET(self), self->reordered_tab->container, snapshot);
-        gtk_widget_snapshot_child(GTK_WIDGET(self), self->reordered_tab->separator, snapshot);
     }
 
     gtk_widget_snapshot_child(GTK_WIDGET(self), self->needs_attention_left, snapshot);
