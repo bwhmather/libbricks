@@ -3,6 +3,7 @@ libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
 
 libbricks_public_headers = files([
   'bricks.h',
+  'brk-button-group.h',
   'brk-main.h',
   'brk-tab-bar.h',
   'brk-tab-page.h',
@@ -33,6 +34,7 @@ libbricks_private_headers = files([
 libbricks_public_sources = files([
   'bricks.c',
   'brk-bin.c',
+  'brk-button-group.c',
   'brk-main.c',
   'brk-tab-bar.c',
   'brk-tab-page.c',
