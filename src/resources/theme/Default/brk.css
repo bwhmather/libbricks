@@ -63,3 +63,18 @@ tabbar tab button.tab-close-button {
 tabbar tab.selected button.tab-close-button {
     margin-top: 7px;
 }
+
+tabview {
+    margin: 4px 0 0 0;
+}
+
+viewport,
+textview {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+grid {
+    border-spacing: 5px;
+    padding: 5px;
+}
