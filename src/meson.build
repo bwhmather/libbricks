@@ -191,7 +191,6 @@ if generate_gir
     install_dir_typelib: typelibdir,
     extra_args: libbricks_gir_extra_args,
   )
-
   if get_option('vapi')
     libbricks_vapi = gnome.generate_vapi(
       package_api_name,
@@ -209,4 +208,15 @@ libbricks_dep = declare_dependency(
   dependencies: libbricks_public_deps,
   link_with: libbricks,
   include_directories: include_directories('.'),
+)
+
+pkgconfig.generate(
+  libraries: [libbricks],
+  subdirs: libbricks_header_subdir,
+  version: meson.project_version(),
+  name: 'Bricks',
+  filebase: package_api_name,
+  description: 'GTK platform library for reactionaries and curmudgeons',
+  requires: 'gtk4',
+  install_dir: libdir / 'pkgconfig',
 )
