@@ -74,9 +74,6 @@ gboolean
 brk_tab_view_select_next_page(BrkTabView *self);
 
 BRK_AVAILABLE_IN_ALL
-GIcon *
-brk_tab_view_get_default_icon(BrkTabView *self);
-BRK_AVAILABLE_IN_ALL
 void
 brk_tab_view_set_default_icon(BrkTabView *self, GIcon *default_icon);
 
