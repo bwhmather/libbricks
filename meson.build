@@ -1,5 +1,5 @@
 project(
-  'libbricks', 'c',
+  'libbricks', 'vala',
   version: '1.0.alpha',
   license: 'LGPL-2.1-or-later',
   meson_version: '>= 1.3.0',
@@ -22,23 +22,8 @@ endif
 apiversion = bricks_version_major.to_string()
 package_api_name = '@0@-@1@'.format(meson.project_name(), apiversion)
 
-# Before making a release, the libversion string should be modified.
-#
-#  * Bump the first component if binary compatibility has been broken; or
-#  * Bump the second component if new APIs are added; or
-#  * Bump the third component otherwise.
-#
-# When bumping the first component version, set the second and third components
-# to 0. When bumping the second version, set the third one to zero.
-libversion = '0.1.0'
-# The so major version of the library
-soversion = 0
+soversion = bricks_version_minor.to_string()
 
-add_project_arguments([
-  '-DBRICKS_COMPILATION',
-], language: 'c')
-
-# Setup various paths that subdirectory meson.build files need
 package_subdir = get_option('package_subdir') # When used as subproject
 if package_subdir != ''
   datadir = get_option('datadir') / package_subdir
@@ -54,90 +39,79 @@ else
   vapidir = get_option('datadir') / 'vala' / 'vapi'
 endif
 
-test_c_args = [
-  '-fno-strict-aliasing',
-  '-Wcast-align',
-  '-Wdeclaration-after-statement',
-  '-Werror=address',
-  '-Werror=array-bounds',
-  '-Werror=empty-body',
-  ['-Werror=format-security', '-Werror=format=2'],
-  '-Werror=implicit',
-  '-Werror=implicit-function-declaration',
-  '-Werror=incompatible-pointer-types',
-  '-Werror=init-self',
-  '-Werror=int-conversion',
-  '-Werror=int-to-pointer-cast',
-  '-Werror=main',
-  '-Werror=misleading-indentation',
-  '-Werror=missing-braces',
-  '-Werror=missing-include-dirs',
-  '-Werror=nonnull',
-  '-Werror=overflow',
-  '-Werror=parenthesis',
-  '-Werror=pointer-arith',
-  '-Werror=pointer-to-int-cast',
-  '-Werror=return-type',
-  '-Werror=sequence-point',
-  '-Werror=shadow',
-  '-Werror=strict-prototypes',
-  '-Werror=trigraphs',
-  '-Werror=undef',
-  '-Werror=write-strings',
-  '-Wformat-nonliteral',
-  '-Wignored-qualifiers',
-  '-Wimplicit-function-declaration',
-  '-Wlogical-op',
-  '-Wmissing-declarations',
-  '-Wmissing-format-attribute',
-  '-Wmissing-include-dirs',
-  '-Wmissing-noreturn',
-  '-Wnested-externs',
-  '-Wno-cast-function-type',
-  '-Wno-missing-field-initializers',
-  '-Wno-overlength-strings',
-  '-Wno-pedantic',
-  '-Wno-sign-compare',
-  '-Wno-unused-parameter',
-  '-Wold-style-definition',
-  '-Wpointer-arith',
-  '-Wstrict-prototypes',
-  '-Wswitch-default',
-  '-Wswitch-enum',
-  '-Wundef',
-  '-Wuninitialized',
-  '-Wunused',
-]
-if get_option('buildtype') != 'plain'
-  test_c_args += '-fstack-protector-strong'
-endif
+add_project_arguments(
+  '--gresourcesdir', 'resources',
+  '--gresources', meson.current_source_dir() / 'src/resources/bricks.gresources.xml',
+  '--vapidir=' + meson.source_root() + '/vapi/',
+  '--pkg', 'config',
+  language: 'vala'
+)
 
-global_c_args = []
-foreach arg: test_c_args
-  if cc.has_multi_arguments(arg)
-    global_c_args += arg
-  endif
-endforeach
-add_project_arguments(global_c_args, language: 'c')
+add_project_arguments([
+  '-include', 'config.h',
+  '-Wno-pedantic',
+  '-Wno-discarded-qualifiers',
+  '-Wno-unused-but-set-variable',
+  '-Wno-unused-function',
+  '-Wno-unused-parameter',
+  '-Wno-unused-variable',
+], language: 'c')
 
 glib_dep = dependency('glib-2.0')
 gio_dep = dependency('gio-2.0')
-fribidi_dep = dependency('fribidi')
 gtk_dep = dependency('gtk4', include_type: 'system')
 math_dep = cc.find_library('m')
 
-gir = find_program('g-ir-scanner', required : get_option('introspection'))
-if not gir.found() and get_option('introspection').enabled()
-  error('Introspection enabled, but g-ir-scanner not found.')
-endif
-generate_gir = gir.found() and (
-  get_option('introspection').enabled() or
-  (get_option('introspection').allowed() and get_option('documentation')) or
-  (get_option('introspection').allowed() and get_option('vapi'))
+libbricks_deps = [
+  math_dep,
+  glib_dep,
+  gio_dep,
+  gtk_dep,
+]
+
+libbricks_public_deps = [
+  glib_dep,
+  gio_dep,
+  gtk_dep,
+]
+
+libbricks_sources = [
+  'src/brk-main.vala',
+  'src/brk-button-group.vala',
+  'src/brk-statusbar.vala',
+  'src/brk-tab-view.vala',
+  'src/brk-toolbar-view.vala',
+  'src/brk-toolbar.vala',
+  #  'src/brk-style-manager.vala',
+]
+
+libbricks_header_subdir = package_subdir / package_api_name
+libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
+
+config_data = configuration_data()
+config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
+config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
+config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+config_data.set_quoted('BRK_DATA_PREFIX', get_option('prefix'))
+libbricks_config_h = configure_file(output: 'config.h', configuration: config_data)
+
+libbricks = shared_library(
+  'bricks-' + apiversion,
+  libbricks_sources,
+  vala_header: package_api_name / 'bricks.h',
+  vala_gir: 'Brk-@0@.@1@.gir'.format(bricks_version_major, bricks_version_minor),
+  soversion: soversion,
+  dependencies: libbricks_deps,
+  include_directories: libbricks_header_subdir,
+  install: true,
+  install_dir: libdir,
 )
 
-subdir('src')
+libbricks_dep = declare_dependency(
+  dependencies: libbricks_public_deps,
+  link_with: libbricks,
+)
+
 if not meson.is_subproject()
     subdir('docs')
-    subdir('tests')
 endif
