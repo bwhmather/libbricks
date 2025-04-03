@@ -12,7 +12,7 @@ if get_option('werror')
   gidocgen_common_args += ['--fatal-warnings']
 endif
 
-docs_dir = datadir / 'doc'
+docs_dir = data_dir / 'doc'
 
 if get_option('documentation') and not generate_gir
   error('API reference requires introspection.')

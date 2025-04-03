@@ -11,44 +11,45 @@ pkgconfig = import('pkgconfig')
 cc = meson.get_compiler('c')
 
 version_arr = meson.project_version().split('-')[0].split('.')
-bricks_version_major = version_arr[0].to_int()
-bricks_version_minor = version_arr[1].to_int()
+version_major = version_arr[0].to_int()
+version_minor = version_arr[1].to_int()
 if version_arr[2].startswith('alpha') or version_arr[2].startswith('beta') or version_arr[2].startswith('rc')
-  bricks_version_micro = 0
+  version_micro = 0
 else
-  bricks_version_micro = version_arr[2].to_int()
+  version_micro = version_arr[2].to_int()
 endif
-
-apiversion = bricks_version_major.to_string()
-package_api_name = '@0@-@1@'.format(meson.project_name(), apiversion)
-
-soversion = bricks_version_minor.to_string()
 
 package_subdir = get_option('package_subdir') # When used as subproject
 if package_subdir != ''
-  datadir = get_option('datadir') / package_subdir
-  libdir = get_option('libdir') / package_subdir
-  girdir = get_option('datadir') / package_subdir / 'gir-1.0'
-  typelibdir = get_option('libdir') / package_subdir / 'girepository-1.0'
-  vapidir = get_option('datadir') / package_subdir / 'vapi'
+  include_dir = get_option('includedir') / package_subdir / f'libbricks-@version_major@'
+  data_dir = get_option('datadir') / package_subdir
+  lib_dir = get_option('libdir') / package_subdir
+  gir_dir = get_option('datadir') / package_subdir / 'gir-1.0'
+  typelib_dir = get_option('libdir') / package_subdir / 'girepository-1.0'
+  vapi_dir = get_option('datadir') / package_subdir / 'vapi'
 else
-  datadir = get_option('datadir')
-  libdir = get_option('libdir')
-  girdir = get_option('datadir') / 'gir-1.0'
-  typelibdir = get_option('libdir') / 'girepository-1.0'
-  vapidir = get_option('datadir') / 'vala' / 'vapi'
+  include_dir = get_option('includedir') / f'libbricks-@version_major@'
+  data_dir = get_option('datadir')
+  lib_dir = get_option('libdir')
+  gir_dir = get_option('datadir') / 'gir-1.0'
+  typelib_dir = get_option('libdir') / 'girepository-1.0'
+  vapi_dir = get_option('datadir') / 'vapi'
 endif
 
+config_data = configuration_data()
+config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
+config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
+config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+config_data.set_quoted('BRK_DATA_PREFIX', get_option('prefix'))
+config_h = configure_file(output: 'libbricks-config.h', configuration: config_data)
+
 add_project_arguments(
-  '--gresourcesdir', 'resources',
-  '--gresources', meson.current_source_dir() / 'src/resources/bricks.gresources.xml',
-  '--vapidir=' + meson.source_root() + '/vapi/',
-  '--pkg', 'config',
+  '--vapidir', meson.current_source_dir() / 'vapi',
   language: 'vala'
 )
 
 add_project_arguments([
-  '-include', 'config.h',
+  '-include', config_h.full_path(),
   '-Wno-pedantic',
   '-Wno-discarded-qualifiers',
   '-Wno-unused-but-set-variable',
@@ -62,20 +63,20 @@ gio_dep = dependency('gio-2.0')
 gtk_dep = dependency('gtk4', include_type: 'system')
 math_dep = cc.find_library('m')
 
-libbricks_deps = [
+deps = [
   math_dep,
   glib_dep,
   gio_dep,
   gtk_dep,
 ]
 
-libbricks_public_deps = [
+public_deps = [
   glib_dep,
   gio_dep,
   gtk_dep,
 ]
 
-libbricks_sources = [
+sources = [
   'src/brk-main.vala',
   'src/brk-button-group.vala',
   'src/brk-statusbar.vala',
@@ -85,31 +86,31 @@ libbricks_sources = [
   #  'src/brk-style-manager.vala',
 ]
 
-libbricks_header_subdir = package_subdir / package_api_name
-libbricks_header_dir = get_option('includedir') / libbricks_header_subdir
-
-config_data = configuration_data()
-config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
-config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
-config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
-config_data.set_quoted('BRK_DATA_PREFIX', get_option('prefix'))
-libbricks_config_h = configure_file(output: 'config.h', configuration: config_data)
+sources += gnome.compile_resources(
+    'brk-resources',
+    'src/resources/bricks.gresources.xml',
+    source_dir: 'src/resources',
+)
 
 libbricks = shared_library(
-  'bricks-' + apiversion,
-  libbricks_sources,
-  vala_header: package_api_name / 'bricks.h',
-  vala_gir: 'Brk-@0@.@1@.gir'.format(bricks_version_major, bricks_version_minor),
-  soversion: soversion,
-  dependencies: libbricks_deps,
-  include_directories: libbricks_header_subdir,
+  f'bricks-@version_major@',
+  sources,
+  vala_header: 'bricks.h',
+  vala_vapi: f'libbricks-@version_major@.vapi',
+  vala_gir: f'Brk-@version_major@.@version_minor@.gir',
+  vala_args: [
+    '--pkg', 'config',
+  ],
+  soversion: version_minor,
+  dependencies: deps,
   install: true,
-  install_dir: libdir,
+  install_dir: [lib_dir, include_dir, true, true]
 )
 
 libbricks_dep = declare_dependency(
-  dependencies: libbricks_public_deps,
+  dependencies: public_deps,
   link_with: libbricks,
+  include_directories: include_directories('.'),
 )
 
 if not meson.is_subproject()

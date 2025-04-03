@@ -1,4 +1,4 @@
-[CCode (cprefix = "", lower_case_cprefix = "", cheader_filename = "config.h")]
+[CCode (cprefix = "", lower_case_cprefix = "", cheader_filename = "libbricks-config.h")]
 namespace Config {
     public const string G_LOG_DOMAIN;
     public const string GETTEXT_PACKAGE;
