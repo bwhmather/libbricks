@@ -41,10 +41,15 @@ config_data.set_quoted('G_LOG_DOMAIN', 'Bricks')
 config_data.set_quoted('GETTEXT_PACKAGE', 'libbricks')
 config_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 config_data.set_quoted('BRK_DATA_PREFIX', get_option('prefix'))
+config_data.set('BRK_VERSION_MAJOR', version_major)
+config_data.set('BRK_VERSION_MINOR', version_minor)
+config_data.set('BRK_VERSION_MICRO', version_micro)
 config_h = configure_file(output: 'libbricks-config.h', configuration: config_data)
 
 add_project_arguments(
   '--vapidir', meson.current_source_dir() / 'vapi',
+  '--enable-deprecated',
+  '--abi-stability',
   language: 'vala'
 )
 
@@ -83,7 +88,7 @@ sources = [
   'src/brk-tab-view.vala',
   'src/brk-toolbar-view.vala',
   'src/brk-toolbar.vala',
-  #  'src/brk-style-manager.vala',
+  'src/brk-style-manager.vala',
 ]
 
 sources += gnome.compile_resources(

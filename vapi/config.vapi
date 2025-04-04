@@ -4,4 +4,7 @@ namespace Config {
     public const string GETTEXT_PACKAGE;
     public const string LOCALEDIR;
     public const string BRK_DATA_PREFIX;
+    public const int BRK_VERSION_MAJOR;
+    public const int BRK_VERSION_MINOR;
+    public const int BRK_VERSION_MICRO;
 }

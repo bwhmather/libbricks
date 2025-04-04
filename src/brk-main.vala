@@ -56,11 +56,3 @@ is_initialized() {
 }
 
 }
-
-internal sealed class Brk.StyleManager : GLib.Object {
-    public Gdk.Display display { get; construct; }
-
-    public StyleManager(Gdk.Display display) {
-        Object(display: display);
-    }
-}
