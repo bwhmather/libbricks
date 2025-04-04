@@ -627,9 +627,9 @@ public sealed class Brk.TabView : Gtk.Widget {
 
         page.closing = false;
         if (!should_close) {
-                return;
+            return;
         }
-        
+
         this.unbind_page(page);
         this.page_list.remove(position);
     }

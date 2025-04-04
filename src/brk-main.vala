@@ -12,7 +12,7 @@ private GLib.HashTable<Gdk.Display, Brk.StyleManager> display_style_managers;
 private void
 register_display(Gdk.Display display) {
     return_if_fail(!display_style_managers.contains(display));
-    
+
     var style_manager = new Brk.StyleManager(display);
     display_style_managers.insert(display, style_manager);
     display.closed.connect((d, is_error) => { unregister_display(d); });

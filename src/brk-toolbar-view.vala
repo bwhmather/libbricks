@@ -96,7 +96,7 @@ public sealed class Brk.ToolbarView : Gtk.Widget, Gtk.Buildable {
             this.add_top_bar(child as Gtk.Widget);
             return;
         }
-        
+
         if (type == "bottom") {
             this.add_bottom_bar(child as Gtk.Widget);
             return;
