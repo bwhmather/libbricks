@@ -237,14 +237,21 @@ public sealed class Brk.TabPage : GLib.Object {
 private sealed class Brk.TabViewTabs : Gtk.Widget {
     public unowned Brk.TabView view { get; construct; }
 
+    private Gtk.Button left_button;
+    private Gtk.Button right_button;
+
     static construct {
-        set_layout_manager_type(typeof (Gtk.BoxLayout));
         set_css_name("tabs");
         set_accessible_role(TAB_LIST);
     }
 
     construct {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.HORIZONTAL, -1);
+
+        this.left_button = new Gtk.Button();
+        this.left_button.insert_before(this, null);
+        this.right_button = new Gtk.Button();
+        this.right_button.insert_after(this, null);
 
         this.view.pages.items_changed.connect((position, removed, added) => {
             Gtk.Widget? next = this.get_first_child();
@@ -267,6 +274,154 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
     public TabViewTabs(Brk.TabView view) {
         Object(view: view);
+    }
+
+    public override void
+    measure(
+        Gtk.Orientation orientation,
+        int for_size,
+        out int minimum,
+        out int natural,
+        out int minimum_baseline,
+        out int natural_baseline
+    ) {
+        if (orientation == HORIZONTAL) {
+            int child_minimum, child_natural;
+
+            // At minimum width just the scroll buttons will be show.  All tabs will be hidden.
+            minimum = 0;
+
+            this.left_button.measure(
+                orientation, for_size,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            minimum += child_minimum;
+
+            this.right_button.measure(
+                orientation, for_size,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            minimum += child_minimum;
+
+            // At natural width, scroll buttons are hidden and all tabs are expanded to the natural
+            // width of the largest tab.
+            natural = 0;
+
+            int tab_width = 0;
+            int num_tabs = 0;
+            for (
+                var child = this.get_first_child();
+                child != this.left_button;
+                child = child.get_next_sibling()
+            ) {
+                child.measure(
+                    orientation, for_size,
+                    out child_minimum, out child_natural,
+                    null, null
+                );
+                if (child_natural > tab_width) {
+                    tab_width = child_natural;
+                }
+                num_tabs += 1;
+            }
+
+            if (natural < minimum) {
+                natural = minimum;
+            }
+
+            minimum_baseline = -1;
+            natural_baseline = -1;
+        } else {
+            minimum = 0;
+            natural = 0;
+            for (
+                var child = this.get_first_child();
+                child != null;
+                child = child.get_next_sibling()
+            ) {
+                int child_minimum, child_natural;
+                child.measure(
+                    orientation, for_size,
+                    out child_minimum, out child_natural,
+                    null, null
+                );
+
+                if (child_minimum > minimum) {
+                    minimum = child_minimum;
+                }
+                if (child_natural > natural) {
+                    natural = child_natural;
+                }
+            }
+            minimum_baseline = -1;
+            natural_baseline = -1;
+        }
+    }
+
+    public override void
+    size_allocate (int width, int height, int baseline) {
+        // Three modes:
+        // Overflow mode: buttons visible.  Tabs all have min width.
+        // Fill mode: buttons hidden.  Tabs
+        // Non-overflow mode: buttons hidden.  ta
+
+        int minimum = 0;
+        int natural = 0;
+        int num_tabs = 0;
+        for (
+            var child = this.get_first_child();
+            child != this.left_button;
+            child = child.get_next_sibling()
+        ) {
+            int child_minimum, child_natural;
+            child.measure(
+                HORIZONTAL, height,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            if (child_minimum > minimum) {
+                minimum = child_minimum;
+            }
+            if (child_natural > natural) {
+                natural = child_natural;
+            }
+            num_tabs += 1;
+        }
+        if (num_tabs == 0) {
+            return;
+        }
+
+        int tabs_width = width;
+        bool overflow = false;
+        if (natural * num_tabs < tabs_width) {
+            // Don't fill up tab bar if tabs aren't requesting it.
+            tabs_width = natural * num_tabs;
+        }
+        if (minimum * num_tabs > tabs_width) {
+            // Tabs don't fit in available space.  Trigger overflow mode (TODO).
+            tabs_width = minimum * num_tabs;
+            overflow = true;
+        }
+
+        // TODO Allocate left button.
+        this.left_button.visible = false;
+
+        // TODO Allocate right button.
+        this.right_button.visible = false;
+
+        int tab_width = tabs_width / num_tabs;
+
+        Gsk.Transform transform = null;
+        for (
+            var child = this.get_first_child();
+            child != this.left_button;
+            child = child.get_next_sibling()
+        ) {
+            child.allocate(tab_width, height, baseline, transform);
+            transform = transform.translate({tab_width, 0});
+        }
     }
 }
 
