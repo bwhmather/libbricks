@@ -305,12 +305,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             );
             minimum += child_minimum;
 
-            // At natural width, scroll buttons are hidden and all tabs are expanded to the natural
-            // width of the largest tab.
+            // At natural width, scroll buttons are hidden and all tabs are expanded to their
+            // own natural width.
             natural = 0;
 
-            int tab_width = 0;
-            int num_tabs = 0;
             for (
                 var child = this.get_first_child();
                 child != this.left_button;
@@ -321,10 +319,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
                     out child_minimum, out child_natural,
                     null, null
                 );
-                if (child_natural > tab_width) {
-                    tab_width = child_natural;
-                }
-                num_tabs += 1;
+                natural += child_natural;
             }
 
             if (natural < minimum) {
@@ -381,27 +376,23 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
                 out child_minimum, out child_natural,
                 null, null
             );
-            if (child_minimum > minimum) {
-                minimum = child_minimum;
-            }
-            if (child_natural > natural) {
-                natural = child_natural;
-            }
+            minimum += child_minimum;
+            natural += child_natural;
             num_tabs += 1;
         }
         if (num_tabs == 0) {
             return;
         }
 
-        int tabs_width = width;
+        int allocated = width;
         bool overflow = false;
-        if (natural * num_tabs < tabs_width) {
+        if (natural < allocated) {
             // Don't fill up tab bar if tabs aren't requesting it.
-            tabs_width = natural * num_tabs;
+            allocated = natural;
         }
-        if (minimum * num_tabs > tabs_width) {
+        if (minimum > allocated) {
             // Tabs don't fit in available space.  Trigger overflow mode (TODO).
-            tabs_width = minimum * num_tabs;
+            allocated = minimum;
             overflow = true;
         }
 
@@ -411,7 +402,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         // TODO Allocate right button.
         this.right_button.visible = false;
 
-        int tab_width = tabs_width / num_tabs;
+        int requested_slack = natural - minimum;
+        int remaining_slack = allocated - minimum;
 
         Gsk.Transform transform = null;
         for (
@@ -419,8 +411,25 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             child != this.left_button;
             child = child.get_next_sibling()
         ) {
-            child.allocate(tab_width, height, baseline, transform);
-            transform = transform.translate({tab_width, 0});
+            int child_minimum, child_natural;
+            child.measure(
+                HORIZONTAL, height,
+                out child_minimum, out child_natural,
+                null, null
+            );
+
+            int child_slack = 0;
+            if (requested_slack != 0) {
+                child_slack += child_natural - child_minimum;
+                child_slack *= remaining_slack; // TODO overflow likely.
+                child_slack /= requested_slack;
+
+                requested_slack -= (child_natural - child_minimum);
+                remaining_slack -= child_slack;
+            }
+            int child_width = child_minimum + child_slack;
+            child.allocate(child_width, height, baseline, transform);
+            transform = transform.translate({child_width, 0});
         }
     }
 }
