@@ -39,7 +39,7 @@ public sealed class Brk.ToolbarView : Gtk.Widget, Gtk.Buildable {
     Gtk.Widget? _content;
     public Gtk.Widget? content {
         get {
-            return this.content;
+            return this._content;
         }
         set {
             if (this._content != null) {
