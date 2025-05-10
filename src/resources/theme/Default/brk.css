@@ -24,8 +24,11 @@
     --text-view-bg: @text_view_bg;
 }
 
+tabview {
+    margin: 4px 0 0 0;
+}
 
-tabbar {
+tabview tabbar {
     padding-top: 2px;
     border-top: 1px solid var(--border-color);
     background-image: linear-gradient(
@@ -36,7 +39,7 @@ tabbar {
     );
 }
 
-tabbar tab {
+tabview tabbar tab {
     border-radius: 8px 8px 0px 0px;
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -45,7 +48,7 @@ tabbar tab {
     margin-right: 2px;
 }
 
-tabbar tab.selected {
+tabview tabbar tab.selected {
     border-bottom-width: 0px;
     background-image: linear-gradient(
         to bottom,
@@ -53,19 +56,17 @@ tabbar tab.selected {
         var(--bg-color) 5px
     );
     margin-top: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
-tabbar tab button.tab-close-button {
+tabview tabbar tab button.tab-close-button {
     padding: 0;
     margin: 5px;
 }
 
-tabbar tab.selected button.tab-close-button {
-    margin-top: 7px;
-}
-
-tabview {
-    margin: 4px 0 0 0;
+tabview tabpages {
+    padding: 3px 0 0 0;
 }
 
 viewport,
