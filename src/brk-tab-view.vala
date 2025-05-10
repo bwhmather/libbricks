@@ -714,6 +714,12 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.page_selection.autoselect = true;
         this.page_selection.notify["selected"].connect((s, pspec) => {this.notify_property("selected-page");});
 
+        this.page_selection.items_changed.connect((position, removed, added) => {
+            for (var i = 0; i < this.n_pages; i++) {
+                var page = this.get_page(i);
+                page.selected = page == this.selected_page;
+            }
+        });
         this.notify["selected-page"].connect((s, pspec) => {
             for (var i = 0; i < this.n_pages; i++) {
                 var page = this.get_page(i);
