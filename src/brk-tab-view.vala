@@ -69,6 +69,30 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         this.close_button.clicked.connect((b) => {
             this.page.close();
         });
+
+        var drag_controller = new Gtk.DragSource();
+        drag_controller.prepare.connect((s, x, y) => {
+            var gvalue = new GLib.Value(typeof(Brk.TabPage));
+            gvalue.set_object(this.page);
+            return new Gdk.ContentProvider.for_value(gvalue);
+        });
+        drag_controller.drag_begin.connect((s, drag) => {
+            assert(this.page.drag == null);
+            this.page.drag = drag;
+
+            // Disable default drag icon.
+            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+            drag_icon.set_child(new Gtk.Box(VERTICAL, 0));
+        });
+        drag_controller.drag_cancel.connect((s, drag, r) => {
+            assert(this.page.drag == drag);
+            return true;
+        });
+        drag_controller.drag_end.connect((s, drag, delete_data) => {
+            assert(this.page.drag == drag);
+            this.page.drag = null;
+        });
+        this.add_controller(drag_controller);
     }
 
     public override void
@@ -117,7 +141,6 @@ private sealed class Brk.TabPageBin : Gtk.Widget {
         Object(page: page);
     }
 }
-
 
 public sealed class Brk.TabPage : GLib.Object {
     internal Brk.TabPageTab tab;
@@ -172,6 +195,8 @@ public sealed class Brk.TabPage : GLib.Object {
     public bool loading { get; set; }
 
     public bool closing { get; internal set; }
+
+    public Gdk.Drag drag { get; internal set; }
 
     /**
      * An indicator icon for the page.
