@@ -78,11 +78,14 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         });
         drag_controller.drag_begin.connect((s, drag) => {
             assert(this.page.drag == null);
-            this.page.drag = drag;
+
+            drag.actions = MOVE;
 
             // Disable default drag icon.
             var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
             drag_icon.set_child(new Gtk.Box(VERTICAL, 0));
+
+            this.page.drag = drag;
         });
         drag_controller.drag_cancel.connect((s, drag, r) => {
             assert(this.page.drag == drag);
@@ -275,6 +278,56 @@ public sealed class Brk.TabPage : GLib.Object {
     }
 }
 
+[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-tab-page-drag-view.ui")]
+private sealed class Brk.TabPageDragView : Gtk.Widget {
+    public Brk.TabPage page { get; construct; }
+
+    public void
+    attach_page(Brk.TabPage page) {
+        assert(page == this.page);
+        assert(!page.drag_source.has_page(page));
+        page.selected = true;
+        page.bin.set_parent(this);
+    }
+
+    public void
+    detach_page(Brk.TabPage page) {
+        assert(page == this.page);
+        assert(!page.drag_source.has_page(page));
+        page.selected = false;
+        GLib.SignalHandler.disconnect_by_data(page, this);
+        page.bin.unparent();
+    }
+
+    static construct {
+        set_layout_manager_type(typeof (Gtk.BoxLayout));
+        set_css_name("tab-drag");
+    }
+
+    internal
+    TabPageDragView(Brk.TabPage page) {
+        Object(page: page);
+    }
+
+    public override void
+    dispose() {
+        this.dispose_template(typeof(Brk.TabPageDragView));
+    }
+
+    public static Brk.TabPageDragView
+    get_for_drag(Gdk.Drag drag) {
+        var page = Brk.TabPage.get_for_drag(drag);
+        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        warning("GET: %p, %p", drag_icon, drag_icon.child);
+        if (!(drag_icon.child is Brk.TabPageDragView)) {
+            drag_icon.child = new Brk.TabPageDragView(page);
+            warning("NEW: %p", drag_icon.child);
+        }
+
+        return drag_icon.child as Brk.TabPageDragView;
+    }
+}
+
 private sealed class Brk.TabViewTabs : Gtk.Widget {
     public unowned Brk.TabView view { get; construct; }
 
@@ -290,6 +343,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         if (this.view.has_page(page)) {
             return;
         }
+
+        var drag_view = Brk.TabPageDragView.get_for_drag(drag);
+        drag_view.detach_page(page);
 
         this.view.attach_page(page);
         this.view.selected_page = page;
@@ -308,6 +364,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return;
         }
         this.view.detach_page(page);
+
+        var drag_view = Brk.TabPageDragView.get_for_drag(drag);
+        drag_view.attach_page(page);
     }
 
     static construct {

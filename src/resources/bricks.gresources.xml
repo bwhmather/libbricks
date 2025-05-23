@@ -3,6 +3,7 @@
   <gresource prefix="/com/bwhmather/Bricks">
     <file preprocess="xml-stripblanks">ui/brk-statusbar.ui</file>
     <file preprocess="xml-stripblanks">ui/brk-tab-page-tab.ui</file>
+    <file preprocess="xml-stripblanks">ui/brk-tab-page-drag-view.ui</file>
     <file>theme/Empty/brk.css</file>
     <file>theme/Default/brk.css</file>
   </gresource>
