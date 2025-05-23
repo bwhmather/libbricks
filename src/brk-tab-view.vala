@@ -198,6 +198,22 @@ public sealed class Brk.TabPage : GLib.Object {
 
     public Gdk.Drag drag { get; internal set; }
 
+    public static Brk.TabPage?
+    get_for_drag(Gdk.Drag drag) {
+        try {
+            var val = new GLib.Value(typeof(Brk.TabPage));
+            drag.content.get_value(ref val);
+            return val.get_object() as Brk.TabPage;
+        } catch {
+            return null;
+        }
+    }
+
+    // This is needed to workaround a race where a tab can be dragged to a new
+    // bar before the motion controller of the original bar is notified.  It
+    // should, ideally, not be used for anything else.
+    internal unowned Brk.TabView? drag_source;
+
     /**
      * An indicator icon for the page.
      *
@@ -265,6 +281,35 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     private Gtk.Button left_button;
     private Gtk.Button right_button;
 
+    private void
+    acquire_drag(Gdk.Drag drag) {
+        var page = Brk.TabPage.get_for_drag(drag);
+        if (page == null) {
+            return;
+        }
+        if (this.view.has_page(page)) {
+            return;
+        }
+
+        this.view.attach_page(page);
+        this.view.selected_page = page;
+    }
+
+    private void
+    release_drag(Gdk.Drag drag) {
+        var page = Brk.TabPage.get_for_drag(drag);
+        if (page == null) {
+            return;
+        }
+        if (!this.view.has_page(page)) {
+            return;
+        }
+        if (page.drag != drag) {
+            return;
+        }
+        this.view.detach_page(page);
+    }
+
     static construct {
         set_css_name("tabs");
         set_accessible_role(TAB_LIST);
@@ -295,6 +340,44 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
                 page.tab.insert_before(this, next);
             }
         });
+
+        this.view.page_attached.connect((page) => {
+            page.notify["drag"].connect((p, pspec) => {
+                if (((Brk.TabPage) p).drag != null) {
+                    this.release_drag(((Brk.TabPage) p).drag);
+                }
+            });
+        });
+        this.view.page_detached.connect((page) => {
+            GLib.SignalHandler.disconnect_by_data(page, this);
+        });
+
+        var drop_controller = new Gtk.DropTargetAsync(
+            new Gdk.ContentFormats.for_gtype(typeof(Brk.TabPage)), MOVE | COPY | LINK | ASK
+        );
+        drop_controller.drag_enter.connect((dc, drop, x, y) => {
+            var drag = drop.drag;
+            this.acquire_drag(drag);
+            return MOVE;
+        });
+        drop_controller.drag_leave.connect((dc, drop) => {
+            var drag = drop.drag;
+            this.release_drag(drag);
+        });
+        drop_controller.drag_motion.connect((dc, drop, x, y) => {
+            var drag = drop.drag;
+            this.acquire_drag(drag);
+            return MOVE;
+        });
+        drop_controller.drop.connect((dc, drop, x, y) => {
+            var page = Brk.TabPage.get_for_drag(drop.drag);
+            page.drag = null;
+
+            var expected = drop.get_actions();
+            drop.finish(COPY);  // TODO
+            return true;
+        });
+        this.add_controller(drop_controller);
     }
 
     public TabViewTabs(Brk.TabView view) {
@@ -613,6 +696,17 @@ public sealed class Brk.TabView : Gtk.Widget {
         return this.page_list.get_item(i) as Brk.TabPage;
     }
 
+    public bool
+    has_page(Brk.TabPage target) {
+        for (var i = 0; i < this.n_pages; i++) {
+            var candidate = this.get_page(i);
+            if (candidate == target) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * The currently visible page.
      */
@@ -764,15 +858,39 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.stack.insert_before(this, null);
     }
 
-    private void
-    bind_page(Brk.TabPage page) {
+    internal void
+    attach_page(Brk.TabPage page) {
+        if (page.drag_source != null) {
+            assert(!page.drag_source.has_page(page));
+        }
+
+        // TODO position should depend on parent, on the existing children of
+        // the parent, and probably on lots of other subtle things.
+        uint index = this.page_list.n_items;
+        this.page_list.insert(index, page);
+
         page.close.connect((p) => this.close_page(p));
+
+        page.drag_source = this;
+        this.page_attached(page);
+
+        if (this.page_list.n_items == 1) {
+            this.selected_page = page;
+        }
     }
 
-    private void
-    unbind_page(Brk.TabPage page) {
+    internal void
+    detach_page(Brk.TabPage page) {
+        assert(this.has_page(page));
+
         page.selected = false;
         GLib.SignalHandler.disconnect_by_data(page, this);
+
+        uint position;
+        return_if_fail(this.page_list.find(page, out position));
+        this.page_list.remove(position);
+
+        this.page_detached(page);
     }
 
     public unowned Brk.TabPage
@@ -780,17 +898,7 @@ public sealed class Brk.TabView : Gtk.Widget {
         return_val_if_fail(child.parent == null, null);
 
         var page = new Brk.TabPage(child);
-
-        // TODO position should depend on parent, on the existing children of
-        // the parent, and probably on lots of other subtle things.
-        uint index = this.page_list.n_items;
-
-        this.page_list.insert(index, page);
-        this.bind_page(page);
-
-        if (this.page_list.n_items == 1) {
-            this.selected_page = page;
-        }
+        this.attach_page(page);
 
         unowned Brk.TabPage reference = page;
         return reference;
@@ -817,15 +925,11 @@ public sealed class Brk.TabView : Gtk.Widget {
      */
     public void
     close_page_finish(Brk.TabPage page, bool should_close) {
-        uint position;
-        return_if_fail(this.page_list.find(page, out position));
-
         page.closing = false;
         if (!should_close) {
             return;
         }
 
-        this.unbind_page(page);
-        this.page_list.remove(position);
+        this.detach_page(page);
     }
 }
