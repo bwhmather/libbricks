@@ -83,7 +83,8 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
 
             // Disable default drag icon.
             var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-            drag_icon.set_child(new Gtk.Box(VERTICAL, 0));
+            //drag_icon.child = new Gtk.Box(VERTICAL, 0);
+            drag_icon.child = new Gtk.Label(".");
 
             this.page.drag = drag;
         });
@@ -92,7 +93,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
             return true;
         });
         drag_controller.drag_end.connect((s, drag, delete_data) => {
-            assert(this.page.drag == drag);
+//            assert(this.page.drag == drag);
             this.page.drag = null;
         });
         this.add_controller(drag_controller);
@@ -282,26 +283,16 @@ public sealed class Brk.TabPage : GLib.Object {
 private sealed class Brk.TabPageDragView : Gtk.Widget {
     public Brk.TabPage page { get; construct; }
 
-    public void
-    attach_page(Brk.TabPage page) {
-        assert(page == this.page);
-        assert(!page.drag_source.has_page(page));
-        page.selected = true;
-        page.bin.set_parent(this);
-    }
-
-    public void
-    detach_page(Brk.TabPage page) {
-        assert(page == this.page);
-        assert(!page.drag_source.has_page(page));
-        page.selected = false;
-        GLib.SignalHandler.disconnect_by_data(page, this);
-        page.bin.unparent();
-    }
-
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
         set_css_name("tab-drag");
+    }
+
+    construct {
+        assert(!page.drag_source.has_page(page));
+
+        this.page.selected = true;
+        this.page.bin.set_parent(this);
     }
 
     internal
@@ -311,20 +302,12 @@ private sealed class Brk.TabPageDragView : Gtk.Widget {
 
     public override void
     dispose() {
+        assert(!page.drag_source.has_page(page));
+
+        this.page.selected = false;
+        this.page.bin.unparent();
+
         this.dispose_template(typeof(Brk.TabPageDragView));
-    }
-
-    public static Brk.TabPageDragView
-    get_for_drag(Gdk.Drag drag) {
-        var page = Brk.TabPage.get_for_drag(drag);
-        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-        warning("GET: %p, %p", drag_icon, drag_icon.child);
-        if (!(drag_icon.child is Brk.TabPageDragView)) {
-            drag_icon.child = new Brk.TabPageDragView(page);
-            warning("NEW: %p", drag_icon.child);
-        }
-
-        return drag_icon.child as Brk.TabPageDragView;
     }
 }
 
@@ -344,8 +327,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return;
         }
 
-        var drag_view = Brk.TabPageDragView.get_for_drag(drag);
-        drag_view.detach_page(page);
+        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        drag_icon.child = new Gtk.Label(".");  // TODO old icon won't be replaced if fully transparent...
 
         this.view.attach_page(page);
         this.view.selected_page = page;
@@ -365,8 +348,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         }
         this.view.detach_page(page);
 
-        var drag_view = Brk.TabPageDragView.get_for_drag(drag);
-        drag_view.attach_page(page);
+        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        drag_icon.child = new Brk.TabPageDragView(page);
     }
 
     static construct {
