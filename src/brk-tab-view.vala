@@ -90,6 +90,16 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         });
         drag_controller.drag_cancel.connect((s, drag, r) => {
             assert(this.page.drag == drag);
+
+            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+            //drag_icon.child = new Gtk.Box(VERTICAL, 0);
+            drag_icon.child = new Gtk.Label(".");
+
+            // TODO page shouldn't know about views.
+            if (!this.page.drag_source.has_page(this.page)) {
+                this.page.drag_source.attach_page(this.page);
+            }
+
             return true;
         });
         drag_controller.drag_end.connect((s, drag, delete_data) => {
