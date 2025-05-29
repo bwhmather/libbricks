@@ -37,6 +37,7 @@ tabview tabbar {
         shade(var(--bg-color), 0.95) 1px,
         shade(var(--bg-color), 0.9) 15px
     );
+    min-height: 42px; /* TODO should depend on line height */
 }
 
 tabview tabbar tab {
