@@ -370,6 +370,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     construct {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.HORIZONTAL, -1);
 
+        this.hexpand = true;
+
         this.left_button = new Gtk.Button();
         this.left_button.insert_before(this, null);
         this.right_button = new Gtk.Button();
@@ -607,6 +609,8 @@ private sealed class Brk.TabViewBar : Gtk.Widget {
 
     construct {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.HORIZONTAL, -1);
+
+        this.hexpand = true;
 
         this.tabs = new Brk.TabViewTabs(this.view);
         this.tabs.insert_after(this, null);
