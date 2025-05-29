@@ -963,6 +963,8 @@ public sealed class Brk.TabView : Gtk.Widget {
      */
     public void
     transfer_page(Brk.TabPage page, Brk.TabView other_view) {
+        this.detach_page(page);
+        other_view.attach_page(page);
     }
 
     /**
