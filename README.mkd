@@ -11,12 +11,12 @@ Goals:
   - Bring back the (probably misremembered) golden age of desktop application design.  Make GTK great again!
 
 Non-goals:
-  - Replace `libadwaita`.  Gnome applications will look and behave like gnome applications.  That is fine.  `libadwaita` is developed independently of GTK specifically to enable efforts like `libbricks` to exist.
+  - Replace `libadwaita`.  Gnome applications will continue to look and behave like gnome applications.  That is fine.  `libadwaita` is developed independently of GTK specifically to enable efforts like `libbricks` to exist.
   - Patch in support for platform specific APIs.  If you want to know where your windows are then adding `libbricks` won't help.
   - Bring about the year of the linux mobile phone.  `libbricks` is for writing desktop applications.  No compromises.
 
 
-What we would aim to provide:
+What we aim to provide:
   - Named container and widget classes that allow applications to be assembed without dipping into CSS.
   - Human Interface Guidelines that try to describe what it means to be a "traditional desktop application" and how to build one.
   - Helpers for loading icon and widget themes.
@@ -101,7 +101,7 @@ Possible other components:
 
 
 
-  - Application authors should never need to create custom widgets.  If you think you need a custom widget, talk to us and get it into `libbricks`.
+  - Application authors should never need to create custom container or leaf widgets.  If you think you need a custom widget, talk to us and get it into `libbricks`.
   - Application authors should never need to set css classes on widgets.  CSS classes are the contract between `libbricks` and theme authors.  `gobject` properties are the contract between application authors and `libbricks`.
 
 
