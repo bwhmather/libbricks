@@ -107,6 +107,17 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
             this.page.drag = null;
         });
         this.add_controller(drag_controller);
+
+        var click_controller = new Gtk.GestureClick();
+        click_controller.pressed.connect((n_press, x, y) => {
+            var picked = this.pick(x, y, DEFAULT);
+            if (picked == this.close_button || picked.is_ancestor(this.close_button)) {
+                return;
+            }
+
+            this.page.focus();
+        });
+        this.add_controller(click_controller);
     }
 
     public override void
@@ -272,6 +283,7 @@ public sealed class Brk.TabPage : GLib.Object {
     public bool needs_attention { get; set; }
 
     internal signal void close();
+    internal signal void focus();
 
     construct {
         this.tab = new Brk.TabPageTab(this);
@@ -926,6 +938,7 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.page_list.insert(index, page);
 
         page.close.connect((p) => this.close_page(p));
+        page.focus.connect((p) => { this.selected_page = p; });
 
         page.drag_source = this;
         this.page_attached(page);
