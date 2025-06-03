@@ -564,7 +564,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             allocated = natural;
         }
 
-        this.scrolling = true;
+        this.scrolling = false;
         if (minimum > allocated) {
             // Tabs don't fit in available space.  Trigger overflow mode (TODO).
             allocated = minimum;
@@ -627,6 +627,20 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             transform = null;
             transform = transform.translate({width - child_minimum, 0});
             this.right_button.allocate(child_minimum, height, baseline, transform);
+        }
+    }
+
+    public override void
+    snapshot(Gtk.Snapshot snapshot) {
+        for (var i = 0; i < this.view.n_pages; i++) {
+            var page = this.view.get_page(i);
+            var child = page.tab;
+            this.snapshot_child(child, snapshot);
+        }
+
+        if (this.scrolling) {
+            this.snapshot_child(this.left_button, snapshot);
+            this.snapshot_child(this.right_button, snapshot);
         }
     }
 }
