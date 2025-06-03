@@ -339,6 +339,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     private Gtk.Button left_button;
     private Gtk.Button right_button;
 
+    private bool scrolling;
+
     private void
     acquire_drag(Gdk.Drag drag) {
         var page = Brk.TabPage.get_for_drag(drag);
@@ -384,9 +386,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
         this.hexpand = true;
 
-        this.left_button = new Gtk.Button();
+        this.left_button = new Gtk.Button.from_icon_name("go-previous-symbolic");
         this.left_button.insert_before(this, null);
-        this.right_button = new Gtk.Button();
+        this.right_button = new Gtk.Button.from_icon_name("go-next-symbolic");
         this.right_button.insert_after(this, null);
 
         this.view.pages.items_changed.connect((position, removed, added) => {
@@ -559,27 +561,38 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         }
 
         int allocated = width;
-        bool overflow = false;
         if (natural < allocated) {
             // Don't fill up tab bar if tabs aren't requesting it.
             allocated = natural;
         }
+
+        this.scrolling = true;
         if (minimum > allocated) {
             // Tabs don't fit in available space.  Trigger overflow mode (TODO).
             allocated = minimum;
-            overflow = true;
+            this.scrolling = true;
         }
-
-        // TODO Allocate left button.
-        this.left_button.visible = false;
-
-        // TODO Allocate right button.
-        this.right_button.visible = false;
 
         int requested_slack = natural - minimum;
         int remaining_slack = allocated - minimum;
 
         Gsk.Transform transform = null;
+
+        // Left button.
+        if (this.scrolling) {
+            int child_minimum, child_natural;
+            this.left_button.measure(
+                HORIZONTAL, height,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            this.left_button.allocate(child_minimum, height, baseline, transform);
+            transform = transform.translate({child_minimum, 0});
+        }
+
+        // TODO adjust transform by scroll amount.
+
+        // Tabs.
         for (
             var child = this.get_first_child();
             child != this.left_button;
@@ -604,6 +617,19 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             int child_width = child_minimum + child_slack;
             child.allocate(child_width, height, baseline, transform);
             transform = transform.translate({child_width, 0});
+        }
+
+        // Right button.
+        if (this.scrolling) {
+            int child_minimum, child_natural;
+            this.right_button.measure(
+                HORIZONTAL, height,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            transform = null;
+            transform = transform.translate({width - child_minimum, 0});
+            this.right_button.allocate(child_minimum, height, baseline, transform);
         }
     }
 }
