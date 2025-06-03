@@ -485,11 +485,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             // own natural width.
             natural = 0;
 
-            for (
-                var child = this.get_first_child();
-                child != this.left_button;
-                child = child.get_next_sibling()
-            ) {
+            for (var i = 0; i < this.view.n_pages; i++) {
+                var page = this.view.get_page(i);
+                var child = page.tab;
+
                 child.measure(
                     orientation, for_size,
                     out child_minimum, out child_natural,
@@ -507,11 +506,11 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         } else {
             minimum = 0;
             natural = 0;
-            for (
-                var child = this.get_first_child();
-                child != null;
-                child = child.get_next_sibling()
-            ) {
+
+            for (var i = 0; i < this.view.n_pages; i++) {
+                var page = this.view.get_page(i);
+                var child = page.tab;
+
                 int child_minimum, child_natural;
                 child.measure(
                     orientation, for_size,
@@ -541,11 +540,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         int minimum = 0;
         int natural = 0;
         int num_tabs = 0;
-        for (
-            var child = this.get_first_child();
-            child != this.left_button;
-            child = child.get_next_sibling()
-        ) {
+        for (var i = 0; i < this.view.n_pages; i++) {
+            var page = this.view.get_page(i);
+            var child = page.tab;
+
             int child_minimum, child_natural;
             child.measure(
                 HORIZONTAL, height,
@@ -593,11 +591,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         // TODO adjust transform by scroll amount.
 
         // Tabs.
-        for (
-            var child = this.get_first_child();
-            child != this.left_button;
-            child = child.get_next_sibling()
-        ) {
+        for (var i = 0; i < this.view.n_pages; i++) {
+            var page = this.view.get_page(i);
+            var child = page.tab;
+
             int child_minimum, child_natural;
             child.measure(
                 HORIZONTAL, height,
