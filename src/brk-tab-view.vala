@@ -504,14 +504,40 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             minimum_baseline = -1;
             natural_baseline = -1;
         } else {
+            int child_minimum, child_natural;
+
             minimum = 0;
             natural = 0;
+
+            this.left_button.measure(
+                orientation, for_size,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            if (child_minimum > minimum) {
+                minimum = child_minimum;
+            }
+            if (child_natural > natural) {
+                natural = child_natural;
+            }
+
+            this.right_button.measure(
+                orientation, for_size,
+                out child_minimum, out child_natural,
+                null, null
+            );
+            if (child_minimum > minimum) {
+                minimum = child_minimum;
+            }
+            if (child_natural > natural) {
+                natural = child_natural;
+            }
+
 
             for (var i = 0; i < this.view.n_pages; i++) {
                 var page = this.view.get_page(i);
                 var child = page.tab;
 
-                int child_minimum, child_natural;
                 child.measure(
                     orientation, for_size,
                     out child_minimum, out child_natural,
