@@ -43,6 +43,8 @@ tabview tabbar {
 tabview tabbar button.navigation-button {
     border: none;
     background: none;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 tabview tabbar tab {
