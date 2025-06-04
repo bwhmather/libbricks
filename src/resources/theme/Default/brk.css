@@ -40,6 +40,11 @@ tabview tabbar {
     min-height: 42px; /* TODO should depend on line height */
 }
 
+tabview tabbar button.navigation-button {
+    border: none;
+    background: none;
+}
+
 tabview tabbar tab {
     border-radius: 8px 8px 0px 0px;
     background-color: var(--bg-color);

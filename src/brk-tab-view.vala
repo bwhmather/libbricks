@@ -387,8 +387,13 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         this.hexpand = true;
 
         this.left_button = new Gtk.Button.from_icon_name("go-previous-symbolic");
+        this.left_button.add_css_class("navigation-button");
+        this.left_button.add_css_class("left");
         this.left_button.insert_before(this, null);
+
         this.right_button = new Gtk.Button.from_icon_name("go-next-symbolic");
+        this.right_button.add_css_class("navigation-button");
+        this.right_button.add_css_class("right");
         this.right_button.insert_after(this, null);
 
         this.view.pages.items_changed.connect((position, removed, added) => {
