@@ -563,11 +563,20 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
     public override void
     size_allocate (int width, int height, int baseline) {
-        // Three modes:
-        // Overflow mode: buttons visible.  Tabs all have min width.
-        // Fill mode: buttons hidden.  Tabs
-        // Non-overflow mode: buttons hidden.  ta
+        // The tab bar will progress through three modes as tabs are added:
+        //  - Expanded mode: Not enought tabs to reach all the way across the
+        //    bar.  Tabs will be expanded to their natural width.
+        //  - Fill mode: There are enough tabs to reach all the way across the
+        //    bar if expanded to their natural width, but there is still enough
+        //    space to fit them at their minimum width.  The tabs will be
+        //    shrunk to exactly fit the bar with extra space being allocated in
+        //    proportion to the difference between minimum and natural widths
+        //    of each tab.
+        //  - Overflow mode: Not all tabs can fit in the tab bar.  All tabs
+        //    will be shrunk to their minimum width and scroll buttons will be
+        //    added to the beginning and end of the bar.
 
+        // Figure out the minimum and natural width of all tabs in the bar.
         int minimum = 0;
         int natural = 0;
         int num_tabs = 0;
@@ -589,39 +598,54 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return;
         }
 
-        int allocated = width;
-        if (natural < allocated) {
-            // Don't fill up tab bar if tabs aren't requesting it.
-            allocated = natural;
-        }
-
+        // Figure out how much space the tabs should actually get.  In overflow
+        // mode this will be greater than the actual amount of space on the bar.
+        int allocated = natural;
         this.scrolling = false;
+        if (width < allocated) {
+            // Shrink to fit available space.
+            allocated = width;
+        }
         if (minimum > allocated) {
-            // Tabs don't fit in available space.  Trigger overflow mode (TODO).
+            // Tabs don't fit in available space.  Trigger overflow mode.
             allocated = minimum;
             this.scrolling = true;
         }
 
+        // If necessary, we now allocate space for the navigation buttons.
+        int left_button_width = 0;
+        int right_button_width = 0;
+        if (this.scrolling) {
+            this.left_button.measure(
+                HORIZONTAL, height,
+                out left_button_width, null,
+                null, null
+            );
+            Gsk.Transform transform = null;
+            this.left_button.allocate(left_button_width, height, baseline, transform);
+
+            this.right_button.measure(
+                HORIZONTAL, height,
+                out right_button_width, null,
+                null, null
+            );
+            transform = null;
+            transform = transform.translate({width - right_button_width, 0});
+            this.right_button.allocate(right_button_width, height, baseline, transform);
+        }
+
+        // TODO shift to class level.
+        var adjustment = new Gtk.Adjustment(
+            0, 0, allocated, 1.0, 1.0, width - left_button_width - right_button_width
+        );
+
+        // Tabs.
+        Gsk.Transform transform = null;
+        transform = transform.translate({(int)(left_button_width - adjustment.value), 0});
+
         int requested_slack = natural - minimum;
         int remaining_slack = allocated - minimum;
 
-        Gsk.Transform transform = null;
-
-        // Left button.
-        if (this.scrolling) {
-            int child_minimum, child_natural;
-            this.left_button.measure(
-                HORIZONTAL, height,
-                out child_minimum, out child_natural,
-                null, null
-            );
-            this.left_button.allocate(child_minimum, height, baseline, transform);
-            transform = transform.translate({child_minimum, 0});
-        }
-
-        // TODO adjust transform by scroll amount.
-
-        // Tabs.
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
             var child = page.tab;
@@ -645,19 +669,6 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             int child_width = child_minimum + child_slack;
             child.allocate(child_width, height, baseline, transform);
             transform = transform.translate({child_width, 0});
-        }
-
-        // Right button.
-        if (this.scrolling) {
-            int child_minimum, child_natural;
-            this.right_button.measure(
-                HORIZONTAL, height,
-                out child_minimum, out child_natural,
-                null, null
-            );
-            transform = null;
-            transform = transform.translate({width - child_minimum, 0});
-            this.right_button.allocate(child_minimum, height, baseline, transform);
         }
     }
 
