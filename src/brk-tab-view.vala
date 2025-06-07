@@ -339,7 +339,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     private Gtk.Button left_button;
     private Gtk.Button right_button;
 
-    private bool scrolling;
+    private Gtk.Adjustment adjustment = new Gtk.Adjustment(0, 0, 0, 1, 1, 0);
 
     private void
     acquire_drag(Gdk.Drag drag) {
@@ -601,7 +601,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         // Figure out how much space the tabs should actually get.  In overflow
         // mode this will be greater than the actual amount of space on the bar.
         int allocated = natural;
-        this.scrolling = false;
+        bool overflowing = false;
         if (width < allocated) {
             // Shrink to fit available space.
             allocated = width;
@@ -609,13 +609,13 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         if (minimum > allocated) {
             // Tabs don't fit in available space.  Trigger overflow mode.
             allocated = minimum;
-            this.scrolling = true;
+            overflowing = true;
         }
 
         // If necessary, we now allocate space for the navigation buttons.
         int left_button_width = 0;
         int right_button_width = 0;
-        if (this.scrolling) {
+        if (overflowing) {
             this.left_button.measure(
                 HORIZONTAL, height,
                 out left_button_width, null,
@@ -635,9 +635,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         }
 
         // TODO shift to class level.
-        var adjustment = new Gtk.Adjustment(
-            0, 0, allocated, 1.0, 1.0, width - left_button_width - right_button_width
-        );
+        this.adjustment.upper = allocated;
+        this.adjustment.page_size = width - left_button_width - right_button_width;
 
         // Tabs.
         Gsk.Transform transform = null;
@@ -680,7 +679,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             this.snapshot_child(child, snapshot);
         }
 
-        if (this.scrolling) {
+        if (this.adjustment.upper > this.adjustment.page_size) {
             this.snapshot_child(this.left_button, snapshot);
             this.snapshot_child(this.right_button, snapshot);
         }
