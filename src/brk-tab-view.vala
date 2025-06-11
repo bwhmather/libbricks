@@ -690,23 +690,19 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         bool overflow_right = tabs_offset + tabs_width > tabs_window;
 
         if (overflow_left || overflow_right) {
-            Graphene.Rect bounds;
-            assert(this.left_button.compute_bounds(this, out bounds));
-            var left = bounds.get_x() + bounds.get_width();
-
-            assert(this.right_button.compute_bounds(this, out bounds));
-            var right = bounds.get_x();
-
-            // Measure left and right buttons.
-            // Push clip area that slightlys overlaps with buttons.
-            // Push mask to fade out on the left and/or right.
-            // Render tabs.
-            // Pop mask.
-            // Pop clip area.
-            // Render buttons.
-
-
+            var fade_overlap = 10;
             var fade_width = 20;
+
+            // Figure out how much room is left for rendering tabs after buttons
+            // are allocated.
+            Graphene.Rect bounds;
+            var ok = this.left_button.compute_bounds(this, out bounds);
+            return_if_fail(ok);
+            var left = bounds.get_x() + bounds.get_width() - fade_overlap;
+
+            ok = this.right_button.compute_bounds(this, out bounds);
+            return_if_fail(ok);
+            var right = bounds.get_x() + fade_overlap;
 
             snapshot.push_clip(Graphene.Rect().init(left, 0, right - left, this.get_height()));
             snapshot.push_mask(INVERTED_ALPHA);
@@ -741,7 +737,6 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
             this.snapshot_child(this.left_button, snapshot);
             this.snapshot_child(this.right_button, snapshot);
-
         } else {
             this.snapshot_tabs(snapshot);
         }
