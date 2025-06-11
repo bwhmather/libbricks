@@ -671,17 +671,79 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         }
     }
 
-    public override void
-    snapshot(Gtk.Snapshot snapshot) {
+    private void
+    snapshot_tabs(Gtk.Snapshot snapshot) {
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
             var child = page.tab;
             this.snapshot_child(child, snapshot);
         }
+    }
 
-        if (this.adjustment.upper > this.adjustment.page_size) {
+    public override void
+    snapshot(Gtk.Snapshot snapshot) {
+        double tabs_offset = this.adjustment.value;
+        double tabs_window = this.adjustment.page_size;
+        double tabs_width = this.adjustment.upper;
+
+        bool overflow_left = tabs_offset > 0;
+        bool overflow_right = tabs_offset + tabs_width > tabs_window;
+
+        if (overflow_left || overflow_right) {
+            Graphene.Rect bounds;
+            assert(this.left_button.compute_bounds(this, out bounds));
+            var left = bounds.get_x() + bounds.get_width();
+
+            assert(this.right_button.compute_bounds(this, out bounds));
+            var right = bounds.get_x();
+
+            // Measure left and right buttons.
+            // Push clip area that slightlys overlaps with buttons.
+            // Push mask to fade out on the left and/or right.
+            // Render tabs.
+            // Pop mask.
+            // Pop clip area.
+            // Render buttons.
+
+
+            var fade_width = 20;
+
+            snapshot.push_clip(Graphene.Rect().init(left, 0, right - left, this.get_height()));
+            snapshot.push_mask(INVERTED_ALPHA);
+            if (overflow_left) {
+                snapshot.append_linear_gradient(
+                    Graphene.Rect().init(left, 0, fade_width, this.get_height()),
+                    Graphene.Point().init(left, 0),
+                    Graphene.Point().init(left + fade_width, 0),
+                    {
+                        {0,{0,0,0,1}},
+                        {1,{0,0,0,0}},
+                    }
+                );
+            }
+            if (overflow_right) {
+                snapshot.append_linear_gradient(
+                    Graphene.Rect().init(right - fade_width, 0, fade_width, this.get_height()),
+                    Graphene.Point().init(right, 0),
+                    Graphene.Point().init(right - fade_width, 0),
+                    {
+                        {0,{0,0,0,1}},
+                        {1,{0,0,0,0}},
+                    }
+                );
+            }
+            snapshot.pop();  // Pop mask.
+
+            this.snapshot_tabs(snapshot);
+
+            snapshot.pop();  // Pop mask contents.
+            snapshot.pop();  // Pop clip.
+
             this.snapshot_child(this.left_button, snapshot);
             this.snapshot_child(this.right_button, snapshot);
+
+        } else {
+            this.snapshot_tabs(snapshot);
         }
     }
 }
