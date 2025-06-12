@@ -451,6 +451,14 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return true;
         });
         this.add_controller(drop_controller);
+
+        var scroll_controller = new Gtk.EventControllerScroll(HORIZONTAL | KINETIC);
+        scroll_controller.scroll.connect((dx, dy) => {
+            this.adjustment.value += dx;
+            this.queue_allocate();
+            return true;
+        });
+        this.add_controller(scroll_controller);
     }
 
     public TabViewTabs(Brk.TabView view) {
