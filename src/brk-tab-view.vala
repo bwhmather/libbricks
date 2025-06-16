@@ -642,7 +642,6 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             this.right_button.allocate(right_button_width, height, baseline, transform);
         }
 
-        // TODO shift to class level.
         this.adjustment.upper = allocated;
         this.adjustment.page_size = width - left_button_width - right_button_width;
 
