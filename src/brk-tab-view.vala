@@ -239,6 +239,11 @@ public sealed class Brk.TabPage : GLib.Object {
     // should, ideally, not be used for anything else.
     internal unowned Brk.TabView? drag_source;
 
+    // The offset of the mouse in the tab at drag start.
+    internal double drag_tab_offset;
+    // The current offset of the mouse in the tab bar.
+    internal double drag_bar_offset;
+
     /**
      * An indicator icon for the page.
      *
@@ -647,10 +652,65 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
         // Tabs.
         Gsk.Transform transform = null;
-        transform = transform.translate({(int)(left_button_width - adjustment.value), 0});
+        transform = transform.translate({(float)(left_button_width - adjustment.value), 0});
 
         int requested_slack = natural - minimum;
         int remaining_slack = allocated - minimum;
+
+        // This is where we handle reordering dragged tabs.  Only the tab of the
+        // view's selected page will be reordered.  The insertion point is
+        // chosen to minimize the distance between the anchor point on the tab
+        // and the position of the cursor.  Changing the insertion point will
+        // queue up another allocation, but this _should_ be a no-op.
+        Brk.TabPage? drag_page;
+     //   int drag_tab_width;
+        if (this.view.selected_page.drag != null) {
+            drag_page = this.view.selected_page;
+
+            // Horizontal offset of the cursor inside the tab at drag start.
+            double drag_tab_offset = drag_page.drag_tab_offset;
+            // Current horizontal offset of the cursor inside the tab bar.
+            double drag_bar_offset = drag_page.drag_bar_offset;;
+            // Horizontal distance between the cursor and the anchor point on the
+            // tab if the tab was inserted at the current index.
+            double drag_candidate_offset =
+                left_button_width -
+                adjustment.value +
+                drag_tab_offset -
+                drag_bar_offset;
+
+            for (var i = 0; i < this.view.n_pages; i++) {
+                var page = this.view.get_page(i);
+                if (page == drag_page) {
+                    continue;
+                }
+
+                var child = page.tab;
+
+                int child_minimum, child_natural;
+                child.measure(
+                    HORIZONTAL, height,
+                    out child_minimum, out child_natural,
+                    null, null
+                );
+
+                int child_slack = 0;
+                if (requested_slack != 0) {
+                    child_slack += child_natural - child_minimum;
+                    child_slack *= remaining_slack; // TODO overflow likely.
+                    child_slack /= requested_slack;
+
+                    requested_slack -= (child_natural - child_minimum);
+                    remaining_slack -= child_slack;
+                }
+                int child_width = child_minimum + child_slack;
+
+                if ((drag_candidate_offset - child_width).abs() < drag_candidate_offset.abs()) {
+                    continue;
+                }
+                this.view.reorder_page_after(drag_page, page);
+            }
+        }
 
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
@@ -673,6 +733,11 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
                 remaining_slack -= child_slack;
             }
             int child_width = child_minimum + child_slack;
+
+//            if (page == drag_page) {
+                // TODO
+  //          }
+
             child.allocate(child_width, height, baseline, transform);
             transform = transform.translate({child_width, 0});
         }
@@ -1113,6 +1178,55 @@ public sealed class Brk.TabView : Gtk.Widget {
 
         unowned Brk.TabPage reference = page;
         return reference;
+    }
+
+    public int
+    get_page_position(Brk.TabPage page) {
+        for (var i = 0; i < this.n_pages; i++) {
+            var candidate = this.get_page(i);
+            if (candidate == page) {
+                return i;
+            }
+        }
+        assert(false);
+        return 0;
+    }
+
+    public bool
+    reorder_page(Brk.TabPage page, int target_position) {
+        return_val_if_fail(this.has_page(page), false);
+        return_val_if_fail(target_position < 0, false);
+        return_val_if_fail(target_position >= this.n_pages, false);
+
+        var original_position = this.get_page_position(page);
+        if (original_position == target_position) {
+            return false;
+        }
+        this.page_list.remove(original_position);
+        this.page_list.insert(target_position, page);
+        return true;
+    }
+
+    public bool
+    reorder_page_after(Brk.TabPage page, Brk.TabPage target) {
+        return_val_if_fail(this.has_page(page), false);
+        return_val_if_fail(this.has_page(target), false);
+        return_val_if_fail(page != target, false);
+
+        var page_position = this.get_page_position(page);
+        var target_position = this.get_page_position(target);
+
+        if (page_position == target_position + 1) {
+            warning("right place");
+            return false;
+        }
+        if (page_position < target_position) {
+            warning("before");
+            target_position -= 1;
+        }
+        this.page_list.remove(page_position);
+        this.page_list.insert(target_position + 1, page);
+        return true;
     }
 
     /**
