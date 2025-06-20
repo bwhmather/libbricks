@@ -947,7 +947,6 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
 
 public sealed class Brk.TabView : Gtk.Widget {
     private GLib.ListStore page_list;
-    private Gtk.SingleSelection page_selection;
 
     private Brk.TabViewBar bar;
     private Brk.TabViewStack stack;
@@ -957,14 +956,7 @@ public sealed class Brk.TabView : Gtk.Widget {
      */
     public uint n_pages { get { return this.page_list.n_items; } }
 
-    /**
-     * A selection model with the tab view's pages.
-     *
-     * This can be used to keep an up-to-date view. The model also implements
-     * [iface@Gtk.SelectionModel] and can be used to track and change the selected
-     * page.
-     */
-    public Gtk.SelectionModel pages { get { return page_selection; } }
+    public GLib.ListModel pages { get { return page_list; } }
 
     public Brk.TabPage
     get_page(uint i) {
@@ -982,19 +974,22 @@ public sealed class Brk.TabView : Gtk.Widget {
         return false;
     }
 
+    internal uint
+    get_page_position(Brk.TabPage page) {
+        for (var i = 0; i < this.n_pages; i++) {
+            var candidate = this.get_page(i);
+            if (candidate == page) {
+                return i;
+            }
+        }
+        assert(false);
+        return 0;
+    }
+
     /**
      * The currently visible page.
      */
-    public Brk.TabPage? selected_page {
-        get {
-            return this.page_selection.selected_item as Brk.TabPage?;
-        }
-        set {
-            uint position;
-            return_if_fail(this.page_list.find(value, out position));
-            this.page_selection.selected = position;
-        }
-    }
+    public Brk.TabPage? selected_page { get; set; }
 
     /**
      * Whether a page is being transferred.
@@ -1057,28 +1052,22 @@ public sealed class Brk.TabView : Gtk.Widget {
 
     private void
     select_prev_page() {
-        if (this.page_list.n_items == 0) {
-            return;
-        }
-        var target = this.page_selection.selected;
+        var target = this.get_page_position(this.selected_page);
         if (target == 0) {
             target = this.page_list.n_items;
         }
         target -= 1;
-        this.page_selection.selected = target;
+        this.selected_page = this.get_page(target);
     }
 
     private void
     select_next_page() {
-        if (this.page_list.n_items == 0) {
-            return;
-        }
-        var target = this.page_selection.selected;
+        var target = this.get_page_position(this.selected_page);
         target += 1;
         if (target >= this.page_list.n_items) {
             target = 0;
         }
-        this.page_selection.selected = target;
+        this.selected_page = this.get_page(target);
     }
 
     static construct {
@@ -1103,17 +1092,6 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.page_list = new GLib.ListStore(typeof(Brk.TabPage));
         this.page_list.notify["n-items"].connect((l, pspec) => { this.notify_property("n-pages"); });
 
-        this.page_selection = new Gtk.SingleSelection(this.page_list);
-        this.page_selection.can_unselect = false;
-        this.page_selection.autoselect = true;
-        this.page_selection.notify["selected"].connect((s, pspec) => {this.notify_property("selected-page");});
-
-        this.page_selection.items_changed.connect((position, removed, added) => {
-            for (var i = 0; i < this.n_pages; i++) {
-                var page = this.get_page(i);
-                page.selected = page == this.selected_page;
-            }
-        });
         this.notify["selected-page"].connect((s, pspec) => {
             for (var i = 0; i < this.n_pages; i++) {
                 var page = this.get_page(i);
@@ -1157,15 +1135,19 @@ public sealed class Brk.TabView : Gtk.Widget {
 
     internal void
     detach_page(Brk.TabPage page) {
-        assert(this.has_page(page));
-
-        page.selected = false;
-        GLib.SignalHandler.disconnect_by_data(page, this);
-
         uint position;
         return_if_fail(this.page_list.find(page, out position));
+        if (this.selected_page == page) {
+            if (this.n_pages == 1) {
+                this.selected_page = null;
+            } else if (position == this.n_pages - 1) {
+                this.selected_page = this.get_page(position - 1);
+            } else {
+                this.selected_page = this.get_page(position + 1);
+            }
+        }
+        GLib.SignalHandler.disconnect_by_data(page, this);
         this.page_list.remove(position);
-
         this.page_detached(page);
     }
 
@@ -1180,48 +1162,17 @@ public sealed class Brk.TabView : Gtk.Widget {
         return reference;
     }
 
-    public int
-    get_page_position(Brk.TabPage page) {
-        for (var i = 0; i < this.n_pages; i++) {
-            var candidate = this.get_page(i);
-            if (candidate == page) {
-                return i;
-            }
-        }
-        assert(false);
-        return 0;
-    }
-
-    public bool
-    reorder_page(Brk.TabPage page, int target_position) {
-        return_val_if_fail(this.has_page(page), false);
-        return_val_if_fail(target_position < 0, false);
-        return_val_if_fail(target_position >= this.n_pages, false);
-
-        var original_position = this.get_page_position(page);
-        if (original_position == target_position) {
-            return false;
-        }
-        this.page_list.remove(original_position);
-        this.page_list.insert(target_position, page);
-        return true;
-    }
-
-    public bool
+    internal bool
     reorder_page_after(Brk.TabPage page, Brk.TabPage target) {
-        return_val_if_fail(this.has_page(page), false);
-        return_val_if_fail(this.has_page(target), false);
         return_val_if_fail(page != target, false);
 
         var page_position = this.get_page_position(page);
         var target_position = this.get_page_position(target);
 
         if (page_position == target_position + 1) {
-            warning("right place");
             return false;
         }
         if (page_position < target_position) {
-            warning("before");
             target_position -= 1;
         }
         this.page_list.remove(page_position);
