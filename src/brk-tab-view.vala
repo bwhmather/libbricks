@@ -662,8 +662,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         // chosen to minimize the distance between the anchor point on the tab
         // and the position of the cursor.  Changing the insertion point will
         // queue up another allocation, but this _should_ be a no-op.
-        Brk.TabPage? drag_page;
-     //   int drag_tab_width;
+        Brk.TabPage? drag_page = null;
         if (this.view.selected_page.drag != null) {
             drag_page = this.view.selected_page;
 
@@ -734,11 +733,15 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             }
             int child_width = child_minimum + child_slack;
 
-//            if (page == drag_page) {
-                // TODO
-  //          }
-
-            child.allocate(child_width, height, baseline, transform);
+            if (page == drag_page) {
+                var drag_transform = transform.translate({
+                    (float)(drag_page.drag_bar_offset - drag_page.drag_tab_offset),
+                    0
+                });
+                child.allocate(child_width, height, baseline, drag_transform);
+            } else {
+                child.allocate(child_width, height, baseline, transform);
+            }
             transform = transform.translate({child_width, 0});
         }
     }
