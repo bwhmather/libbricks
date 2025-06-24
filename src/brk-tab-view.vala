@@ -72,6 +72,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
 
         var drag_controller = new Gtk.DragSource();
         drag_controller.prepare.connect((s, x, y) => {
+            this.page.drag_tab_offset = x;
             var gvalue = new GLib.Value(typeof(Brk.TabPage));
             gvalue.set_object(this.page);
             return new Gdk.ContentProvider.for_value(gvalue);
@@ -347,11 +348,13 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     private Gtk.Adjustment adjustment = new Gtk.Adjustment(0, 0, 0, 1, 1, 0);
 
     private void
-    acquire_drag(Gdk.Drag drag) {
+    acquire_drag(Gdk.Drag drag, double x, double y) {
         var page = Brk.TabPage.get_for_drag(drag);
         if (page == null) {
             return;
         }
+        page.drag_bar_offset = x;
+        this.queue_allocate();
         if (this.view.has_page(page)) {
             return;
         }
@@ -435,7 +438,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         );
         drop_controller.drag_enter.connect((dc, drop, x, y) => {
             var drag = drop.drag;
-            this.acquire_drag(drag);
+            this.acquire_drag(drag, x, y);
             return MOVE;
         });
         drop_controller.drag_leave.connect((dc, drop) => {
@@ -444,10 +447,14 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         });
         drop_controller.drag_motion.connect((dc, drop, x, y) => {
             var drag = drop.drag;
-            this.acquire_drag(drag);
+            this.acquire_drag(drag, x, y);
             return MOVE;
         });
         drop_controller.drop.connect((dc, drop, x, y) => {
+            // TODO figure out if I had a good reason for not including this bit:
+          //  var drag = drop.drag;
+          //  this.acquire_drag(drag, x, y);
+
             var page = Brk.TabPage.get_for_drag(drop.drag);
             page.drag = null;
 
@@ -670,14 +677,15 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             double drag_tab_offset = drag_page.drag_tab_offset;
             // Current horizontal offset of the cursor inside the tab bar.
             double drag_bar_offset = drag_page.drag_bar_offset;;
-            // Horizontal distance between the cursor and the anchor point on the
-            // tab if the tab was inserted at the current index.
-            double drag_candidate_offset =
-                left_button_width -
-                adjustment.value +
-                drag_tab_offset -
-                drag_bar_offset;
+            // The ideal offset of the tab from the beginning of the list of
+            // tabs after scrolling applied.
+            double drag_target_offset =
+                drag_bar_offset -
+                drag_tab_offset +
+                adjustment.value -
+                left_button_width;
 
+            double drag_candidate_offset = 0;
             for (var i = 0; i < this.view.n_pages; i++) {
                 var page = this.view.get_page(i);
                 if (page == drag_page) {
@@ -704,10 +712,21 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
                 }
                 int child_width = child_minimum + child_slack;
 
-                if ((drag_candidate_offset - child_width).abs() < drag_candidate_offset.abs()) {
-                    continue;
+
+                double next_candidate_offset = drag_candidate_offset + child_width;
+
+                if ((drag_target_offset - next_candidate_offset).abs() > (drag_target_offset - drag_candidate_offset).abs()) {
+                    this.view.reorder_page_before(drag_page, page);
+                    break;
                 }
-                this.view.reorder_page_after(drag_page, page);
+
+                if (i + 1 == this.view.n_pages) {
+                    this.view.reorder_page_after(drag_page, page);
+                    break;
+                }
+
+
+                drag_candidate_offset = next_candidate_offset;
             }
         }
 
@@ -734,7 +753,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             int child_width = child_minimum + child_slack;
 
             if (page == drag_page) {
-                var drag_transform = transform.translate({
+                var drag_transform = new Gsk.Transform().translate({
                     (float)(drag_page.drag_bar_offset - drag_page.drag_tab_offset),
                     0
                 });
@@ -1183,6 +1202,19 @@ public sealed class Brk.TabView : Gtk.Widget {
         return true;
     }
 
+    internal bool
+    reorder_page_before(Brk.TabPage page, Brk.TabPage target) {
+        return_val_if_fail(page != target, false);
+
+        var page_position = this.get_page_position(page);
+        var target_position = this.get_page_position(target);
+        if (page_position < target_position) {
+            target_position -= 1;
+        }
+        this.page_list.remove(page_position);
+        this.page_list.insert(target_position, page);
+        return true;
+    }
     /**
      * Transfers @page from @self to @other_view.
      *
