@@ -767,11 +767,16 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
     private void
     snapshot_tabs(Gtk.Snapshot snapshot) {
+        var selected_page = this.view.selected_page;
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
             var child = page.tab;
+            if (page == selected_page) {
+                continue;
+            }
             this.snapshot_child(child, snapshot);
         }
+        this.snapshot_child(selected_page.tab, snapshot);
     }
 
     public override void
