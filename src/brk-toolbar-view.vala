@@ -22,6 +22,7 @@ private sealed class Brk.ToolbarViewBar : Gtk.Widget {
         while (this.get_last_child() != null) {
             this.get_last_child().unparent();
         }
+        base.dispose();
     }
 
     public void
@@ -46,7 +47,9 @@ public sealed class Brk.ToolbarView : Gtk.Widget, Gtk.Buildable {
                 this._content.unparent();
             }
             this._content = value;
-            this._content.insert_before(this, bottom_bar);
+            if (this._content != null) {
+                this._content.insert_before(this, bottom_bar);
+            }
         }
     }
 
@@ -88,6 +91,7 @@ public sealed class Brk.ToolbarView : Gtk.Widget, Gtk.Buildable {
             this.content.unparent();
             this.content = null;
         }
+        base.dispose();
     }
 
     public void

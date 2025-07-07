@@ -92,7 +92,10 @@ public sealed class Brk.PreferencesPage : Gtk.Widget {
 
     public override void
     dispose() {
-        this.dispose_template(typeof(Brk.PreferencesPage));
+        while (this.get_last_child() != null) {
+            this.get_last_child().unparent();
+        }
+        base.dispose();
     }
 
     public void
@@ -112,6 +115,7 @@ public class Brk.PreferencesDialog : Gtk.Window, Gtk.Buildable {
     public override void
     dispose() {
         this.dispose_template(typeof(Brk.PreferencesDialog));
+        base.dispose();
     }
 
     public void

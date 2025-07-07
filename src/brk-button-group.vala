@@ -21,5 +21,6 @@ public class Brk.ButtonGroup : Gtk.Widget {
         while (this.get_last_child() != null) {
             this.get_last_child().unparent();
         }
+        base.dispose();
     }
 }

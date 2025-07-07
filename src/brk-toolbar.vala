@@ -21,6 +21,7 @@ public class Brk.Toolbar : Gtk.Widget {
         while (this.get_last_child() != null) {
             this.get_last_child().unparent();
         }
+        base.dispose();
     }
 
     public void

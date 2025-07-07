@@ -44,6 +44,7 @@ public sealed class Brk.Statusbar : Gtk.Widget {
     public override void
     dispose() {
         this.dispose_template(typeof(Brk.Statusbar));
+        base.dispose();
     }
 
     /**

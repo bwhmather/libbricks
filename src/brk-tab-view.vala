@@ -124,6 +124,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
     public override void
     dispose() {
         this.dispose_template(typeof(Brk.TabPageTab));
+        base.dispose();
     }
 
     internal TabPageTab(Brk.TabPage page) {
@@ -150,6 +151,7 @@ private sealed class Brk.TabPageBin : Gtk.Widget {
         while (this.get_last_child() != null) {
             this.get_last_child().unparent();
         }
+        base.dispose();
     }
 
     public override void
@@ -300,6 +302,7 @@ public sealed class Brk.TabPage : GLib.Object {
     dispose() {
         this.tab = null;
         this.bin = null;
+        base.dispose();
     }
 
     internal TabPage(Gtk.Widget child) {
@@ -336,6 +339,7 @@ private sealed class Brk.TabPageDragView : Gtk.Widget {
         this.page.bin.unparent();
 
         this.dispose_template(typeof(Brk.TabPageDragView));
+        base.dispose();
     }
 }
 
