@@ -84,11 +84,12 @@ public_deps = [
 sources = [
   'src/brk-main.vala',
   'src/brk-button-group.vala',
+  'src/brk-preferences.vala',
   'src/brk-statusbar.vala',
-  'src/brk-tab-view.vala',
-  'src/brk-toolbar-view.vala',
-  'src/brk-toolbar.vala',
   'src/brk-style-manager.vala',
+  'src/brk-tab-view.vala',
+  'src/brk-toolbar.vala',
+  'src/brk-toolbar-view.vala',
 ]
 
 sources += gnome.compile_resources(

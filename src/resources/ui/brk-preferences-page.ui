@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="BrkPreferencesPage" parent="GtkWidget">
+    <child>
+      <object class="GtkLabel" id="title_label">
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="description_label">
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="child_box">
+        <property name="orientation">vertical</property>
+      </object>
+    </child>
+  </template>
+</interface>

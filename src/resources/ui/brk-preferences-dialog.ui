@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="BrkPreferencesDialog" parent="GtkWindow">
+    <child>
+      <object class="BrkToolbarView">
+        <property name="content">
+          <object class="GtkBox">
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkStackSidebar">
+                <property name="stack">stack</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStack" id="stack">
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="bottom">
+          <object class="GtkActionBar" id="action_bar">
+            <child type="end">
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <property name="action-name">close</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+
