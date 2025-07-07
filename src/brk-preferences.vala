@@ -54,7 +54,7 @@ public sealed class Brk.PreferencesGroup : Gtk.Widget {
 
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
-        set_css_name("preferences-page");
+        set_css_name("preferencesgroups");
         set_accessible_role(GROUP);
     }
 
@@ -80,7 +80,7 @@ public sealed class Brk.PreferencesPage : Gtk.Widget {
 
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
-        set_css_name("preferences-page");
+        set_css_name("preferencespage");
         set_accessible_role(GROUP);
     }
 
