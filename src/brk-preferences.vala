@@ -73,19 +73,10 @@ public sealed class Brk.PreferencesGroup : Gtk.Widget {
     }
 }
 
-[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-preferences-page.ui")]
-public sealed class Brk.PreferencesPage : Gtk.Widget, Gtk.Buildable {
+public sealed class Brk.PreferencesPage : Gtk.Widget {
     public string title { get; set; }
-    public string description { get; set; }
     public string icon_name { get; set; }
     public bool use_underline { get; set; }
-
-    [GtkChild]
-    private unowned Gtk.Label title_label;
-    [GtkChild]
-    private unowned Gtk.Label description_label;
-    [GtkChild]
-    private unowned Gtk.Box child_box;
 
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
@@ -97,9 +88,6 @@ public sealed class Brk.PreferencesPage : Gtk.Widget, Gtk.Buildable {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.VERTICAL, -1);
         var layout_manager = this.layout_manager as Gtk.BoxLayout;
         layout_manager.orientation = VERTICAL;
-
-        this.bind_property("title", title_label, "label", SYNC_CREATE);
-        this.bind_property("description", description_label, "label", SYNC_CREATE);
     }
 
     public override void
@@ -108,17 +96,8 @@ public sealed class Brk.PreferencesPage : Gtk.Widget, Gtk.Buildable {
     }
 
     public void
-    add_child(Gtk.Builder builder, GLib.Object child, string? type) {
-        if (type == null && child is Brk.PreferencesGroup) {
-            this.add(child as Brk.PreferencesGroup);
-            return;
-        }
-        base.add_child(builder, child, type);
-    }
-
-    public void
     add(Brk.PreferencesGroup group) {
-        group.insert_before(this.child_box, null);
+        group.insert_before(this, null);
     }
 }
 
