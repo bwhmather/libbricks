@@ -640,6 +640,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         int left_button_width = 0;
         int right_button_width = 0;
         if (overflowing) {
+            this.left_button.visible = true;
             this.left_button.measure(
                 HORIZONTAL, height,
                 out left_button_width, null,
@@ -648,6 +649,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             Gsk.Transform transform = null;
             this.left_button.allocate(left_button_width, height, baseline, transform);
 
+            this.right_button.visible = true;
             this.right_button.measure(
                 HORIZONTAL, height,
                 out right_button_width, null,
@@ -656,6 +658,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             transform = null;
             transform = transform.translate({width - right_button_width, 0});
             this.right_button.allocate(right_button_width, height, baseline, transform);
+        } else {
+            this.left_button.visible = false;
+            this.right_button.visible = false;
         }
 
         this.adjustment.upper = allocated;
