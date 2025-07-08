@@ -373,7 +373,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
         drag_icon.child = new Gtk.Label(".");  // TODO old icon won't be replaced if fully transparent...
 
-        if (page.drag_source != this.view) {
+        if (page.drag_source != this.view && page.drag_source.has_page(page)) {
             page.drag_source.detach_page(page);
         }
 
@@ -807,7 +807,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             }
             this.snapshot_child(child, snapshot);
         }
-        this.snapshot_child(selected_page.tab, snapshot);
+        if (selected_page != null) {
+            this.snapshot_child(selected_page.tab, snapshot);
+        }
     }
 
     public override void
@@ -930,7 +932,7 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
             }
 
             for (var child = this.get_first_child(); child != null; child = child.get_next_sibling()) {
-                child.set_child_visible(child == this.view.selected_page.bin);
+                child.set_child_visible(this.view.selected_page != null && child == this.view.selected_page.bin);
             }
 
             this.queue_allocate();
@@ -1167,6 +1169,25 @@ public sealed class Brk.TabView : Gtk.Widget {
 
         this.stack = new Brk.TabViewStack(this);
         this.stack.insert_before(this, null);
+    }
+
+    public override void
+    dispose() {
+        while (this.selected_page != null) {
+            this.detach_page(this.selected_page);
+        }
+
+        if (this.bar != null) {
+            this.bar.unparent();
+            this.bar = null;
+        }
+
+        if (this.stack != null) {
+            this.stack.unparent();
+            this.stack = null;
+        }
+
+        base.dispose();
     }
 
     internal void
