@@ -174,6 +174,31 @@ public sealed class Brk.TabPage : GLib.Object {
     internal Brk.TabPageTab tab;
     internal Brk.TabPageBin bin;
 
+    internal Gdk.Drag drag { get; internal set; }
+
+    internal static Brk.TabPage?
+    get_for_drag(Gdk.Drag drag) {
+        try {
+            var val = new GLib.Value(typeof(Brk.TabPage));
+            drag.content.get_value(ref val);
+            return val.get_object() as Brk.TabPage;
+        } catch {
+            return null;
+        }
+    }
+
+    // This is needed to workaround a race where a tab can be dragged to a new
+    // bar before the motion controller of the original bar is notified.  It
+    // should, ideally, not be used for anything else.
+    internal unowned Brk.TabView? drag_source;
+
+    // The offset of the mouse in the tab at drag start.
+    internal double drag_tab_offset;
+    // The current offset of the mouse in the tab bar.
+    internal double drag_bar_offset;
+
+    internal GLib.Source? drag_timeout;
+
 //    internal GLib.WeakRef last_focus;
 
     /**
@@ -223,29 +248,6 @@ public sealed class Brk.TabPage : GLib.Object {
     public bool loading { get; set; }
 
     public bool closing { get; internal set; }
-
-    public Gdk.Drag drag { get; internal set; }
-
-    public static Brk.TabPage?
-    get_for_drag(Gdk.Drag drag) {
-        try {
-            var val = new GLib.Value(typeof(Brk.TabPage));
-            drag.content.get_value(ref val);
-            return val.get_object() as Brk.TabPage;
-        } catch {
-            return null;
-        }
-    }
-
-    // This is needed to workaround a race where a tab can be dragged to a new
-    // bar before the motion controller of the original bar is notified.  It
-    // should, ideally, not be used for anything else.
-    internal unowned Brk.TabView? drag_source;
-
-    // The offset of the mouse in the tab at drag start.
-    internal double drag_tab_offset;
-    // The current offset of the mouse in the tab bar.
-    internal double drag_bar_offset;
 
     /**
      * An indicator icon for the page.
@@ -363,8 +365,17 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return;
         }
 
+        if (page.drag_timeout != null) {
+            page.drag_timeout.destroy();
+        }
+        page.drag_timeout = null;
+
         var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
         drag_icon.child = new Gtk.Label(".");  // TODO old icon won't be replaced if fully transparent...
+
+        if (page.drag_source != this.view) {
+            page.drag_source.detach_page(page);
+        }
 
         this.view.attach_page(page);
         this.view.selected_page = page;
@@ -382,10 +393,21 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         if (page.drag != drag) {
             return;
         }
-        this.view.detach_page(page);
 
-        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-        drag_icon.child = new Brk.TabPageDragView(page);
+        if (page.drag_timeout != null) {
+            page.drag_timeout.destroy();
+        }
+        page.drag_timeout = new TimeoutSource(100);
+        page.drag_timeout.set_callback(() => {
+            page.drag_timeout = null;
+            this.view.detach_page(page);
+
+            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+            drag_icon.child = new Brk.TabPageDragView(page);
+
+            return false;
+        });
+        page.drag_timeout.attach(GLib.MainContext.@default());
     }
 
     static construct {
