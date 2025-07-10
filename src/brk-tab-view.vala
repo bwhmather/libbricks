@@ -935,7 +935,7 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
                 child.set_child_visible(this.view.selected_page != null && child == this.view.selected_page.bin);
             }
 
-            this.queue_allocate();
+            this.queue_resize();
         });
     }
 
