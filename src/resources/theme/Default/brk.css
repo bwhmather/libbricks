@@ -74,6 +74,10 @@ tabview tabbar button.navigation-button {
     padding-bottom: 0;
 }
 
+tabview tabs:drop(active):not(:disabled) {
+	box-shadow: none;  /* Disable green border. */
+}
+
 tabview tabpages {
     padding: 3px 0 0 0;
 }
