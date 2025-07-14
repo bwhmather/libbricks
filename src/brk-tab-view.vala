@@ -21,6 +21,17 @@
  *     ╰── tabpage
  *          ╰── <child>
  * ```
+ *
+ *
+ * ```
+ * tabdrag[.empty][.single]
+ * ├── tabs
+ * ┊    ╰── tab[.selected]
+ * ┊
+ * ╰── tabpages
+ *     ╰── tabpage
+ *          ╰── <child>
+ * ```
  */
 
 [Flags]
@@ -40,6 +51,8 @@ public enum Brk.TabViewShortcuts {
     ALT_ZERO,
     ALL_SHORTCUTS
 }
+
+/* === Pages ============================================================================================== */
 
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-tab-page-tab.ui")]
 private sealed class Brk.TabPageTab : Gtk.Widget {
@@ -142,7 +155,6 @@ private sealed class Brk.TabPageBin : Gtk.Widget {
     }
 
     construct {
-        this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.HORIZONTAL, -1);
         this.page.child.set_parent(this);
     }
 
@@ -312,38 +324,106 @@ public sealed class Brk.TabPage : GLib.Object {
     }
 }
 
-[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-tab-page-drag-view.ui")]
-private sealed class Brk.TabPageDragView : Gtk.Widget {
-    public Brk.TabPage page { get; construct; }
+/* === Drag View ========================================================================================== */
+
+private sealed class Brk.TabDragViewTabs : Gtk.Widget {
+    private unowned Brk.TabPageTab? _tab;
+    public unowned Brk.TabPageTab? tab {
+        get { return this._tab; }
+        set {
+            if (this._tab != null) {
+                this._tab.unparent();
+            }
+            this._tab = value;
+            if (this._tab != null) {
+                this._tab.set_parent(this);
+            }
+        }
+    }
 
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
-        set_css_name("tab-drag");
+        set_css_name("tabs");
+    }
+
+    public override void
+    dispose() {
+        this.tab = null;
+        base.dispose();
+    }
+}
+
+private sealed class Brk.TabDragViewPages : Gtk.Widget {
+    private unowned Brk.TabPageBin? _page;
+    public unowned Brk.TabPageBin? page {
+        get { return this._page; }
+        set {
+            if (this._page != null) {
+                this._page.unparent();
+            }
+            this._page = value;
+            if (this._page != null) {
+                this._page.set_parent(this);
+            }
+        }
+    }
+    static construct {
+        set_layout_manager_type(typeof (Gtk.BinLayout));
+        set_css_name("tabpages");
+    }
+
+    public override void
+    dispose() {
+        this.page = null;
+        base.dispose();
+    }
+}
+
+
+[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-tab-drag-view.ui")]
+private sealed class Brk.TabDragView : Gtk.Widget {
+    public Brk.TabPage page { get; set; }
+
+    [GtkChild]
+    private unowned Brk.TabDragViewTabs tabs;
+
+    [GtkChild]
+    private unowned Brk.TabDragViewPages pages;
+
+    static construct {
+        set_layout_manager_type(typeof (Gtk.BoxLayout));
+        set_css_name("tabdrag");
     }
 
     construct {
-        assert(!page.drag_source.has_page(page));
+        this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.VERTICAL, -1);
+        var layout_manager = this.layout_manager as Gtk.BoxLayout;
+        layout_manager.orientation = VERTICAL;
 
-        this.page.selected = true;
-        this.page.bin.set_parent(this);
+        this.notify["page"].connect((p, pspec) => {
+            if (this.page != null) {
+                this.page.selected = true;
+            }
+            this.tabs.tab = this.page != null ? this.page.tab : null;
+            this.pages.page = this.page != null ? this.page.bin : null;
+        });
     }
 
     internal
-    TabPageDragView(Brk.TabPage page) {
+    TabDragView(Brk.TabPage page) {
         Object(page: page);
     }
 
     public override void
     dispose() {
-        assert(!page.drag_source.has_page(page));
-
-        this.page.selected = false;
-        this.page.bin.unparent();
-
-        this.dispose_template(typeof(Brk.TabPageDragView));
+        this.page = null;
+        this.dispose_template(typeof (Brk.TabDragView));
         base.dispose();
     }
 }
+
+
+/* === Tab View =========================================================================================== */
 
 private sealed class Brk.TabViewTabs : Gtk.Widget {
     public unowned Brk.TabView view { get; construct; }
@@ -403,7 +483,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             this.view.detach_page(page);
 
             var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-            drag_icon.child = new Brk.TabPageDragView(page);
+            drag_icon.child = new Brk.TabDragView(page);
 
             return false;
         });
