@@ -110,3 +110,14 @@ grid {
     border-spacing: 5px;
     padding: 5px;
 }
+
+statusbar {
+	border-spacing: 25px;
+}
+
+statusbar button {
+	margin: 0;
+	border: none;
+	background: none;
+	padding: 0;
+}
