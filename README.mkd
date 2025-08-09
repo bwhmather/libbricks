@@ -125,7 +125,7 @@ Application developers using `libbricks` should not need to manually set CSS cla
 ## Similar Efforts
 
   - XApp - https://linuxmint-developer-guide.readthedocs.io/en/latest/xapps.html - Similar goals.  Gtk3 Only
-  - Adwaita - Gnome style guide.
+  - Adwaita - https://gnome.pages.gitlab.gnome.org/libadwaita/doc/ - Gnome style guide.
   - Granite - https://valadoc.org/granite-7/index.htm
   - Helium - https://docs.developers.tauos.co/libhelium/libhelium-1/
 
