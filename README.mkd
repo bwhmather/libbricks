@@ -1,5 +1,8 @@
 ### LibBricks
 
+> [!WARNING]
+> `libbricks` is currently in very early development.  If you want to use it then expect to have to help out.
+
 The missing GTK4 platform library for reactionaries and curmudgeons.
 
 Provides the necessary pieces for developing traditional desktop applications using GTK4.
@@ -13,123 +16,52 @@ Goals:
 Non-goals:
   - Replace `libadwaita`.  Gnome applications will continue to look and behave like gnome applications.  That is fine.  `libadwaita` is developed independently of GTK specifically to enable efforts like `libbricks` to exist.
   - Patch in support for platform specific APIs.  If you want to know where your windows are then adding `libbricks` won't help.
-  - Bring about the year of the linux mobile phone.  `libbricks` is for writing desktop applications.  No compromises.
-
+  - Bring about the year of the Linux mobile phone.  `libbricks` is for writing desktop applications.  No compromises.
 
 What we aim to provide:
-  - Named container and widget classes that allow applications to be assembed without dipping into CSS.
-  - Human Interface Guidelines that try to describe what it means to be a "traditional desktop application" and how to build one.
+  - Named container and widget classes that allow applications to be assembled without dipping into CSS (in progress).
+  - Human Interface Guidelines that try to describe what it means to be a "traditional desktop application" and how to build one (in progress).
   - Helpers for loading icon and widget themes.
-  - Demo application for illustrating patterns and testing themes.
-  - A curated set of widget themes, tested with each release.
-  - An updated baseline true colour icon theme.
+  - Demo application for illustrating patterns and testing themes (todo).
+  - A curated set of widget themes, tested with each release (todo).
+  - An updated baseline true colour icon theme (todo).
   - Generic choosers and dialogs that support typeahead and look good with server side decorations (might be out of scope).
-  - A community of likeminded developers.
-  - A curated list of applications that follow the `libbricks` style.
-
-
-`libbricks` maintains two separate contracts:
-  - A contract with theme authors: CSS classes.
-  - A contract with application developers: Widgets.
-
-
-
-
-Application developers using `libbricks` should not need to manually set margins or separation.
-Application developers using `libbricks` should not need to manually set CSS classes.
+  - A community of like-minded developers (todo).
+  - A curated list of applications that follow the `libbricks` style (todo).
 
 
 `libbricks` is developed as a monorepo, but its components are designed to be packaged separately.
 
 
-Questions:
-  - When should widgets be displayed in a viewport and when should they be drawn directly on to the background?
-  - When widgets stretch to the edge and when should they be centered?
+### Relationship to Gnome
 
-Ways to display children of property groups:
-  - HTML fieldset style: box around, label replacing part of top border, and rows undecorated.
-  - GTK3 style: label in bold and unindented, and rows indented but undecorated.
-  - Adwaita style: label in bold, rows in list view.
+GTK4 contains the common core of components for both Gnome and non-Gnome applications.
+Libadwaita adds the Gnome specific components.
+This is us stepping up to provide the bits that don't make sense in Gnome.
+Hopefully it will reduce the bickering that Gnome developers currently have to put up with.
 
-
-Vertical splits:
-  - Left and right padded from edge on same background.  Handle in middle.
-  - Left and right butted against sharp border.
-  - Mix.
-
-Rules:
-  - If one side butts against the edge then the other side must too.
-  - Contents can't butt against the inside of a viewport or standalone frame unless the frame also butts against its container.
-
-
-
-
-
-
-
-TODO:
-  - [ ] Implement demo applications:
-    - [ ] Abiword font chooser (multiple tabs with shared preview).
-    - [ ] Display settings (preview, list box, mirrored/split, primary).
-    - [ ] Remote desktop launcher.
-    - [ ] Text editor settings.
-    - [ ] Print settings.
-    - [ ] File chooser.
-    - [ ] Text editor.
-
-  - [ ] Implement real applications:
-    - [ ] bedit2.
-    - [ ] endoscope.
-    - [ ] haywardout.
-    - [ ] Rhythmbox.
-  - [ ] Extract widgets.
-  - [ ] Move from github.
-  - [ ] Fork gi-docgen and port gtk-doc theme.
-  - [ ] Documentation hosting.
-  - [ ] Website.
-  - [ ] Forums.
-  - [ ] Theme preview tool.
-
-
-
-Possible other components:
-  - XDG `.desktop` file extension for registering Control Panel links.
-
-
-### Writing `libbricks` Applications
-
-
-
-
-  - Application authors should never need to create custom container or leaf widgets.  If you think you need a custom widget, talk to us and get it into `libbricks`.
-  - Application authors should never need to set css classes on widgets.  CSS classes are the contract between `libbricks` and theme authors.  `gobject` properties are the contract between application authors and `libbricks`.
-
-
-
-#### Relationship to Gnome
-GTK4 contains the common core of components for both gnome and non-gnome applications.
-Libadwaita adds the gnome specific components.
-This is us stepping up to provide the bits that don't make sense in gnome.
-Hopefully it will reduce the bickering that gnome developers currently have to put up with.
-
-`Insert Venn diagram with [libadwaita [GTK4] libbrick] and GTK2 wrapping libbricks and GTK4`
+*Insert Venn diagram with [libadwaita [GTK4] libbrick] and GTK2 wrapping libbricks and GTK4*
 
 
 ### Relationship to other GTK desktop environments
+
 `libbricks` applications should feel at home in Mate, XFCE and any of the numerous lightweight and tiling window managers.
 One of the central goals of `libbricks` is to bring back themeing.
 Applications are free to pick and choose different parts.
 
 
 ### Relationship to KDE
+
 `libbricks` applications are structured very similarly to KDE applications.
 We would like the breeze GTK theme to support `libbricks` widgets and will do what we can to make it straightforward.
 
 
-## Library
+### Known users
 
-  - Dense forms (single column) for side bar.
-  - Dense forms (two column) for content area.
+  - Bedit - https://github.com/bwhmather/bedit2 - A tabbed text editor using `libbricks`
+
+
+## Writing `libbricks` Applications
 
 Widgets:
   - General:
@@ -151,36 +83,20 @@ Widgets:
     - Big icon on left and form stuff on right.
   - Preferences:
     - `BrkPreferencesWindow`
-    - `BrkPreferencesGroup` (possibly `BrkFieldSet` ala html, or `BrkFrame` ala old GTK).
+    - `BrkPreferencesGroup` (possibly `BrkFieldSet`, à la html, or `BrkFrame`, à la old GTK).
     - `BrkPreferencesRow`
   - Selection:
     - `BrkFileChooser`
 
-
-CSS classes:
-  - Need some way to indicate that widgets should extend all of the way to the edge of the parent container.
-
-
-Banned widgets:
+Discouraged widgets:
   - `GtkHeaderBar` - Prefer server side decorations.
-  - `GtkDialog`
-  - `GtkMessageDialog`
-  - `GtkAboutDialog`
+  - `GtkDialog` - Replace with `BrkDialog` or `BrkPreferencesWindow`.
+  - `GtkMessageDialog` - Replace with `BrkDialog`.
+  - `GtkAboutDialog` - Replace with `BrkDialog`.
   - `GtkAssistant` - Replacement provided without client side decorations.
   - `GtkShortcutsWindow` - No replacement provided.  Show keyboard shortcuts inline in menus.
   - `GtkFrame` - Replaced with `BrkPreferencesGroup` and similar.
 
-Discouraged widgets:
-  - `GtkMenuButton`
-  - `GtkPopover`
-  - `GtkNotebook`?
-
-## Themes
-  - Classic - A somewhat modernised GTK2 style.
-  - Default - Compatible with Gtk4 default style.  No frames around field sets.
-  - Fisher - Window XP style.
-  - Redmond - Windows 2000 style.
-  - Nadawaita - Superficially similar to Adwaita, but with different layout.  Items in field sets are styled as a list box.
 
 ## Style Guide
 
@@ -196,46 +112,23 @@ Types of windows:
   - About windows.
 
 
-### Slicing
-Main window separated into horizontal slices: menu bars, tool bars, tab bars and status bars go all the way from one edge to the other.
+## Themeing `libbricks` Applications
 
-Vertical panels split a single horizontal slice into either two or three vertical slices.
-Horizontal slices within the each panel go all of the way to the edge.
-In the default them, the panel is rendered as a one pixel splitter with a shadow over the main panel.
+`libbricks` maintains two separate contracts:
+  - A contract with theme authors: CSS classes.
+  - A contract with application developers: Widgets.
 
-Vertical panels are generally responsible for rendering a separator line at their bottom but not at their top.
-
-Wells / List boxes
+Application developers using `libbricks` should not need to manually set margins or separation.
+Application developers using `libbricks` should not need to manually set CSS classes.
 
 
-### Menu Bars
-When hidden by default:
-  - Toggle on with F10
-  - Temporarily open by holding Alt.
+## Similar Efforts
 
-Levels:
-  - Background (behind tabs)
-  - Document
-  - Foreground (toolbars, statusbars and level with bottom of tabs)
+  - XApp - https://linuxmint-developer-guide.readthedocs.io/en/latest/xapps.html - Similar goals.  Gtk3 Only
+  - Adwaita - Gnome style guide.
+  - Granite - https://valadoc.org/granite-7/index.htm
+  - Helium - https://docs.developers.tauos.co/libhelium/libhelium-1/
 
-### Action Bars
-
-Help on Left.
-Ok, Apply, Cancel on right.
-Alternatively, Close on right.
-
-
-## Other libraries
-
-XApp - https://linuxmint-developer-guide.readthedocs.io/en/latest/xapps.html - Similar goals.  Gtk3 Only
-Adwaita - Gnome style guide.
-Granite - https://valadoc.org/granite-7/index.htm
-Helium - https://docs.developers.tauos.co/libhelium/libhelium-1/
-
-
-MATE
-Cinnamon
-Xfce
 
 
 
