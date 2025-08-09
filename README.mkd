@@ -1,7 +1,7 @@
 > [!WARNING]
 > `libbricks` is currently in very early development.  Bugs and missing features abound.  If you want to use it then expect to have to help out.
 
-### LibBricks
+# LibBricks
 
 The missing GTK4 platform library for reactionaries and curmudgeons.
 
