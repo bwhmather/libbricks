@@ -58,7 +58,7 @@ We would like the breeze GTK theme to support `libbricks` widgets and will do wh
 
 ### Known users
 
-  - Bedit - https://github.com/bwhmather/bedit2 - A tabbed text editor using `libbricks`
+  - Bedit - https://github.com/bwhmather/bedit2 - A tabbed text editor.
 
 
 ## Writing `libbricks` Applications
