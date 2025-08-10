@@ -10,6 +10,25 @@ pkgconfig = import('pkgconfig')
 
 cc = meson.get_compiler('c')
 
+glib_dep = dependency('glib-2.0')
+gio_dep = dependency('gio-2.0')
+gtk_dep = dependency('gtk4', include_type: 'system')
+math_dep = cc.find_library('m')
+
+deps = [
+  math_dep,
+  glib_dep,
+  gio_dep,
+  gtk_dep,
+]
+
+public_deps = [
+  glib_dep,
+  gio_dep,
+  gtk_dep,
+]
+
+
 version_arr = meson.project_version().split('-')[0].split('.')
 version_major = version_arr[0].to_int()
 version_minor = version_arr[1].to_int()
@@ -62,24 +81,6 @@ add_project_arguments([
   '-Wno-unused-parameter',
   '-Wno-unused-variable',
 ], language: 'c')
-
-glib_dep = dependency('glib-2.0')
-gio_dep = dependency('gio-2.0')
-gtk_dep = dependency('gtk4', include_type: 'system')
-math_dep = cc.find_library('m')
-
-deps = [
-  math_dep,
-  glib_dep,
-  gio_dep,
-  gtk_dep,
-]
-
-public_deps = [
-  glib_dep,
-  gio_dep,
-  gtk_dep,
-]
 
 sources = [
   'src/brk-main.vala',
