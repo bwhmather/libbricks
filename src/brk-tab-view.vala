@@ -765,13 +765,17 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             this.right_button.visible = false;
         }
 
+        double page_size = width - left_button_width - right_button_width;
+        if (page_size > allocated) {
+            page_size = allocated;
+        }
         this.adjustment.configure(
             this.adjustment.value,
             0, // `"lower"
             allocated, // "upper"
             this.adjustment.step_increment,
             this.adjustment.page_increment,
-            width - left_button_width - right_button_width  // "page-size"
+            page_size
         );
 
         // Tabs.
