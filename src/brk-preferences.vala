@@ -104,8 +104,8 @@ public sealed class Brk.PreferencesPage : Gtk.Widget {
     }
 }
 
-[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-preferences-dialog.ui")]
-public class Brk.PreferencesDialog : Gtk.Window, Gtk.Buildable {
+[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-preferences-window.ui")]
+public class Brk.PreferencesWindow : Gtk.Window, Gtk.Buildable {
     public bool search_enabled { get; set; }
     public Brk.PreferencesPage visible_page { get; set; }
 
@@ -114,7 +114,7 @@ public class Brk.PreferencesDialog : Gtk.Window, Gtk.Buildable {
 
     public override void
     dispose() {
-        this.dispose_template(typeof(Brk.PreferencesDialog));
+        this.dispose_template(typeof(Brk.PreferencesWindow));
         base.dispose();
     }
 

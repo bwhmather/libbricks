@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/com/bwhmather/Bricks">
-    <file preprocess="xml-stripblanks">ui/brk-preferences-dialog.ui</file>
+    <file preprocess="xml-stripblanks">ui/brk-preferences-window.ui</file>
     <file preprocess="xml-stripblanks">ui/brk-preferences-group.ui</file>
     <file preprocess="xml-stripblanks">ui/brk-statusbar.ui</file>
     <file preprocess="xml-stripblanks">ui/brk-tab-drag-view.ui</file>
