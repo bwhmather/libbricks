@@ -112,6 +112,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
             // TODO page shouldn't know about views.
             if (!this.page.drag_source.has_page(this.page)) {
                 this.page.drag_source.attach_page(this.page);
+                this.page.drag_source.selected_page = this.page;
             }
 
             return true;
