@@ -123,8 +123,16 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         });
         this.add_controller(drag_controller);
 
-        var click_controller = new Gtk.GestureClick();
-        click_controller.pressed.connect((n_press, x, y) => {
+        var middle_click_controller = new Gtk.GestureClick();
+        middle_click_controller.button = 2;
+        // Listen on release to give user a chance to cancel by unfocussing.
+        middle_click_controller.released.connect((n_press, x, y) => {
+            this.page.close();
+        });
+        this.add_controller(middle_click_controller);
+
+        var raise_on_click_controller = new Gtk.GestureClick();
+        raise_on_click_controller.pressed.connect((n_press, x, y) => {
             var picked = this.pick(x, y, DEFAULT);
             if (picked == this.close_button || picked.is_ancestor(this.close_button)) {
                 return;
@@ -132,7 +140,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
 
             this.page.focus();
         });
-        this.add_controller(click_controller);
+        this.add_controller(raise_on_click_controller);
     }
 
     public override void
