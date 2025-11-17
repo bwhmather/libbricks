@@ -24,18 +24,19 @@
     --text-view-bg: @text_view_bg;
 }
 
+/* --- Tab View ------------------------------------------------------------------------------------------- */
 
+/* Tabs */
 tab {
     border-radius: 8px 8px 0px 0px;
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
+    border-bottom: 0;
     margin-top: 2px;
     margin-left: 2px;
     margin-right: 2px;
 }
-
 tab.selected {
-    border-bottom-width: 0px;
     background-image: linear-gradient(
         to bottom,
         var(--selected-bg-color) 5px,
@@ -43,73 +44,82 @@ tab.selected {
     );
     margin-top: 0px;
     padding-top: 2px;
+    margin-bottom: -1px;
     padding-bottom: 1px;
 }
-
 tab button.tab-close-button {
     padding: 0;
     margin: 5px;
 }
 
-tabview {
-    margin: 4px 0 0 0;
+/* Tab pages */
+tabpages {
+    padding: 3px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+}
+tabpage {
+    border: 1px solid var(--border-color);
 }
 
+/* Docked tabs */
 tabview tabbar {
     padding-top: 2px;
-    border-top: 1px solid var(--border-color);
-    background-image: linear-gradient(
-        to top,
-        var(--border-color) 1px,
-        shade(var(--bg-color), 0.95) 1px,
-        shade(var(--bg-color), 0.9) 15px
-    );
-    min-height: 42px; /* TODO should depend on line height */
 }
-
 tabview tabbar button.navigation-button {
     border: none;
     background: none;
     padding-top: 0;
     padding-bottom: 0;
 }
-
 tabview tabs:drop(active):not(:disabled) {
 	box-shadow: none;  /* Disable green border. */
 }
-
-tabview tabpages {
-    padding: 3px 0 0 0;
+tabview tabpages,
+tabview tabpage {
+    padding-left: 0;
+    padding-right: 0;
+    border-left: 0;
+    border-right: 0;
 }
 
+/* Dragged tabs */
 tabdrag tab {
     margin-right: 200px;
 }
-
-
 tabdrag tabpages {
-    border: 1px solid var(--border-color);
-    padding: 3px;
     background: var(--bg-color);
     border-radius: 3px;
 
 }
-
 tabdrag tabpage {
-    border: 1px solid var(--border-color);
     min-height: 300px;
 }
 
-viewport,
-textview {
-    border-top: 1px solid var(--border-color);
+/* --- Toolbar View --------------------------------------------------------------------------------------- */
+
+toolbarview {
+    background: shade(var(--bg-color), 0.9);
+}
+toolbarview>bar {
+    background: var(--bg-color);
+}
+
+toolbarview>bar.top-bar>*:not(revealer),
+toolbarview>bar.top-bar>revealer>* {
     border-bottom: 1px solid var(--border-color);
 }
 
-grid {
-    border-spacing: 5px;
-    padding: 5px;
+toolbarview>bar.bottom-bar>*:not(revealer),
+toolbarview>bar.bottom-bar>revealer>* {
+    border-top: 1px solid var(--border-color);
 }
+
+toolbarview tabview tabpages {
+    border-bottom: 0;
+}
+
+/* --- Status Bar ----------------------------------------------------------------------------------------- */
 
 statusbar {
 	border-spacing: 25px;
@@ -121,3 +131,11 @@ statusbar button {
 	background: none;
 	padding: 0;
 }
+
+/* --- Grids ---------------------------------------------------------------------------------------------- */
+
+grid {
+    border-spacing: 5px;
+    padding: 5px;
+}
+

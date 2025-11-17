@@ -429,6 +429,13 @@ private sealed class Brk.TabDragView : Gtk.Widget {
         this.dispose_template(typeof (Brk.TabDragView));
         base.dispose();
     }
+
+    public override void
+    snapshot(Gtk.Snapshot snapshot) {
+        // Snapshot the stack first so that tabs can overlap.
+        this.snapshot_child(this.pages, snapshot);
+        this.snapshot_child(this.tabs, snapshot);
+    }
 }
 
 
@@ -1287,6 +1294,13 @@ public sealed class Brk.TabView : Gtk.Widget {
         }
 
         base.dispose();
+    }
+
+    public override void
+    snapshot(Gtk.Snapshot snapshot) {
+        // Snapshot the stack first so that tabs can overlap.
+        this.snapshot_child(this.stack, snapshot);
+        this.snapshot_child(this.bar, snapshot);
     }
 
     internal void
