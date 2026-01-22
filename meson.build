@@ -85,6 +85,12 @@ add_project_arguments([
 sources = [
   'src/brk-main.vala',
   'src/brk-button-group.vala',
+  'src/brk-file-dialog.vala',
+  'src/brk-file-dialog-filter-view.vala',
+  'src/brk-file-dialog-icon-view.vala',
+  'src/brk-file-dialog-list-view.vala',
+  'src/brk-file-dialog-tree-view.vala',
+  'src/brk-file-thumbnail.vala',
   'src/brk-preferences.vala',
   'src/brk-statusbar.vala',
   'src/brk-style-manager.vala',
@@ -107,6 +113,7 @@ libbricks = shared_library(
   vala_gir: f'Brk-@version_major@.@version_minor@.gir',
   vala_args: [
     '--pkg', 'config',
+    '--pkg', 'gtk4',
   ],
   soversion: version_minor,
   dependencies: deps,
