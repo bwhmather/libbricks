@@ -91,6 +91,7 @@ sources = [
   'src/brk-file-dialog-list-view.vala',
   'src/brk-file-dialog-tree-view.vala',
   'src/brk-file-thumbnail.vala',
+  'src/brk-path-bar.vala',
   'src/brk-preferences.vala',
   'src/brk-statusbar.vala',
   'src/brk-style-manager.vala',

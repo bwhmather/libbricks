@@ -26,19 +26,6 @@ private sealed class Brk.FileDialogState {
     public string[] sort_columns;
 }
 
-private sealed class Brk.FileDialogPathBar : Gtk.Widget {
-    public GLib.File root_directory { get; set; }
-
-    class construct {
-        set_layout_manager_type(typeof (Gtk.BoxLayout));
-    }
-
-    public override void
-    dispose() {
-        base.dispose();
-    }
-}
-
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-file-dialog.ui")]
 private sealed class Brk.FileDialogWindow : Gtk.Window {
     // Path to root folder under mount.
