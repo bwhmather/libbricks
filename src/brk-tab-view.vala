@@ -1264,6 +1264,9 @@ public sealed class Brk.TabView : Gtk.Widget {
                 page.selected = page == this.selected_page;
             }
         });
+        this.notify["n-pages"].connect((s, pspec) => {
+            this.stack.visible = this.n_pages > 0;
+        });
 
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.VERTICAL, -1);
 
