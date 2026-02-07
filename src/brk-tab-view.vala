@@ -449,6 +449,14 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
 
     private Gtk.Adjustment adjustment = new Gtk.Adjustment(0, 0, 0, 1, 1, 0);
 
+    private bool should_scroll_to_selected = false;
+
+    private void
+    scroll_to_selected() {
+        this.should_scroll_to_selected = true;
+        this.queue_allocate();
+    }
+
     private void
     acquire_drag(Gdk.Drag drag, double x, double y) {
         var page = Brk.TabPage.get_for_drag(drag);
@@ -554,6 +562,9 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         this.view.page_detached.connect((page) => {
             GLib.SignalHandler.disconnect_by_data(page, this);
         });
+        this.view.notify["selected-page"].connect((v, pspec) => {
+            this.scroll_to_selected();
+        });
 
         var drop_controller = new Gtk.DropTargetAsync(
             new Gdk.ContentFormats.for_gtype(typeof(Brk.TabPage)), MOVE | COPY | LINK | ASK
@@ -593,6 +604,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             return true;
         });
         this.add_controller(scroll_controller);
+
+        this.adjustment.notify["upper"].connect((a, pspec) => {
+            this.scroll_to_selected();
+        });
     }
 
     public TabViewTabs(Brk.TabView view) {
@@ -785,6 +800,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         if (page_size > allocated) {
             page_size = allocated;
         }
+
         this.adjustment.configure(
             this.adjustment.value,
             0, // `"lower"
@@ -795,11 +811,45 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         );
 
         // Tabs.
-        Gsk.Transform transform = null;
-        transform = transform.translate({(float)(left_button_width - adjustment.value), 0});
-
         int requested_slack = natural - minimum;
         int remaining_slack = allocated - minimum;
+        if (this.should_scroll_to_selected) {
+            var selected_page = this.view.selected_page;
+            var offset = 0;
+            for (var i = 0; i < this.view.n_pages; i++) {
+                var page = this.view.get_page(i);
+                var child = page.tab;
+
+                int child_minimum, child_natural;
+                child.measure(
+                    HORIZONTAL, height,
+                    out child_minimum, out child_natural,
+                    null, null
+                );
+
+                int child_slack = 0;
+                if (requested_slack != 0) {
+                    child_slack += child_natural - child_minimum;
+                    child_slack *= remaining_slack; // TODO overflow likely.
+                    child_slack /= requested_slack;
+
+                    requested_slack -= (child_natural - child_minimum);
+                    remaining_slack -= child_slack;
+                }
+                int child_width = child_minimum + child_slack;
+
+                if (page == selected_page) {
+                    this.should_scroll_to_selected = false;
+                    double new_value = this.adjustment.value;
+                    new_value = double.min(new_value, offset + child_width - this.adjustment.page_size);
+                    new_value = double.max(new_value, offset);
+                    this.adjustment.value = new_value;
+                    break;
+                }
+
+                offset += child_width;
+            }
+        }
 
         // This is where we handle reordering dragged tabs.  Only the tab of the
         // view's selected page will be reordered.  The insertion point is
@@ -807,6 +857,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         // and the position of the cursor.  Changing the insertion point will
         // queue up another allocation, but this _should_ be a no-op.
         Brk.TabPage? drag_page = null;
+        requested_slack = natural - minimum;
+        remaining_slack = allocated - minimum;
         if (this.view.selected_page.drag != null) {
             drag_page = this.view.selected_page;
 
@@ -867,6 +919,10 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             }
         }
 
+        Gsk.Transform transform = null;
+        transform = transform.translate({(float)(left_button_width - adjustment.value), 0});
+        requested_slack = natural - minimum;
+        remaining_slack = allocated - minimum;
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
             var child = page.tab;
