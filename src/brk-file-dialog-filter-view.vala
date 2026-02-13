@@ -11,6 +11,180 @@ private struct QueryStackEntry {
     GLib.FileInfo[] matches;
 }
 
+private void append_escaped(GLib.StringBuilder str, unichar chr) {
+    // Mostly stolen from `g_markup_escape_text`,
+    switch (chr) {
+    case '&':
+        str.append("&amp;");
+        break;
+
+    case '<':
+        str.append("&lt;");
+        break;
+
+    case '>':
+        str.append("&gt;");
+        break;
+
+    case '\'':
+        str.append("&apos;");
+        break;
+
+    case '"':
+        str.append("&quot;");
+        break;
+
+    default:
+        if (
+            (0x1 <= chr && chr <= 0x8) ||
+            (0xb <= chr && chr <= 0xc) ||
+            (0xe <= chr && chr <= 0x1f) ||
+            (0x7f <= chr && chr <= 0x84) ||
+            (0x86 <= chr && chr <= 0x9f)
+        ) {
+            str.append_printf("&#x%x;", chr);
+        } else {
+            str.append_unichar(chr);
+        }
+        break;
+    }
+}
+
+private bool match_subquery(
+    string subquery, string name, GLib.StringBuilder markup, out uint64 quality
+) {
+    bool bold = false;
+    unowned string query_cursor;
+    unowned string name_cursor;
+    int quality_cursor = 0;
+    unowned string chunk_start;
+
+    markup.truncate(0);
+    quality = 0l;
+
+    query_cursor = subquery;
+    name_cursor = name;
+    chunk_start = name;
+
+    while (chunk_start.get_char() != '\0') {
+        unowned string chunk_end;
+        unowned string candidate_start;
+        unowned string best_start;
+        unowned string best_end;
+        unowned string best_query_cursor;
+        size_t best_length;
+
+        // Find end of chunk.
+        chunk_end = chunk_start.next_char();
+        while (true) {
+            unichar start_char = chunk_start.get_char();
+            unichar end_char = chunk_end.get_char();
+
+            if (end_char == '\0') {
+                break;
+            }
+
+            if (start_char.isalpha()) {
+                // Chunk is made up of an upper or lower case letter followed by
+                // any number of lower case letters.
+                if (!end_char.islower()) {
+                    break;
+                }
+            } else if (start_char.isdigit()) {
+                // Chunk is a sequence of digits
+                if (!end_char.isdigit()) {
+                    break;
+                }
+            } else {
+                // Chunk is a single, non-alphanumeric character.
+                break;
+            }
+
+            chunk_end = chunk_end.next_char();
+        }
+
+        // Find longest match.
+        best_start = chunk_start;
+        best_end = chunk_start;
+        best_query_cursor = query_cursor;
+        best_length = 0;
+
+        candidate_start = chunk_start;
+        while (candidate_start < chunk_end) {
+            unowned string candidate_name_cursor;
+            unowned string candidate_query_cursor;
+            int candidate_length;
+
+            candidate_name_cursor = candidate_start;
+            candidate_query_cursor = query_cursor;
+            candidate_length = 0;
+
+            while (candidate_name_cursor <= chunk_end) {
+                unichar name_char = candidate_name_cursor.get_char();
+                unichar query_char = candidate_query_cursor.get_char();
+
+                if (query_char == '\0') {
+                    break;
+                }
+
+                if (name_char.tolower() != query_char.tolower()) {
+                    break;
+                }
+
+                candidate_name_cursor = candidate_name_cursor.next_char();
+                candidate_query_cursor = candidate_query_cursor.next_char();
+                candidate_length++;
+            }
+
+            if (candidate_length > best_length) {
+                best_start = candidate_start;
+                best_end = candidate_name_cursor;
+                best_query_cursor = candidate_query_cursor;
+                best_length = candidate_length;
+            }
+
+            candidate_start = candidate_start.next_char();
+        }
+
+        while (name_cursor < chunk_end) {
+            if (
+                name_cursor >= best_start &&
+                name_cursor < (best_end)
+            ) {
+                if (!bold) {
+                    markup.append("<b>");
+                    bold = true;
+                }
+                quality = quality | (1l << uint64.max(63 - quality_cursor, 0));
+            } else {
+                if (bold) {
+                    markup.append("</b>");
+                    bold = true;
+                }
+            }
+
+            append_escaped(markup, name_cursor.get_char());
+
+            name_cursor = name_cursor.next_char();
+            quality_cursor ++;
+        }
+
+        query_cursor = best_query_cursor;
+        chunk_start = chunk_end;
+    }
+
+    if (bold) {
+        markup.append("</b>");
+    }
+
+    if (query_cursor.get_char() == '\0') {
+        return true;
+    } else {
+        quality = 0;
+        return false;
+    }
+}
+
 [GtkTemplate ( ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-filter-view.ui")]
 internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
@@ -95,7 +269,7 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                 n += 1;
 
                 // Subquery is from the beginning of the remaining query to either the next `/` or the very
-                // end.  We need to read the next segment here and consume any following slashes. Segments can
+                // end.  We need to read the next subquery here and consume any following slashes. Segments can
                 // be empty if the query ends with a trailing /.
                 int next_slash = remainder.index_of_char('/', 0);
                 if (next_slash >= 0) {
@@ -200,29 +374,31 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                         continue;
                     }
 
+                    var file = candidate.get_attribute_object("standard::file") as GLib.File;
+
+                    var markup = new GLib.StringBuilder();
+                    while (true) {
+                        var parentinfo = this.query_stack[n - 1].matches[parent_index];
+                        var parentfile = parentinfo.get_attribute_object("standard::file") as GLib.File;
+                        if (parentfile.equal(file.get_parent())) {
+                            markup.append(parentinfo.get_attribute_string("bricks::markup"));
+                            break;
+                        }
+                        parent_index++;
+                    }
+                    if (markup.len > 0) {
+                        markup.append("<b>/</b>");
+                    }
+
                     string name = candidate.get_name();
-                    if (!name.has_prefix(subquery)) {
+                    uint64 quality = 0;
+                    if (!match_subquery(subquery, name, markup, out quality)) {
                         continue;
                     }
 
                     // We need to dup in order to invalidate the list view items.
                     var match = candidate.dup();
-                    var file = match.get_attribute_object("standard::file") as GLib.File;
-
-                    string markup = "";
-                    while (true) {
-                        var parentinfo = this.query_stack[n - 1].matches[parent_index];
-                        var parentfile = parentinfo.get_attribute_object("standard::file") as GLib.File;
-                        if (parentfile.equal(file.get_parent())) {
-                            markup = parentinfo.get_attribute_string("bricks::markup");
-                            break;
-                        }
-                        parent_index++;
-                    }
-
-                    markup = markup == "" ? "" : markup + "<b>/</b>";
-                    markup = markup + GLib.Markup.printf_escaped("<b>%s</b>%s", subquery, name[subquery.length:]);
-                    match.set_attribute_string("bricks::markup", markup);
+                    match.set_attribute_string("bricks::markup", markup.str);
 
                     matches += match;
                 }
