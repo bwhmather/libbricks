@@ -59,7 +59,6 @@ private bool match_subquery(
     int quality_cursor = 0;
     unowned string chunk_start;
 
-    markup.truncate(0);
     quality = 0l;
 
     query_cursor = subquery;
@@ -369,6 +368,7 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
                 GLib.FileInfo[] matches = {};
                 var parent_index = 0;
+                var markup = new GLib.StringBuilder();
                 foreach (var candidate in candidates) {
                     if (!show_hidden && candidate.get_is_hidden()) {
                         continue;
@@ -376,7 +376,7 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
                     var file = candidate.get_attribute_object("standard::file") as GLib.File;
 
-                    var markup = new GLib.StringBuilder();
+                    markup.truncate(0);
                     while (true) {
                         var parentinfo = this.query_stack[n - 1].matches[parent_index];
                         var parentfile = parentinfo.get_attribute_object("standard::file") as GLib.File;
