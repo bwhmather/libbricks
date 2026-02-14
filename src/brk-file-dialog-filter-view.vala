@@ -154,7 +154,7 @@ private bool match_subquery(
                     markup.append("<b>");
                     bold = true;
                 }
-                quality = quality | (1l << uint64.max(63 - quality_cursor, 0));
+                quality = quality | (1ull << int.max(63 - quality_cursor, 0));
             } else {
                 if (bold) {
                     markup.append("</b>");
@@ -406,9 +406,34 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                     // We need to dup in order to invalidate the list view items.
                     var match = candidate.dup();
                     match.set_attribute_string("bricks::markup", markup.str);
+                    match.set_attribute_uint64("bricks::quality", quality);
 
                     matches += match;
                 }
+
+                GLib.qsort_with_data<GLib.FileInfo>(matches, sizeof (GLib.FileInfo), (a, b) => {
+                    var fa = a.get_attribute_object("standard::file") as GLib.File;
+                    var fb = b.get_attribute_object("standard::file") as GLib.File;
+                    if (!fa.has_parent(fb.get_parent())) {
+                        // Preserve existing order if parents don't match.
+                        return -1;
+                    }
+
+                    var qa = a.get_attribute_uint64("bricks::quality");
+                    var qb = b.get_attribute_uint64("bricks::quality");
+                    if (qa < qb) {
+                        return 1;
+                    }
+                    if (qa > qb) {
+                        return -1;
+                    }
+
+                    if (fa.get_basename() < fb.get_basename()) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                });
 
                 // Changing a stack entry invalidates all higher entries.
                 this.query_stack.resize(n + 1);
