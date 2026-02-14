@@ -1,9 +1,15 @@
+/*
+ * Copyright (c) 2025 Ben Mather <bwhmather@bwhmather.com>
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
 internal sealed class Brk.StyleManager : GLib.Object {
     public Gdk.Display display { get; construct; }
     private Gtk.CssProvider provider = new Gtk.CssProvider();
 
-    // Based on `_gtk_get_theme_dir` from `gtkcssprovider.c`.  Should be kept in sync to
-    // prevent GTK and libbricks loading different themes.
+    // Based on `_gtk_get_theme_dir` from `gtkcssprovider.c`.  Should be kept in
+    // sync to prevent GTK and libbricks loading different themes.
     private static string
     theme_dir() {
         string? data_prefix = Environment.get_variable("BRK_DATA_PREFIX");
@@ -14,8 +20,8 @@ internal sealed class Brk.StyleManager : GLib.Object {
         return Path.build_filename(data_prefix, "share", "themes");
     }
 
-    // Based on `_gtk_css_find_theme_dir` from `gtkcssprovider.c`.  Should be kept in sync to
-    // prevent GTK and libbricks loading different themes.
+    // Based on `_gtk_css_find_theme_dir` from `gtkcssprovider.c`.  Should be
+    // kept in sync to prevent GTK and libbricks loading different themes.
     private static string?
     find_theme_dir(string dir, string? subdir, string name, string file) {
         string basedir;
@@ -44,8 +50,8 @@ internal sealed class Brk.StyleManager : GLib.Object {
         return path;
     }
 
-    // Based on `_gtk_css_find_theme` from `gtkcssprovider.c`.  Should be kept in sync to
-    // prevent GTK and libbricks loading different themes.
+    // Based on `_gtk_css_find_theme` from `gtkcssprovider.c`.  Should be kept
+    // in sync to prevent GTK and libbricks loading different themes.
     private static string?
     find_theme(string name, string? variant) {
         string? path;
@@ -113,7 +119,8 @@ internal sealed class Brk.StyleManager : GLib.Object {
         // Things failed! Fall back!
         //
         // To match GTK, we accept the names HighContrast, HighContrastInverse,
-        // Adwaita and Adwaita-dark as aliases for the variants of the Default theme.
+        // Adwaita and Adwaita-dark as aliases for the variants of the Default
+        // theme.
         if (name == "HighContrast") {
             if (variant == "dark") {
                 this.load_named("Default", "hc-dark");
@@ -133,9 +140,9 @@ internal sealed class Brk.StyleManager : GLib.Object {
             return;
         }
 
-        // At this point we diverge from GTK.  GTK falls back to "Default" for all
-        // other requests.  We only fallback for "Adwaita" and assume other themes
-        // won't be loaded unless they have a libbricks variant.
+        // At this point we diverge from GTK.  GTK falls back to "Default" for
+        // all other requests.  We only fallback for "Adwaita" and assume other
+        // themes won't be loaded unless they have a libbricks variant.
         if (name == "Adwaita") {
             this.load_named("Default", null);
             return;
@@ -144,8 +151,8 @@ internal sealed class Brk.StyleManager : GLib.Object {
         this.load_named("Empty", null);
     }
 
-    // Based on `get_theme_name` from `gtksettings.c`.  Should be kept in sync to
-    // prevent GTK and libbricks loading different themes.
+    // Based on `get_theme_name` from `gtksettings.c`.  Should be kept in sync
+    // to prevent GTK and libbricks loading different themes.
     private void
     get_theme_name(out string? theme_name, out string? theme_variant) {
         theme_name = null;

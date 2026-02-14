@@ -120,8 +120,8 @@ public sealed class Brk.Statusbar : Gtk.Widget {
     }
 
     /**
-     * Forces the removal of a message from the statusbar's stack.
-     * The exact context id and message id must be specified.
+     * Forces the removal of a message from the statusbar's stack.  The exact
+     * context id and message id must be specified.
      */
     public void
     remove(uint context_id, uint message_id) {
@@ -151,8 +151,8 @@ public sealed class Brk.Statusbar : Gtk.Widget {
     }
 
     /**
-     * Forces the removal of all messages from the statusbar's stack with
-     * the exact context id.
+     * Forces the removal of all messages from the statusbar's stack with the
+     * exact context id.
      */
     public void
     remove_all(uint context_id) {

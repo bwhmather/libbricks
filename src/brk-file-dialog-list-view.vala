@@ -7,9 +7,9 @@
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-list-view.ui")]
 internal sealed class Brk.FileDialogListView : Gtk.Widget {
 
-    /* === State ========================================================================================== */
+    /* === State ============================================================ */
 
-    /* --- Directory State -------------------------------------------------------------------------------- */
+    /* --- Directory State -------------------------------------------------- */
 
     private Gtk.DirectoryList _directory_list;
     public Gtk.DirectoryList directory_list {
@@ -33,18 +33,20 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         }
     }
 
-    /* --- Selection -------------------------------------------------------------------------------------- */
+    /* --- Selection -------------------------------------------------------- */
 
     public bool select_multiple { get; set; }
 
     internal Gtk.SelectionModel selection_model { get; set; default = new Gtk.NoSelection(null); }
-    // Files that should be in the current selection but haven't been loaded into the directory list yet.
+    // Files that should be in the current selection but haven't been loaded
+    // into the directory list yet.
     private GLib.HashTable<GLib.File, void *> pending_selection = new GLib.HashTable<GLib.File, GLib.FileInfo>(GLib.File.hash, GLib.File.equal);
 
     public GLib.ListModel selection {
         owned get {
-            // Note that we use the selection model rather than the directory list.  This is to allow us to
-            // read the old selection when swapping out directory lists.
+            // Note that we use the selection model rather than the directory
+            // list.  This is to allow us to read the old selection when
+            // swapping out directory lists.
             var list_model = this.selection_model as GLib.ListModel;
             var result = new GLib.ListStore(typeof(GLib.FileInfo));
             for (var i = 0; i < list_model.get_n_items(); i++) {
@@ -64,8 +66,9 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
                 var fileinfo = value.get_item(i) as GLib.FileInfo;
                 var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
                 if (!file.has_parent(root_directory)) {
-                    // File not visible in current state of view.  Only safe thing to do is to clear the
-                    // entire selection.  Silently dropping just some files from the selection or worse
+                    // File not visible in current state of view.  Only safe
+                    // thing to do is to clear the entire selection.  Silently
+                    // dropping just some files from the selection or worse
                     // leaving invisible files selected is not acceptable.
                     this.pending_selection.remove_all();
                     break;
@@ -108,10 +111,12 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         this.notify["directory-list"].connect((lv, pspec) => {
             this.selection_rebuild();
 
-            // This binding requires that the directory list is bound to the selection model first.  Do not
-            // move before the call to rebuild the selection.
+            // This binding requires that the directory list is bound to the
+            // selection model first.  Do not move before the call to rebuild
+            // the selection.
             this.directory_list.items_changed.connect((dl, position, removed, added) => {
-                // Check if any of the newly added items is in the pending selection and should be selected.
+                // Check if any of the newly added items is in the pending
+                // selection and should be selected.
                 var selected = new Gtk.Bitset.empty();
                 var mask = new Gtk.Bitset.range(position, added);
                 for (var i = position; i < position + added; i++) {
@@ -126,9 +131,10 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
 
             this.directory_list.notify["loading"].connect((dl, pspec) => {
                 if (!this.directory_list.loading) {
-                    // All files that actually exist in the directory should now also be in the directory list
-                    // model.  Any files in the selection that aren't in the directory list model don't exist
-                    // anymore and should be removed.
+                    // All files that actually exist in the directory should now
+                    // also be in the directory list model.  Any files in the
+                    // selection that aren't in the directory list model don't
+                    // exist anymore and should be removed.
                     this.pending_selection.remove_all();
                 }
             });
@@ -136,7 +142,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
 
     }
 
-    /* === View =========================================================================================== */
+    /* === View ============================================================= */
 
     [GtkChild]
     private unowned Gtk.ColumnView column_view;
@@ -181,7 +187,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         this.size_column.factory = factory;
     }
 
-    /* === Lifecycle ====================================================================================== */
+    /* === Lifecycle ======================================================== */
 
     class construct {
         set_layout_manager_type(typeof (Gtk.BinLayout));

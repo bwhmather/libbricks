@@ -7,9 +7,9 @@
 [GtkTemplate ( ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-tree-view.ui")]
 internal sealed class Brk.FileDialogTreeView : Gtk.Widget {
 
-    /* === State ========================================================================================== */
+    /* === State ============================================================ */
 
-    /* --- Directory State -------------------------------------------------------------------------------- */
+    /* --- Directory State -------------------------------------------------- */
 
     private Gtk.DirectoryList _directory_list;
     public Gtk.DirectoryList directory_list {
@@ -33,7 +33,7 @@ internal sealed class Brk.FileDialogTreeView : Gtk.Widget {
         }
     }
 
-    /* === View =========================================================================================== */
+    /* === View ============================================================= */
 
     [GtkChild]
     private unowned Gtk.ListView list_view;
@@ -77,7 +77,7 @@ internal sealed class Brk.FileDialogTreeView : Gtk.Widget {
         this.list_view.model = new Gtk.MultiSelection(tree_list_model);
     }
 
-    /* === Lifecycle ====================================================================================== */
+    /* === Lifecycle ======================================================== */
 
     class construct {
         set_layout_manager_type(typeof (Gtk.BinLayout));

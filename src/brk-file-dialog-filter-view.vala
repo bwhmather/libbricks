@@ -187,7 +187,7 @@ private bool match_subquery(
 [GtkTemplate ( ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-filter-view.ui")]
 internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
-    /* === State ========================================================================================== */
+    /* === State ============================================================ */
 
     public GLib.File? root_directory { get; set; default = null; }
     public string query { get; set; default = "";}
@@ -212,9 +212,10 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
     private async void
     update_matches(GLib.Cancellable cancellable) {
         // Rules:
-        //  1. Before every `yield`, the query stack must be left in a valid state.
-        //  2. After every `yield` the state of `cancellable` must be checked and no further changes must be
-        //     made if set.
+        //  1. Before every `yield`, the query stack must be left in a valid
+        //     state.
+        //  2. After every `yield` the state of `cancellable` must be checked
+        //     and no further changes must be made if set.
         try {
             GLib.File? root = this.root_directory;
             string query = this.query;
@@ -247,7 +248,9 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
             this.loading = true;
 
             if (this.query_stack.length <= n || this.query_stack[n].subquery != subquery) {
-                this.query_stack_truncate(n);  // Truncate before doing anything else to leave stack in valid state.
+                // Truncate before doing anything else to leave stack in valid
+                // state.
+                this.query_stack_truncate(n);
 
                 var rootinfo = yield root.query_info_async(
                     ATTRIBUTES, NONE, GLib.Priority.DEFAULT, cancellable
@@ -267,9 +270,10 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
             while (!done) {
                 n += 1;
 
-                // Subquery is from the beginning of the remaining query to either the next `/` or the very
-                // end.  We need to read the next subquery here and consume any following slashes. Segments can
-                // be empty if the query ends with a trailing /.
+                // Subquery is from the beginning of the remaining query to
+                // either the next `/` or the very end.  We need to read the
+                // next subquery here and consume any following slashes.
+                // Segments can be empty if the query ends with a trailing /.
                 int next_slash = remainder.index_of_char('/', 0);
                 if (next_slash >= 0) {
                     subquery = remainder[:next_slash];
@@ -286,7 +290,8 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                 }
 
                 if (subquery == "..") {
-                    this.query_stack_truncate(n);  // Truncate to leave stack in valid state.
+                    // Truncate to leave stack in valid state.
+                    this.query_stack_truncate(n);
 
                     // Find all parent directories of all previous matches.
                     GLib.FileInfo[] matches = {};
@@ -300,8 +305,9 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                             continue;
                         }
                         if (last_parent != null && parent.equal(last_parent)) {
-                            // Matches should already be sorted by parent directory so deduplicating just a
-                            // matter of tracking it.
+                            // Matches should already be sorted by parent
+                            // directory so deduplicating just a matter of
+                            // tracking it.
                             continue;
                         }
 
@@ -329,11 +335,12 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                     subquery.has_prefix(this.query_stack[n].subquery) ||
                     this.query_stack[n].subquery == ".."
                 )) {
-                    // New query is a refinement of the current query so we can copy the existing matches as a
-                    // starting point.
+                    // New query is a refinement of the current query so we can
+                    // copy the existing matches as a starting point.
                     candidates = this.query_stack[n].matches;
                 } else {
-                    // New query is not a refinement of the current query so we cannot reuse the existing list.
+                    // New query is not a refinement of the current query so we
+                    // cannot reuse the existing list.
                     foreach (GLib.FileInfo parentinfo in this.query_stack[n-1].matches) {
                         GLib.FileType parenttype = parentinfo.get_file_type();
                         if (parenttype != DIRECTORY && parenttype != SYMBOLIC_LINK) {
@@ -363,8 +370,8 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                 }
 
                 // TODO Filter to only include matches and sort by match quality.
-                // When sorting, files should be kept together with other files with the same parent
-                // directory.
+                // When sorting, files should be kept together with other files
+                // with the same parent directory.
 
                 GLib.FileInfo[] matches = {};
                 var parent_index = 0;
@@ -409,7 +416,8 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                 this.query_stack[n].matches = (owned) matches;
             }
 
-            // Remove any unused entries from the query cache as these were derived from a different query.
+            // Remove any unused entries from the query cache as these were
+            // derived from a different query.
             this.query_stack_truncate(n + 1);
             this.list_store.splice(0, this.list_store.get_n_items(), this.query_stack[n].matches);
             this.selection_model.selected = 0;
@@ -452,7 +460,7 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
         });
     }
 
-    /* === View =========================================================================================== */
+    /* === View ============================================================= */
 
     [GtkChild]
     private unowned Gtk.ListView list_view;
@@ -474,7 +482,7 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
         this.list_view.model = this.selection_model;
     }
 
-    /* === Lifecycle ====================================================================================== */
+    /* === Lifecycle ======================================================== */
 
     class construct {
         set_layout_manager_type(typeof (Gtk.BinLayout));

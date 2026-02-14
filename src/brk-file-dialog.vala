@@ -20,7 +20,8 @@ private sealed class Brk.FileDialogState {
     public GLib.File root_directory;
 
     // Tree view specific.
-    public string[] expanded;  // Sorted list of expanded directories under the current mount.
+    // Sorted list of expanded directories under the current mount.
+    public string[] expanded;
 
     // List view specific.
     public string[] sort_columns;
@@ -39,7 +40,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     public GLib.SimpleActionGroup dialog_actions = new GLib.SimpleActionGroup();
 
-    /* === Views ========================================================================================== */
+    /* === Views ============================================================ */
 
     [GtkChild]
     private unowned Brk.ToolbarView outer_view;
@@ -193,7 +194,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.outer_view.add_controller(cancel_controller);
     }
 
-    /* --- Filter View ------------------------------------------------------------------------------------ */
+    /* --- Filter View ------------------------------------------------------ */
 
     [GtkChild]
     private unowned Gtk.Entry filter_entry;
@@ -347,7 +348,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.bind_property("show-hidden", this.filter_view, "show-hidden", SYNC_CREATE);
     }
 
-    /* --- List View -------------------------------------------------------------------------------------- */
+    /* --- List View -------------------------------------------------------- */
 
     public string[] sort_columns;
 
@@ -360,13 +361,15 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
         this.notify["view-mode"].connect(() => {
             if (this.view_mode == LIST) {
-                // Apply current selection to list view when switching from a different view.
+                // Apply current selection to list view when switching from a
+                // different view.
                 this.list_view.selection = this.selection;
             }
         });
         this.notify["filter-view-enabled"].connect((v, pspec) => {
             if (this.view_mode == LIST) {
-                // Resync selection to match list view when coming out of filter mode.
+                // Resync selection to match list view when coming out of filter
+                // mode.
                 this.selection = this.list_view.selection;
             }
         });
@@ -378,7 +381,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         });
     }
 
-    /* --- Icon View -------------------------------------------------------------------------------------- */
+    /* --- Icon View -------------------------------------------------------- */
 
     [GtkChild]
     private unowned Brk.FileDialogIconView icon_view;
@@ -388,7 +391,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.icon_view.directory_list = this.directory_list;
     }
 
-    /* --- Tree View -------------------------------------------------------------------------------------- */
+    /* --- Tree View -------------------------------------------------------- */
 
     // Sorted list of expanded directories under the current mount.
     public string[] expanded;
@@ -401,7 +404,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.tree_view.directory_list = this.directory_list;
     }
 
-    /* === Lifecycle ======================================================================================= */
+    /* === Lifecycle ======================================================== */
 
     class construct {
         typeof (Brk.FileDialogPathBar).ensure();
@@ -442,11 +445,12 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 /**
  * Asnychronous API for opening a file chooser dialog.
  *
- * Brk.FileDialog collects the arguments that are needed topresent the dialog to the user such as a title
- * or whether it should be modal.
+ * Brk.FileDialog collects the arguments that are needed topresent the dialog to
+ * the user such as a title or whether it should be modal.
  *
- * It is safe to reuse a file dialog object multiple times to serve multiple requests.  You do not need to
- * wait for previous requests to finish before asking for a new window.
+ * It is safe to reuse a file dialog object multiple times to serve multiple
+ * requests.  You do not need to wait for previous requests to finish before
+ * asking for a new window.
  */
 public sealed class Brk.FileDialog : GLib.Object {
     public string title { get; set; }
@@ -461,7 +465,8 @@ public sealed class Brk.FileDialog : GLib.Object {
     public string accept_label { get; set; }
 
     /**
-     * Opens a new file chooser dialog to allow the user to select a single file for reading.
+     * Opens a new file chooser dialog to allow the user to select a single file
+     * for reading.
      *
      * If the user closes the chooser without selecting a file will return NULL.
      * Will throw a CANCELLED error if interrupted.

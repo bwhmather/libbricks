@@ -52,7 +52,7 @@ public enum Brk.TabViewShortcuts {
     ALL_SHORTCUTS
 }
 
-/* === Pages ============================================================================================== */
+/* === Pages ================================================================ */
 
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-tab-page-tab.ui")]
 private sealed class Brk.TabPageTab : Gtk.Widget {
@@ -237,8 +237,8 @@ public sealed class Brk.TabPage : GLib.Object {
     public Brk.TabPage parent { get; construct; }
 
     /**
-     * Will be set if this tab page is the currently selected page in its containing
-     * view.
+     * Will be set if this tab page is the currently selected page in its
+     * containing view.
      */
     public bool selected { get; internal set; }
 
@@ -278,8 +278,8 @@ public sealed class Brk.TabPage : GLib.Object {
      * This will be shown it at the beginning of the tab, alongside the icon
      * representing [property@TabPage:icon] or loading spinner.
      *
-     * [property@TabPage:indicator-tooltip] can be used to set the tooltip on the
-     * indicator icon.
+     * [property@TabPage:indicator-tooltip] can be used to set the tooltip on
+     * the indicator icon.
      *
      * If [property@TabPage:indicator-activatable] is set to `TRUE`, the
      * indicator icon can act as a button.
@@ -333,7 +333,7 @@ public sealed class Brk.TabPage : GLib.Object {
     }
 }
 
-/* === Drag View ========================================================================================== */
+/* === Drag View ============================================================ */
 
 private sealed class Brk.TabDragViewTabs : Gtk.Widget {
     private unowned Brk.TabPageTab? _tab;
@@ -439,7 +439,7 @@ private sealed class Brk.TabDragView : Gtk.Widget {
 }
 
 
-/* === Tab View =========================================================================================== */
+/* === Tab View ============================================================= */
 
 private sealed class Brk.TabViewTabs : Gtk.Widget {
     public unowned Brk.TabView view { get; construct; }
@@ -626,7 +626,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         if (orientation == HORIZONTAL) {
             int child_minimum, child_natural;
 
-            // At minimum width just the scroll buttons will be show.  All tabs will be hidden.
+            // At minimum width just the scroll buttons will be show.  All tabs
+            // will be hidden.
             minimum = 0;
 
             this.left_button.measure(
@@ -643,8 +644,8 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             );
             minimum += child_minimum;
 
-            // At natural width, scroll buttons are hidden and all tabs are expanded to their
-            // own natural width.
+            // At natural width, scroll buttons are hidden and all tabs are
+            // expanded to their own natural width.
             natural = 0;
 
             for (var i = 0; i < this.view.n_pages; i++) {
@@ -1216,8 +1217,8 @@ public sealed class Brk.TabView : Gtk.Widget {
     /**
      * Whether a page is being transferred.
      *
-     * This property will be set to `TRUE` when a drag-n-drop tab transfer starts
-     * on any `BrkTabView`, and to `FALSE` after it ends.
+     * This property will be set to `TRUE` when a drag-n-drop tab transfer
+     * starts on any `BrkTabView`, and to `FALSE` after it ends.
      *
      * During the transfer, children cannot receive pointer input and a tab can
      * be safely dropped on the tab view.
@@ -1228,33 +1229,33 @@ public sealed class Brk.TabView : Gtk.Widget {
      * Tab context menu model.
      *
      * When a context menu is shown for a tab, it will be constructed from the
-     * provided menu model. Use the [signal@TabView::setup-menu] signal to set up
-     * the menu actions for the particular tab.
+     * provided menu model. Use the [signal@TabView::setup-menu] signal to set
+     * up the menu actions for the particular tab.
      */
     public GLib.MenuModel menu_model { get; set; }
 
     /**
      * Requests to close page.
      *
-     * Calling this function will result in the [signal@TabView::close-page] signal
-     * being emitted for @page. Closing the page can then be confirmed or
+     * Calling this function will result in the [signal@TabView::close-page]
+     * signal being emitted for @page. Closing the page can then be confirmed or
      * denied via [method@TabView.close_page_finish].
      *
-     * If the page is waiting for a [method@TabView.close_page_finish] call, this
-     * function will do nothing.
+     * If the page is waiting for a [method@TabView.close_page_finish] call,
+     * this function will do nothing.
      *
-     * The default handler for [signal@TabView::close-page] will immediately confirm
-     * closing the page. This behavior can be changed by registering your own
-     * handler for that signal.
+     * The default handler for [signal@TabView::close-page] will immediately
+     * confirm closing the page. This behavior can be changed by registering
+     * your own handler for that signal.
      *
      * If @page was selected, another page will be selected instead:
      *
      * If the [property@TabPage:parent] value is `NULL`, the next page will be
-     * selected when possible, or if the page was already last, the previous page
-     * will be selected instead.
+     * selected when possible, or if the page was already last, the previous
+     * page will be selected instead.
      *
-     * If it's not `NULL`, the previous page will be selected if it's a descendant
-     * (possibly indirect) of the parent.
+     * If it's not `NULL`, the previous page will be selected if it's a
+     * descendant (possibly indirect) of the parent.
      */
     public signal bool close_page(Brk.TabPage page);
 
@@ -1264,7 +1265,8 @@ public sealed class Brk.TabView : Gtk.Widget {
      * This can happen after a tab has been dropped on desktop.
      *
      * The signal handler is expected to create a new window, position it as
-     * needed and return its `BrkTabView` that the page will be transferred into.
+     * needed and return its `BrkTabView` that the page will be transferred
+     * into.
      */
     public signal unowned Brk.TabView? create_window();
     public signal void indicator_activated(Brk.TabPage page);
@@ -1459,8 +1461,8 @@ public sealed class Brk.TabView : Gtk.Widget {
      * Completes a [method:@TabView.close_page] call for @page.
      *
      * If @confirm is `TRUE`, @page will be closed.  If it's `FALSE`, it will be
-     * reverted to its previous state and [method@TabView.close_page] can be called
-     * for it again.
+     * reverted to its previous state and [method@TabView.close_page] can be
+     * called for it again.
      *
      * This functions should not be called unless a custom handler for
      * [signal@TabView::close-page] is used.
