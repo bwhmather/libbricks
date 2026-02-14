@@ -110,7 +110,7 @@ private bool match_subquery(
         best_length = 0;
 
         candidate_start = chunk_start;
-        while (candidate_start < chunk_end) {
+        while ((void *)candidate_start < (void *)chunk_end) {
             unowned string candidate_name_cursor;
             unowned string candidate_query_cursor;
             int candidate_length;
@@ -119,7 +119,7 @@ private bool match_subquery(
             candidate_query_cursor = query_cursor;
             candidate_length = 0;
 
-            while (candidate_name_cursor <= chunk_end) {
+            while ((void *)candidate_name_cursor <= (void *)chunk_end) {
                 unichar name_char = candidate_name_cursor.get_char();
                 unichar query_char = candidate_query_cursor.get_char();
 
@@ -146,10 +146,10 @@ private bool match_subquery(
             candidate_start = candidate_start.next_char();
         }
 
-        while (name_cursor < chunk_end) {
+        while ((void *)name_cursor < (void *)chunk_end) {
             if (
-                name_cursor >= best_start &&
-                name_cursor < (best_end)
+                (void *)name_cursor >= (void *)best_start &&
+                (void *)name_cursor < (void *)best_end
             ) {
                 if (!bold) {
                     markup.append("<b>");
@@ -159,7 +159,7 @@ private bool match_subquery(
             } else {
                 if (bold) {
                     markup.append("</b>");
-                    bold = true;
+                    bold = false;
                 }
             }
 
