@@ -258,14 +258,18 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
                 rootinfo.set_attribute_object("standard::file", root);
 
-                string markup = subquery == null ? "" : GLib.Markup.printf_escaped("<b>%s</b>", subquery);
-                rootinfo.set_attribute_string("bricks::markup", markup);
+                if (subquery == null) {
+                    rootinfo.set_attribute_string("bricks::markup", "");
+                } else {
+                    rootinfo.set_attribute_string("bricks::markup", GLib.Markup.printf_escaped("<b>%s</b>", subquery));
+                }
 
                 this.query_stack.resize(n + 1);
                 this.query_stack[n].subquery = subquery;
                 this.query_stack[n].matches = {rootinfo};
             }
 
+            var markup = new GLib.StringBuilder();
             bool done = false;
             while (!done) {
                 n += 1;
@@ -316,8 +320,10 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
                         );
                         parentinfo.set_attribute_object("standard::file", parent);
 
-                        string markup = matchinfo.get_attribute_string("bricks::markup");
-                        parentinfo.set_attribute_string("bricks::markup", markup != "" ? markup + "<b>/..</b>" : "<b>..</b>");
+                        markup.truncate(0);
+                        markup.append(matchinfo.get_attribute_string("bricks::markup"));
+                        markup.append(markup.len > 0 ? "<b>/..</b>" : "<b>..</b>");
+                        parentinfo.set_attribute_string("bricks::markup", markup.str);
 
                         matches += parentinfo;
                         last_parent = parent;
@@ -375,7 +381,6 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
                 GLib.FileInfo[] matches = {};
                 var parent_index = 0;
-                var markup = new GLib.StringBuilder();
                 foreach (var candidate in candidates) {
                     if (!show_hidden && candidate.get_is_hidden()) {
                         continue;
