@@ -53,6 +53,7 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
         edit_toggle.set_parent(this);
 
         this.edit_entry = new Gtk.Entry();
+        this.edit_entry.hexpand = true;
         edit_entry.insert_before(this, this.edit_toggle);
 
         this.edit_toggle.notify["active"].connect(this.update_visible);

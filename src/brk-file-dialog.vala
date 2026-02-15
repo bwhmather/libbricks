@@ -49,9 +49,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.ToolbarView inner_view;
 
     [GtkChild]
-    private unowned Gtk.Entry location_entry;
-
-    [GtkChild]
     private unowned Brk.FileDialogPathBar path_bar;
 
     [GtkChild]
@@ -72,7 +69,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     view_stack_update_visible_child() {
         if (this.filter_view_enabled) {
             this.filter_entry.visible = true;
-            this.location_entry.visible = false;
             this.path_bar.visible = false;
             this.view_button_group.visible = false;
 
@@ -83,10 +79,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.filter_entry.visible = false;
         this.view_button_group.visible = true;
         if (this.edit_location_enabled) {
-            this.location_entry.visible = true;
             this.path_bar.visible = false;
         } else {
-            this.location_entry.visible = false;
             this.path_bar.visible = true;
         }
         switch (this.view_mode) {
@@ -195,6 +189,9 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     }
 
     /* --- Filter View ------------------------------------------------------ */
+
+    [GtkChild]
+    private unowned Brk.ButtonGroup filter_button_group;
 
     [GtkChild]
     private unowned Gtk.Entry filter_entry;
@@ -341,6 +338,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.notify["root-directory"].connect((fd, pspec) => {
             this.filter_view_enabled = false;
         });
+
+        this.bind_property("filter-view-enabled", this.filter_button_group, "hexpand", SYNC_CREATE);
 
         // Settings.
         this.bind_property("root-directory", this.filter_view, "root-directory", SYNC_CREATE);
