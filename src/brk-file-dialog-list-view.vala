@@ -91,10 +91,11 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     private void
     selection_rebuild() {
         var saved_selection = this.selection;
+        var sort_model = new Gtk.SortListModel(this.directory_list, this.column_view.sorter);
         if (this.select_multiple) {
-            this.selection_model = new Gtk.MultiSelection(this.directory_list);
+            this.selection_model = new Gtk.MultiSelection(sort_model);
         } else {
-            this.selection_model = new Gtk.SingleSelection(this.directory_list);
+            this.selection_model = new Gtk.SingleSelection(sort_model);
         }
         this.selection_model.selection_changed.connect((sm, p, n_items) => {
             this.notify_property("selection");
@@ -169,6 +170,19 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             thumbnail.fileinfo = (GLib.FileInfo) listitem.item;
         });
         this.name_column.factory = factory;
+        var sorter = new Gtk.CustomSorter((aptr, bptr) => {
+            var ainfo = (GLib.FileInfo) aptr;
+            var aname = ainfo.get_name();
+            var akey = aname.collate_key_for_filename();
+
+            var binfo = (GLib.FileInfo) bptr;
+            var bname = binfo.get_name();
+            var bkey = bname.collate_key_for_filename();
+
+            return Gtk.Ordering.from_cmpfunc(GLib.strcmp(akey, bkey));
+        });
+        this.name_column.sorter = sorter;
+        this.column_view.sort_by_column(this.name_column, DESCENDING);
 
         // Size column.
         factory = new Gtk.SignalListItemFactory();
