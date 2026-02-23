@@ -4,6 +4,48 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+private unowned string
+get_category_from_content_type(string content_type) {
+    // List opied from gtkfilechooserwidget.c:get_category_from_content_type.
+    // They copied it from src/nautilus_file.c:get_description().
+    // Represented as switch statement because vala is awesome and does the
+    // right thing.
+    switch (GLib.ContentType.get_generic_icon_name(content_type)) {
+    case "application-x-executable":
+        return "Program";
+    case "audio-x-generic":
+        return "Audio";
+    case "font-x-generic":
+        return "Font";
+    case "image-x-generic":
+        return "Image";
+    case "package-x-generic":
+        return "Archive";
+    case "text-html":
+        return "Markup";
+    case "text-x-generic":
+        return "Text";
+    case "text-x-generic-template":
+        return "Text";
+    case "text-x-script":
+        return "Program";
+    case "video-x-generic":
+        return "Video";
+    case "x-office-address-book":
+        return "Contacts";
+    case "x-office-calendar":
+        return "Calendar";
+    case "x-office-document":
+        return "Document";
+    case "x-office-presentation":
+        return "Presentation";
+    case "x-office-spreadsheet":
+        return "Spreadsheet";
+    default:
+        return "Unknown";
+    }
+}
+
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-list-view.ui")]
 internal sealed class Brk.FileDialogListView : Gtk.Widget {
 
@@ -16,7 +58,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         get {
             if (this._directory_list == null) {
                 this._directory_list = new Gtk.DirectoryList(
-                    "standard::icon,standard::display-name,standard::size,time::modified,standard::type",
+                    "standard::icon,standard::display-name,standard::size,time::modified,standard::type,standard::content-type",
                     null
                 );
             }
@@ -162,6 +204,9 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     [GtkChild]
     private unowned Gtk.ColumnViewColumn size_column;
 
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn type_column;
+
     private void
     view_init() {
         // Name column.
@@ -216,6 +261,23 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             return Gtk.Ordering.EQUAL;
         });
         this.size_column.sorter = sorter;
+
+        // Type column
+        factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var label = new Gtk.Label("");
+            label.halign = START;
+            listitem.child = label;
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            Gtk.Label label = (Gtk.Label) listitem.child;
+            GLib.FileInfo info = (GLib.FileInfo) listitem.item;
+            var content_type = info.get_content_type();
+            label.label = get_category_from_content_type(content_type);
+        });
+        this.type_column.factory = factory;
 
         this.column_view.sort_by_column(this.name_column, ASCENDING);
 

@@ -16,7 +16,7 @@ internal sealed class Brk.FileDialogIconView : Gtk.Widget {
         get {
             if (this._directory_list == null) {
                 this._directory_list = new Gtk.DirectoryList(
-                    "standard::display-name,standard::size,time::modified,standard::type",
+                    "standard::icon,standard::display-name,standard::size,time::modified,standard::type,standard::content-type",
                     null
                 );
             }
