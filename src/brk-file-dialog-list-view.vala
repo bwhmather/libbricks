@@ -12,37 +12,37 @@ get_category_from_content_type(string content_type) {
     // right thing.
     switch (GLib.ContentType.get_generic_icon_name(content_type)) {
     case "application-x-executable":
-        return "Program";
+        return _("Program");
     case "audio-x-generic":
-        return "Audio";
+        return _("Audio");
     case "font-x-generic":
-        return "Font";
+        return _("Font");
     case "image-x-generic":
-        return "Image";
+        return _("Image");
     case "package-x-generic":
-        return "Archive";
+        return _("Archive");
     case "text-html":
-        return "Markup";
+        return _("Markup");
     case "text-x-generic":
-        return "Text";
+        return _("Text");
     case "text-x-generic-template":
-        return "Text";
+        return _("Text");
     case "text-x-script":
-        return "Program";
+        return _("Program");
     case "video-x-generic":
-        return "Video";
+        return _("Video");
     case "x-office-address-book":
-        return "Contacts";
+        return _("Contacts");
     case "x-office-calendar":
-        return "Calendar";
+        return _("Calendar");
     case "x-office-document":
-        return "Document";
+        return _("Document");
     case "x-office-presentation":
-        return "Presentation";
+        return _("Presentation");
     case "x-office-spreadsheet":
-        return "Spreadsheet";
+        return _("Spreadsheet");
     default:
-        return "Unknown";
+        return _("Unknown");
     }
 }
 
