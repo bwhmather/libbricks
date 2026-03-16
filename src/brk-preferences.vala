@@ -193,8 +193,41 @@ public sealed class Brk.ExpanderRow : Brk.PreferencesRow {
 
 }
 
-public sealed class Brk.SpinRow : Brk.PreferencesRow {
+public sealed class Brk.SpinRow : Brk.ActionRow {
+    private Gtk.SpinButton spin_button;
 
+    public Gtk.Adjustment adjustment {
+        get { return this.spin_button.adjustment; }
+        set { this.spin_button.adjustment = value; }
+    }
+    public double climb_rate { get; set; default = 0.0; }
+    public uint digits { get; set; default = 0; }
+    public bool snap_to_ticks { get; set; default = false; }
+    public Gtk.SpinButtonUpdatePolicy update_policy { get; set; default = ALWAYS; }
+    public double value { get; set; default = 0.0; }
+    public bool wrap { get; set; default = false; }
+
+    construct {
+        this.spin_button = new Gtk.SpinButton(null, 1.0, 0);
+        this.spin_button.valign = CENTER;
+        this.spin_button.focusable = false;
+        this.add_suffix(this.spin_button);
+        this.activatable_widget = this.spin_button;
+
+        this.spin_button.notify["adjustment"].connect(() => { this.notify_property("adjustment"); });
+        this.bind_property("climb-rate", this.spin_button, "climb-rate", SYNC_CREATE | BIDIRECTIONAL);
+        this.bind_property("digits", this.spin_button, "digits", SYNC_CREATE | BIDIRECTIONAL);
+        this.bind_property("snap-to-ticks", this.spin_button, "snap-to-ticks", SYNC_CREATE | BIDIRECTIONAL);
+        this.bind_property("update-policy", this.spin_button, "update-policy", SYNC_CREATE | BIDIRECTIONAL);
+        this.bind_property("value", this.spin_button, "value", SYNC_CREATE | BIDIRECTIONAL);
+        this.bind_property("wrap", this.spin_button, "wrap", SYNC_CREATE | BIDIRECTIONAL);
+    }
+
+    public void configure(Gtk.Adjustment? adjustment, double climb_rate, uint digits) {
+        this.adjustment = adjustment;
+        this.climb_rate = climb_rate;
+        this.digits = digits;
+    }
 }
 
 public sealed class Brk.SwitchRow : Brk.ActionRow {
