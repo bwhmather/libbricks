@@ -132,6 +132,29 @@ statusbar button {
 	padding: 0;
 }
 
+/* --- Preferences ---------------------------------------------------------------------------------------- */
+
+preferencesgroup {
+    margin-bottom: 12px;
+}
+
+preferencesgroup > box.header {
+    margin-bottom: 6px;
+}
+
+preferencespage box.content {
+    padding: 12px;
+}
+
+preferencesgroup row {
+    padding: 8px;
+}
+
+preferencesgroup row > box.header > box.title > label.subtitle {
+    font-size: smaller;
+    opacity: 0.7;
+}
+
 /* --- Grids ---------------------------------------------------------------------------------------------- */
 
 grid {

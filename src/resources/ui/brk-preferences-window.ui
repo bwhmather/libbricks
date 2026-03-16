@@ -14,6 +14,7 @@
             </child>
             <child>
               <object class="GtkStack" id="stack">
+                <property name="hexpand">True</property>
               </object>
             </child>
           </object>
