@@ -24,7 +24,7 @@
             <child type="end">
               <object class="GtkButton">
                 <property name="label">Close</property>
-                <property name="action-name">close</property>
+                <property name="action-name">window.close</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
