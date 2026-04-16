@@ -471,7 +471,11 @@ public sealed class Brk.FileDialog : GLib.Object {
      * Will throw a CANCELLED error if interrupted.
      */
     public async GLib.File?
-    open(Gtk.Window? parent, GLib.Cancellable cancellable) throws Error {
+    open(Gtk.Window? parent, GLib.Cancellable? cancellable) throws Error {
+        if (cancellable != null && cancellable.is_cancelled()) {
+            throw new GLib.IOError.CANCELLED("open cancelled");
+        }
+
         var window = new Brk.FileDialogWindow();
         window.set_transient_for(parent);
 
@@ -495,13 +499,16 @@ public sealed class Brk.FileDialog : GLib.Object {
         GLib.File? result = null;
         bool done = false;
 
-        cancellable.connect((c) => {
-            if (!done) {
-                done = true;
-                window.close();
-                this.open.callback();
-            }
-        });
+        ulong cancellable_id = 0;
+        if (cancellable != null) {
+            cancellable_id = cancellable.connect((c) => {
+                if (!done) {
+                    done = true;
+                    window.close();
+                    this.open.callback();
+                }
+            });
+        }
         window.open.connect((file) => {
             result = file;
             if (!done) {
@@ -510,7 +517,7 @@ public sealed class Brk.FileDialog : GLib.Object {
                 this.open.callback();
             }
         });
-        window.unmap.connect((w) => {
+        (window as Gtk.Widget).unrealize.connect(() => {
             if (!done) {
                 done = true;
                 this.open.callback();
@@ -519,6 +526,9 @@ public sealed class Brk.FileDialog : GLib.Object {
         window.present();
         yield;
 
+        if (cancellable != null) {
+            cancellable.disconnect(cancellable_id);
+        }
 
         var new_state = new FileDialogState() {
             view_mode = window.view_mode,
@@ -530,7 +540,7 @@ public sealed class Brk.FileDialog : GLib.Object {
         };
         parent.set_data("bricks-file-dialog-state", new_state);
 
-        if (cancellable.is_cancelled()) {
+        if (cancellable != null && cancellable.is_cancelled()) {
             throw new GLib.IOError.CANCELLED("open cancelled");
         }
 
