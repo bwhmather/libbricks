@@ -230,6 +230,42 @@ public sealed class Brk.SpinRow : Brk.ActionRow {
     }
 }
 
+public sealed class Brk.FontRow : Brk.ActionRow {
+    private Gtk.FontDialogButton font_button;
+
+    private string _font = "";
+
+    public string font {
+        get { return this._font; }
+        set {
+            if (this._font == value) {
+                return;
+            }
+            this._font = value;
+            this.font_button.font_desc = Pango.FontDescription.from_string(value);
+            this.notify_property("font");
+        }
+    }
+
+    construct {
+        var dialog = new Gtk.FontDialog();
+        this.font_button = new Gtk.FontDialogButton(dialog);
+        this.font_button.valign = CENTER;
+        this.font_button.focusable = false;
+        this.add_suffix(this.font_button);
+        this.activatable_widget = this.font_button;
+
+        this.font_button.notify["font-desc"].connect(() => {
+            var desc = this.font_button.font_desc;
+            var new_font = desc != null ? desc.to_string() : "";
+            if (this._font != new_font) {
+                this._font = new_font;
+                this.notify_property("font");
+            }
+        });
+    }
+}
+
 public sealed class Brk.SwitchRow : Brk.ActionRow {
     private Gtk.Switch slider;
 
