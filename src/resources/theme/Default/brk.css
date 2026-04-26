@@ -24,6 +24,13 @@
     --text-view-bg: @text_view_bg;
 }
 
+/* --- Typography ----------------------------------------------------------------------------------------- */
+
+.subtitle {
+    font-size: smaller;
+    opacity: 0.7;
+}
+
 /* --- Tab View ------------------------------------------------------------------------------------------- */
 
 /* Tabs */
@@ -134,25 +141,21 @@ statusbar button {
 
 /* --- Preferences ---------------------------------------------------------------------------------------- */
 
-preferencesgroup {
-    margin-bottom: 12px;
-}
-
-preferencesgroup > box.header {
-    margin-bottom: 6px;
-}
-
-preferencespage box.content {
+preferencespage > scrolledwindow > viewport > box.content {
     padding: 12px;
 }
 
-preferencesgroup row {
-    padding: 8px;
+preferencesgroup {
+    margin-bottom: 20px;
+    border-spacing: 8px;
 }
 
-preferencesgroup row > box.header > box.title > label.subtitle {
-    font-size: smaller;
-    opacity: 0.7;
+preferencesgroup > list > row {
+    padding: 10px;
+}
+
+preferencesgroup > list > row > box {
+    border-spacing: 10px;
 }
 
 /* --- Grids ---------------------------------------------------------------------------------------------- */

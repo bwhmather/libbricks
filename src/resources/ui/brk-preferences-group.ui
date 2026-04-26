@@ -17,8 +17,7 @@
                 <property name="use-markup">true</property>
                 <property name="ellipsize">end</property>
                 <style>
-                  <class name="heading"/>
-                  <class name="h4"/>
+                  <class name="title-4"/>
                 </style>
               </object>
             </child>
