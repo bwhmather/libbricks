@@ -519,6 +519,14 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         set_accessible_role(TAB_LIST);
     }
 
+    private void
+    page_on_notify_drag(GLib.Object target, GLib.ParamSpec pspec) {
+        var page = (Brk.TabPage) target;
+        if (page.drag != null) {
+            this.release_drag(page.drag);
+        }
+    }
+
     construct {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.HORIZONTAL, -1);
 
@@ -553,11 +561,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         });
 
         this.view.page_attached.connect((page) => {
-            page.notify["drag"].connect((p, pspec) => {
-                if (((Brk.TabPage) p).drag != null) {
-                    this.release_drag(((Brk.TabPage) p).drag);
-                }
-            });
+            page.notify["drag"].connect(this.page_on_notify_drag);
         });
         this.view.page_detached.connect((page) => {
             GLib.SignalHandler.disconnect_by_data(page, this);
@@ -1364,6 +1368,18 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.snapshot_child(this.bar, snapshot);
     }
 
+    private void
+    page_on_close(Brk.TabPage page) {
+        return_if_fail(this.has_page(page));
+        this.close_page(page);
+    }
+
+    private void
+    page_on_focus(Brk.TabPage page) {
+        return_if_fail(this.has_page(page));
+        this.selected_page = page;
+    }
+
     internal void
     attach_page(Brk.TabPage page) {
         if (page.drag_source != null) {
@@ -1375,8 +1391,8 @@ public sealed class Brk.TabView : Gtk.Widget {
         uint index = this.page_list.n_items;
         this.page_list.insert(index, page);
 
-        page.close.connect((p) => this.close_page(p));
-        page.focus.connect((p) => { this.selected_page = p; });
+        page.close.connect(this.page_on_close);
+        page.focus.connect(this.page_on_focus);
 
         page.drag_source = this;
         this.page_attached(page);
