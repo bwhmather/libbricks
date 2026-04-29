@@ -70,7 +70,7 @@ public class Brk.ActionRow : Brk.PreferencesRow {
     private void
     on_parent_changed() {
         if (this.previous_parent != null) {
-            (this.previous_parent as Gtk.ListBox).row_activated.disconnect(this.on_row_activated);
+            ((Gtk.ListBox) this.previous_parent).row_activated.disconnect(this.on_row_activated);
             this.previous_parent = null;
         }
 
@@ -79,7 +79,7 @@ public class Brk.ActionRow : Brk.PreferencesRow {
             return;
 
         this.previous_parent = parent;
-        (parent as Gtk.ListBox).row_activated.connect(this.on_row_activated);
+        ((Gtk.ListBox) parent).row_activated.connect(this.on_row_activated);
     }
 
     private void
@@ -161,7 +161,7 @@ public class Brk.ActionRow : Brk.PreferencesRow {
     remove(Gtk.Widget widget) {
         var parent = widget.get_parent();
         if (parent == this.prefixes || parent == this.suffixes) {
-            (parent as Gtk.Box).remove(widget);
+            ((Gtk.Box) parent).remove(widget);
             parent.visible = parent.get_first_child() != null;
         }
     }
@@ -169,7 +169,7 @@ public class Brk.ActionRow : Brk.PreferencesRow {
     public override void
     dispose() {
         if (this.previous_parent != null) {
-            (this.previous_parent as Gtk.ListBox).row_activated.disconnect(this.on_row_activated);
+            ((Gtk.ListBox) this.previous_parent).row_activated.disconnect(this.on_row_activated);
             this.previous_parent = null;
         }
         this.activatable_widget = null;
@@ -360,7 +360,7 @@ public sealed class Brk.PreferencesGroup : Gtk.Widget, Gtk.Buildable {
     }
 
     construct {
-        (this.get_layout_manager() as Gtk.BoxLayout).orientation = VERTICAL;
+        ((Gtk.BoxLayout) this.get_layout_manager()).orientation = VERTICAL;
         this.hexpand = true;
 
         this.bind_property("title", this.title_label, "label", SYNC_CREATE);

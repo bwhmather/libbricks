@@ -102,10 +102,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         if (this.filter_view_enabled) {
             selection = this.filter_view.selection;
         } else {
-            selection = this.selection.get_item(0) as GLib.FileInfo?;
+            selection = (GLib.FileInfo?) this.selection.get_item(0);
         }
         if (selection != null) {
-            var selected_file = selection.get_attribute_object("standard::file") as GLib.File;
+            var selected_file = (GLib.File) selection.get_attribute_object("standard::file");
             var file_type = selection.get_file_type();
             switch (file_type) {
             case REGULAR:
@@ -517,7 +517,7 @@ public sealed class Brk.FileDialog : GLib.Object {
                 this.open.callback();
             }
         });
-        (window as Gtk.Widget).unrealize.connect(() => {
+        ((Gtk.Widget) window).unrealize.connect(() => {
             if (!done) {
                 done = true;
                 this.open.callback();
