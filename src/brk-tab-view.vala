@@ -992,22 +992,38 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             var fade_overlap = 10;
             var fade_width = 20;
 
+            Graphene.Rect bounds;
+            var ok = this.compute_bounds(this, out bounds);
+            return_if_fail(ok);
+
+            // Selected tab, at least in the default theme, is rendered slightly
+            // out of bounds to draw over the content area border.  Expand the
+            // clip area to include it.
+            var selected_page = this.view.selected_page;
+            if (selected_page != null) {
+                Graphene.Rect selected_bounds;
+                ok = selected_page.tab.compute_bounds(this, out selected_bounds);
+                return_if_fail(ok);
+                bounds = bounds.union(selected_bounds);
+            }
+
             // Figure out how much room is left for rendering tabs after buttons
             // are allocated.
-            Graphene.Rect bounds;
-            var ok = this.left_button.compute_bounds(this, out bounds);
+            Graphene.Rect left_button_bounds;
+            ok = this.left_button.compute_bounds(this, out left_button_bounds);
             return_if_fail(ok);
-            var left = bounds.get_x() + bounds.get_width() - fade_overlap;
+            var left = left_button_bounds.get_x() + left_button_bounds.get_width() - fade_overlap;
 
-            ok = this.right_button.compute_bounds(this, out bounds);
+            Graphene.Rect right_button_bounds;
+            ok = this.right_button.compute_bounds(this, out right_button_bounds);
             return_if_fail(ok);
-            var right = bounds.get_x() + fade_overlap;
+            var right = right_button_bounds.get_x() + fade_overlap;
 
-            snapshot.push_clip(Graphene.Rect().init(left, 0, right - left, this.get_height()));
+            snapshot.push_clip(Graphene.Rect().init(left, bounds.get_y(), right - left, bounds.get_height()));
             snapshot.push_mask(INVERTED_ALPHA);
             if (overflow_left) {
                 snapshot.append_linear_gradient(
-                    Graphene.Rect().init(left, 0, fade_width, this.get_height()),
+                    Graphene.Rect().init(left, bounds.get_y(), fade_width, bounds.get_height()),
                     Graphene.Point().init(left, 0),
                     Graphene.Point().init(left + fade_width, 0),
                     {
@@ -1018,7 +1034,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             }
             if (overflow_right) {
                 snapshot.append_linear_gradient(
-                    Graphene.Rect().init(right - fade_width, 0, fade_width, this.get_height()),
+                    Graphene.Rect().init(right - fade_width, bounds.get_y(), fade_width, bounds.get_height()),
                     Graphene.Point().init(right, 0),
                     Graphene.Point().init(right - fade_width, 0),
                     {
