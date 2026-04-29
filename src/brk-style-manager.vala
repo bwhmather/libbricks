@@ -209,6 +209,14 @@ internal sealed class Brk.StyleManager : GLib.Object {
         this.update_stylesheet();
     }
 
+    public override void
+    dispose() {
+        GLib.SignalHandler.disconnect_by_data(
+            Gtk.Settings.get_for_display(this.display), this
+        );
+        base.dispose();
+    }
+
     public StyleManager(Gdk.Display display) {
         Object(display: display);
     }
