@@ -7,9 +7,9 @@
 [GtkTemplate ( ui = "/com/bwhmather/Bricks/ui/brk-file-dialog-icon-view.ui")]
 internal sealed class Brk.FileDialogIconView : Gtk.Widget {
 
-    /* === State ========================================================================================== */
+    /* === State ============================================================ */
 
-    /* --- Directory State -------------------------------------------------------------------------------- */
+    /* --- Directory State -------------------------------------------------- */
 
     private Gtk.DirectoryList _directory_list;
     public Gtk.DirectoryList directory_list {
@@ -30,7 +30,7 @@ internal sealed class Brk.FileDialogIconView : Gtk.Widget {
         }
     }
 
-    /* === Lifecycle ====================================================================================== */
+    /* === Lifecycle ======================================================== */
 
     class construct {
         set_layout_manager_type(typeof (Gtk.BinLayout));
