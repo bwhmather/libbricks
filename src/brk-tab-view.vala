@@ -70,76 +70,100 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         set_accessible_role(TAB);
     }
 
+    private void
+    on_page_notify_selected() {
+        if (this.page.selected) {
+            this.add_css_class("selected");
+        } else {
+            this.remove_css_class("selected");
+        }
+    }
+
+    private void
+    on_close_button_clicked() {
+        this.page.close();
+    }
+
+    private Gdk.ContentProvider
+    on_drag_prepare(Gtk.DragSource s, double x, double y) {
+        this.page.drag_tab_offset = x;
+        var gvalue = new GLib.Value(typeof(Brk.TabPage));
+        gvalue.set_object(this.page);
+        return new Gdk.ContentProvider.for_value(gvalue);
+    }
+
+    private void
+    on_drag_begin(Gtk.DragSource s, Gdk.Drag drag) {
+        assert(this.page.drag == null);
+
+        drag.actions = MOVE;
+
+        // Disable default drag icon.
+        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        //drag_icon.child = new Gtk.Box(VERTICAL, 0);
+        drag_icon.child = new Gtk.Label(".");
+
+        this.page.drag = drag;
+    }
+
+    private bool
+    on_drag_cancel(Gtk.DragSource s, Gdk.Drag drag, Gdk.DragCancelReason r) {
+        assert(this.page.drag == drag);
+
+        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        //drag_icon.child = new Gtk.Box(VERTICAL, 0);
+        drag_icon.child = new Gtk.Label(".");
+
+        // TODO page shouldn't know about views.
+        if (!this.page.drag_source.has_page(this.page)) {
+            this.page.drag_source.attach_page(this.page);
+            this.page.drag_source.selected_page = this.page;
+        }
+
+        return true;
+    }
+
+    private void
+    on_drag_end(Gtk.DragSource s, Gdk.Drag drag, bool delete_data) {
+        // assert(this.page.drag == drag);
+        this.page.drag = null;
+    }
+
+    private void
+    on_middle_mouse_button_released(int n_press, double x, double y) {
+        this.page.close();
+    }
+
+    private void
+    on_mouse_button_pressed(int n_press, double x, double y) {
+        var picked = this.pick(x, y, DEFAULT);
+        if (picked == this.close_button || picked.is_ancestor(this.close_button)) {
+            return;
+        }
+
+        this.page.focus();
+    }
+
     construct {
         this.page.bind_property("title", this.label, "label", SYNC_CREATE);
-        this.page.notify["selected"].connect((p, pspec) => {
-            if (this.page.selected) {
-                this.add_css_class("selected");
-            } else {
-                this.remove_css_class("selected");
-            }
-        });
-        this.close_button.clicked.connect((b) => {
-            this.page.close();
-        });
+        this.page.notify["selected"].connect(this.on_page_notify_selected);
+        this.close_button.clicked.connect(this.on_close_button_clicked);
 
         var drag_controller = new Gtk.DragSource();
-        drag_controller.prepare.connect((s, x, y) => {
-            this.page.drag_tab_offset = x;
-            var gvalue = new GLib.Value(typeof(Brk.TabPage));
-            gvalue.set_object(this.page);
-            return new Gdk.ContentProvider.for_value(gvalue);
-        });
-        drag_controller.drag_begin.connect((s, drag) => {
-            assert(this.page.drag == null);
-
-            drag.actions = MOVE;
-
-            // Disable default drag icon.
-            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-            //drag_icon.child = new Gtk.Box(VERTICAL, 0);
-            drag_icon.child = new Gtk.Label(".");
-
-            this.page.drag = drag;
-        });
-        drag_controller.drag_cancel.connect((s, drag, r) => {
-            assert(this.page.drag == drag);
-
-            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
-            //drag_icon.child = new Gtk.Box(VERTICAL, 0);
-            drag_icon.child = new Gtk.Label(".");
-
-            // TODO page shouldn't know about views.
-            if (!this.page.drag_source.has_page(this.page)) {
-                this.page.drag_source.attach_page(this.page);
-                this.page.drag_source.selected_page = this.page;
-            }
-
-            return true;
-        });
-        drag_controller.drag_end.connect((s, drag, delete_data) => {
-//            assert(this.page.drag == drag);
-            this.page.drag = null;
-        });
+        drag_controller.prepare.connect(this.on_drag_prepare);
+        drag_controller.drag_begin.connect(this.on_drag_begin);
+        drag_controller.drag_cancel.connect(this.on_drag_cancel);
+        drag_controller.drag_end.connect(this.on_drag_end);
         this.add_controller(drag_controller);
 
         var middle_click_controller = new Gtk.GestureClick();
         middle_click_controller.button = 2;
         // Listen on release to give user a chance to cancel by unfocussing.
-        middle_click_controller.released.connect((n_press, x, y) => {
-            this.page.close();
-        });
+        middle_click_controller.released.connect(this.on_middle_mouse_button_released);
         this.add_controller(middle_click_controller);
 
         var raise_on_click_controller = new Gtk.GestureClick();
-        raise_on_click_controller.pressed.connect((n_press, x, y) => {
-            var picked = this.pick(x, y, DEFAULT);
-            if (picked == this.close_button || picked.is_ancestor(this.close_button)) {
-                return;
-            }
-
-            this.page.focus();
-        });
+        raise_on_click_controller.pressed.connect(this.on_mouse_button_pressed);
         this.add_controller(raise_on_click_controller);
     }
 
@@ -404,18 +428,21 @@ private sealed class Brk.TabDragView : Gtk.Widget {
         set_css_name("tabdrag");
     }
 
+    private void
+    on_notify_page() {
+        if (this.page != null) {
+            this.page.selected = true;
+        }
+        this.tabs.tab = this.page != null ? this.page.tab : null;
+        this.pages.page = this.page != null ? this.page.bin : null;
+    }
+
     construct {
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.VERTICAL, -1);
         var layout_manager = this.layout_manager as Gtk.BoxLayout;
         layout_manager.orientation = VERTICAL;
 
-        this.notify["page"].connect((p, pspec) => {
-            if (this.page != null) {
-                this.page.selected = true;
-            }
-            this.tabs.tab = this.page != null ? this.page.tab : null;
-            this.pages.page = this.page != null ? this.page.bin : null;
-        });
+        this.notify["page"].connect(this.on_notify_page);
     }
 
     internal
@@ -520,11 +547,91 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
     }
 
     private void
-    page_on_notify_drag(GLib.Object target, GLib.ParamSpec pspec) {
+    on_pages_items_changed(uint position, uint removed, uint added) {
+        Gtk.Widget? next = this.get_first_child();
+        for (var i = 0; i < position; i++) {
+            next = next.get_next_sibling();
+        }
+
+        for (var i = 0; i < removed; i++) {
+            var target = next;
+            next = next.get_next_sibling();
+            target.unparent();
+        }
+
+        for (var i = 0; i < added; i++) {
+            var page = this.view.pages.get_item(position + i) as Brk.TabPage;
+            page.tab.insert_before(this, next);
+        }
+    }
+
+    private void
+    on_page_notify_drag(GLib.Object target, GLib.ParamSpec pspec) {
         var page = (Brk.TabPage) target;
         if (page.drag != null) {
             this.release_drag(page.drag);
         }
+    }
+
+    private void
+    on_view_page_attached(Brk.TabPage page) {
+        page.notify["drag"].connect(this.on_page_notify_drag);
+    }
+
+    private void
+    on_view_page_detached(Brk.TabPage page) {
+        GLib.SignalHandler.disconnect_by_data(page, this);
+    }
+
+    private void
+    on_view_notify_selected_page() {
+        this.scroll_to_selected();
+    }
+
+    private Gdk.DragAction
+    on_drag_enter(Gtk.DropTargetAsync dc, Gdk.Drop drop, double x, double y) {
+        var drag = drop.drag;
+        this.acquire_drag(drag, x, y);
+        return MOVE;
+    }
+
+    private void
+    on_drag_leave(Gtk.DropTargetAsync dc, Gdk.Drop drop) {
+        var drag = drop.drag;
+        this.release_drag(drag);
+    }
+
+    private Gdk.DragAction
+    on_drag_motion(Gtk.DropTargetAsync dc, Gdk.Drop drop, double x, double y) {
+        var drag = drop.drag;
+        this.acquire_drag(drag, x, y);
+        return MOVE;
+    }
+
+    private bool
+    on_drop(Gtk.DropTargetAsync dc, Gdk.Drop drop, double x, double y) {
+        // TODO figure out if I had a good reason for not including this bit:
+      //  var drag = drop.drag;
+      //  this.acquire_drag(drag, x, y);
+
+        var page = Brk.TabPage.get_for_drag(drop.drag);
+        page.drag = null;
+
+        var expected = drop.get_actions();
+        drop.finish(COPY);  // TODO
+        return true;
+    }
+
+    private bool
+    on_scroll(double dx, double dy) {
+        this.adjustment.value += dx;
+        this.queue_allocate();
+        return true;
+    }
+
+    private void
+    on_adjustment_notify_upper() {
+        this.scroll_to_selected();
     }
 
     construct {
@@ -542,76 +649,25 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         this.right_button.add_css_class("right");
         this.right_button.insert_after(this, null);
 
-        this.view.pages.items_changed.connect((position, removed, added) => {
-            Gtk.Widget? next = this.get_first_child();
-            for (var i = 0; i < position; i++) {
-                next = next.get_next_sibling();
-            }
-
-            for (var i = 0; i < removed; i++) {
-                var target = next;
-                next = next.get_next_sibling();
-                target.unparent();
-            }
-
-            for (var i = 0; i < added; i++) {
-                var page = this.view.pages.get_item(position + i) as Brk.TabPage;
-                page.tab.insert_before(this, next);
-            }
-        });
-
-        this.view.page_attached.connect((page) => {
-            page.notify["drag"].connect(this.page_on_notify_drag);
-        });
-        this.view.page_detached.connect((page) => {
-            GLib.SignalHandler.disconnect_by_data(page, this);
-        });
-        this.view.notify["selected-page"].connect((v, pspec) => {
-            this.scroll_to_selected();
-        });
+        this.view.pages.items_changed.connect(this.on_pages_items_changed);
+        this.view.page_attached.connect(this.on_view_page_attached);
+        this.view.page_detached.connect(this.on_view_page_detached);
+        this.view.notify["selected-page"].connect(this.on_view_notify_selected_page);
 
         var drop_controller = new Gtk.DropTargetAsync(
             new Gdk.ContentFormats.for_gtype(typeof(Brk.TabPage)), MOVE | COPY | LINK | ASK
         );
-        drop_controller.drag_enter.connect((dc, drop, x, y) => {
-            var drag = drop.drag;
-            this.acquire_drag(drag, x, y);
-            return MOVE;
-        });
-        drop_controller.drag_leave.connect((dc, drop) => {
-            var drag = drop.drag;
-            this.release_drag(drag);
-        });
-        drop_controller.drag_motion.connect((dc, drop, x, y) => {
-            var drag = drop.drag;
-            this.acquire_drag(drag, x, y);
-            return MOVE;
-        });
-        drop_controller.drop.connect((dc, drop, x, y) => {
-            // TODO figure out if I had a good reason for not including this bit:
-          //  var drag = drop.drag;
-          //  this.acquire_drag(drag, x, y);
-
-            var page = Brk.TabPage.get_for_drag(drop.drag);
-            page.drag = null;
-
-            var expected = drop.get_actions();
-            drop.finish(COPY);  // TODO
-            return true;
-        });
+        drop_controller.drag_enter.connect(this.on_drag_enter);
+        drop_controller.drag_leave.connect(this.on_drag_leave);
+        drop_controller.drag_motion.connect(this.on_drag_motion);
+        drop_controller.drop.connect(this.on_drop);
         this.add_controller(drop_controller);
 
         var scroll_controller = new Gtk.EventControllerScroll(HORIZONTAL | KINETIC);
-        scroll_controller.scroll.connect((dx, dy) => {
-            this.adjustment.value += dx;
-            this.queue_allocate();
-            return true;
-        });
+        scroll_controller.scroll.connect(this.on_scroll);
         this.add_controller(scroll_controller);
 
-        this.adjustment.notify["upper"].connect((a, pspec) => {
-            this.scroll_to_selected();
-        });
+        this.adjustment.notify["upper"].connect(this.on_adjustment_notify_upper);
     }
 
     public TabViewTabs(Brk.TabView view) {
@@ -1090,36 +1146,41 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
         set_css_name("tabpages");
     }
 
+    private void
+    on_view_pages_items_changed(uint position, uint removed, uint added) {
+        Gtk.Widget? next = this.get_first_child();
+        for (var i = 0; i < position; i++) {
+            next = next.get_next_sibling();
+        }
+
+        for (var i = 0; i < removed; i++) {
+            var target = next;
+            next = next.get_next_sibling();
+            target.unparent();
+        }
+
+        for (var i = 0; i < added; i++) {
+            var page = this.view.pages.get_item(position + i) as Brk.TabPage;
+            page.bin.insert_before(this, next);
+        }
+    }
+
+    private void
+    on_view_notify_selected_page() {
+        if (this.in_destruction()) {
+            return;
+        }
+
+        for (var child = this.get_first_child(); child != null; child = child.get_next_sibling()) {
+            child.set_child_visible(this.view.selected_page != null && child == this.view.selected_page.bin);
+        }
+
+        this.queue_resize();
+    }
+
     construct {
-        this.view.pages.items_changed.connect((position, removed, added) => {
-            Gtk.Widget? next = this.get_first_child();
-            for (var i = 0; i < position; i++) {
-                next = next.get_next_sibling();
-            }
-
-            for (var i = 0; i < removed; i++) {
-                var target = next;
-                next = next.get_next_sibling();
-                target.unparent();
-            }
-
-            for (var i = 0; i < added; i++) {
-                var page = this.view.pages.get_item(position + i) as Brk.TabPage;
-                page.bin.insert_before(this, next);
-            }
-        });
-
-        this.view.notify["selected-page"].connect((v, pspec) => {
-            if (this.in_destruction()) {
-                return;
-            }
-
-            for (var child = this.get_first_child(); child != null; child = child.get_next_sibling()) {
-                child.set_child_visible(this.view.selected_page != null && child == this.view.selected_page.bin);
-            }
-
-            this.queue_resize();
-        });
+        this.view.pages.items_changed.connect(this.on_view_pages_items_changed);
+        this.view.notify["selected-page"].connect(this.on_view_notify_selected_page);
     }
 
     internal TabViewStack(Brk.TabView view) {
@@ -1319,32 +1380,50 @@ public sealed class Brk.TabView : Gtk.Widget {
         set_css_name("tabview");
     }
 
+    private bool
+    on_control_shift_tab() {
+        this.select_prev_page();
+        return true;
+    }
+
+    private bool
+    on_control_tab() {
+        this.select_next_page();
+        return true;
+    }
+
+    private void
+    on_page_list_notify_n_items() {
+        this.notify_property("n-pages");
+            this.stack.visible = this.n_pages > 0;
+    }
+
+    private void
+    on_notify_selected_page() {
+        for (var i = 0; i < this.n_pages; i++) {
+            var page = this.get_page(i);
+            page.selected = page == this.selected_page;
+        }
+    }
+
     construct {
         var shortcut_controller = new Gtk.ShortcutController();
         shortcut_controller.propagation_phase = CAPTURE;
         shortcut_controller.scope = GLOBAL;
         shortcut_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("<Control><Shift>Tab"),
-            new Gtk.CallbackAction((v, args) => { this.select_prev_page(); return true; })
+            new Gtk.CallbackAction(this.on_control_shift_tab)
         ));
         shortcut_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("<Control>Tab"),
-            new Gtk.CallbackAction((v, args) => { this.select_next_page(); return true; })
+            new Gtk.CallbackAction(this.on_control_tab)
         ));
         this.add_controller(shortcut_controller);
 
         this.page_list = new GLib.ListStore(typeof(Brk.TabPage));
-        this.page_list.notify["n-items"].connect((l, pspec) => { this.notify_property("n-pages"); });
+        this.page_list.notify["n-items"].connect(this.on_page_list_notify_n_items);
 
-        this.notify["selected-page"].connect((s, pspec) => {
-            for (var i = 0; i < this.n_pages; i++) {
-                var page = this.get_page(i);
-                page.selected = page == this.selected_page;
-            }
-        });
-        this.notify["n-pages"].connect((s, pspec) => {
-            this.stack.visible = this.n_pages > 0;
-        });
+        this.notify["selected-page"].connect(this.on_notify_selected_page);
 
         this.update_property(Gtk.AccessibleProperty.ORIENTATION, Gtk.Orientation.VERTICAL, -1);
 
