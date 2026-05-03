@@ -112,7 +112,7 @@ private bool match_subquery(
         while ((void *)candidate_start < (void *)chunk_end) {
             unowned string candidate_name_cursor;
             unowned string candidate_query_cursor;
-            int candidate_length;
+            size_t candidate_length;
 
             candidate_name_cursor = candidate_start;
             candidate_query_cursor = query_cursor;
