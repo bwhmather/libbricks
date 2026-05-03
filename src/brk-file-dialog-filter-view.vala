@@ -338,8 +338,8 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
                 GLib.FileInfo[] candidates = {};
                 if (this.query_stack.length > n && (
-                    subquery.has_prefix(this.query_stack[n].subquery) ||
-                    this.query_stack[n].subquery == ".."
+                    subquery.has_prefix(this.query_stack[n].subquery) &&
+                    this.query_stack[n].subquery != ".."
                 )) {
                     // New query is a refinement of the current query so we can
                     // copy the existing matches as a starting point.
