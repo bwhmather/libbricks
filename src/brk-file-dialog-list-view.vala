@@ -202,15 +202,8 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     [GtkChild]
     private unowned Gtk.ColumnViewColumn name_column;
 
-    [GtkChild]
-    private unowned Gtk.ColumnViewColumn size_column;
-
-    [GtkChild]
-    private unowned Gtk.ColumnViewColumn type_column;
-
     private void
-    view_init() {
-        // Name column.
+    view_name_column_init() {
         var factory = new Gtk.SignalListItemFactory();
         factory.setup.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
@@ -234,9 +227,14 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             return Gtk.Ordering.from_cmpfunc(GLib.strcmp(akey, bkey));
         });
         this.name_column.sorter = sorter;
+    }
 
-        // Size column.
-        factory = new Gtk.SignalListItemFactory();
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn size_column;
+
+    private void
+    view_size_column_init() {
+        var factory = new Gtk.SignalListItemFactory();
         factory.setup.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
             var label = new Gtk.Label("");
@@ -250,7 +248,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             label.label = GLib.format_size(info.get_size());
         });
         this.size_column.factory = factory;
-        sorter = new Gtk.CustomSorter((aptr, bptr) => {
+        var sorter = new Gtk.CustomSorter((aptr, bptr) => {
             var ainfo = (GLib.FileInfo) aptr;
             var asize = ainfo.get_size();
 
@@ -262,9 +260,14 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             return Gtk.Ordering.EQUAL;
         });
         this.size_column.sorter = sorter;
+    }
 
-        // Type column
-        factory = new Gtk.SignalListItemFactory();
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn type_column;
+
+    private void
+    view_type_column_init() {
+        var factory = new Gtk.SignalListItemFactory();
         factory.setup.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
             var label = new Gtk.Label("");
@@ -279,6 +282,13 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             label.label = get_category_from_content_type(content_type);
         });
         this.type_column.factory = factory;
+    }
+
+    private void
+    view_init() {
+        this.view_name_column_init();
+        this.view_size_column_init();
+        this.view_type_column_init();
 
         this.column_view.sort_by_column(this.name_column, ASCENDING);
 
