@@ -97,6 +97,21 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     }
 
     private void
+    open_fileinfo(GLib.FileInfo fileinfo) {
+        var file = (GLib.File) fileinfo.get_attribute_object("standard::file");
+        switch (fileinfo.get_file_type()) {
+        case REGULAR:
+            this.open(file);
+            return;
+        case DIRECTORY:
+            this.root_directory = file;
+            return;
+        default:
+            return;
+        }
+    }
+
+    private void
     action_open() {
         GLib.FileInfo? selection;
         if (this.filter_view_enabled) {
@@ -105,18 +120,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
             selection = (GLib.FileInfo?) this.selection.get_item(0);
         }
         if (selection != null) {
-            var selected_file = (GLib.File) selection.get_attribute_object("standard::file");
-            var file_type = selection.get_file_type();
-            switch (file_type) {
-            case REGULAR:
-                this.open(selected_file);
-                return;
-            case DIRECTORY:
-                this.root_directory = selected_file;
-                return;
-            default:
-                return;
-            }
+            this.open_fileinfo(selection);
         }
     }
 
@@ -230,7 +234,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
             }
         }
         if (this.filter_entry_submit) {
-            this.activate_action("dialog.open", null);
+            var selection = this.filter_view.selection;
+            if (selection != null) {
+                this.open_fileinfo(selection);
+            }
         }
 
         this.filter_entry_navigate = null;
@@ -355,8 +362,14 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.FileDialogListView list_view;
 
     private void
+    on_list_view_file_activated(GLib.FileInfo fileinfo) {
+        this.open_fileinfo(fileinfo);
+    }
+
+    private void
     list_view_init() {
         this.list_view.directory_list = this.directory_list;
+        this.list_view.file_activated.connect(this.on_list_view_file_activated);
 
         this.notify["view-mode"].connect(() => {
             if (this.view_mode == LIST) {
@@ -386,8 +399,14 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.FileDialogIconView icon_view;
 
     private void
+    on_icon_view_file_activated(GLib.FileInfo fileinfo) {
+        this.open_fileinfo(fileinfo);
+    }
+
+    private void
     icon_view_init() {
         this.icon_view.directory_list = this.directory_list;
+        this.icon_view.file_activated.connect(this.on_icon_view_file_activated);
     }
 
     /* --- Tree View -------------------------------------------------------- */
@@ -399,8 +418,14 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.FileDialogTreeView tree_view;
 
     private void
+    on_tree_view_file_activated(GLib.FileInfo fileinfo) {
+        this.open_fileinfo(fileinfo);
+    }
+
+    private void
     tree_view_init() {
         this.tree_view.directory_list = this.directory_list;
+        this.tree_view.file_activated.connect(this.on_tree_view_file_activated);
     }
 
     /* === Lifecycle ======================================================== */

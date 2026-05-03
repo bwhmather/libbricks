@@ -30,6 +30,8 @@ internal sealed class Brk.FileDialogIconView : Gtk.Widget {
         }
     }
 
+    public signal void file_activated(GLib.FileInfo fileinfo);
+
     /* === Lifecycle ======================================================== */
 
     class construct {

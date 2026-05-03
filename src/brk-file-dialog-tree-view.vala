@@ -30,6 +30,8 @@ internal sealed class Brk.FileDialogTreeView : Gtk.Widget {
         }
     }
 
+    public signal void file_activated(GLib.FileInfo fileinfo);
+
     /* === View ============================================================= */
 
     [GtkChild]

@@ -284,6 +284,16 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         this.type_column.factory = factory;
     }
 
+    public signal void file_activated(GLib.FileInfo fileinfo);
+
+    private void
+    on_column_view_activate(Gtk.ColumnView cv, uint position) {
+        var fileinfo = this.selection_model.get_item(position) as GLib.FileInfo;
+        if (fileinfo != null) {
+            this.file_activated(fileinfo);
+        }
+    }
+
     private void
     view_init() {
         this.view_name_column_init();
@@ -294,6 +304,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
 
         this.bind_property("selection-model", this.column_view, "model", SYNC_CREATE);
         this.column_view.bind_property("sorter", this.sort_model, "sorter", SYNC_CREATE);
+        this.column_view.activate.connect(this.on_column_view_activate);
     }
 
     /* === Lifecycle ======================================================== */
