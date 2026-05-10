@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+private enum Brk.FileDialogMode {
+    OPEN,
+    SAVE,
+}
+
 private enum Brk.FileDialogViewMode {
     LIST,
     ICON,
@@ -39,6 +44,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     public GLib.ListModel selection { get; set; default=new GLib.ListStore(typeof (GLib.FileInfo)); }
 
     public GLib.SimpleActionGroup dialog_actions = new GLib.SimpleActionGroup();
+
+    public Brk.FileDialogMode mode { get; set; default = OPEN; }
 
     /* === Views ============================================================ */
 
@@ -101,26 +108,19 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         var file = (GLib.File) fileinfo.get_attribute_object("standard::file");
         switch (fileinfo.get_file_type()) {
         case REGULAR:
-            this.open(file);
+            if (this.mode == SAVE) {
+                this.filter_view_enabled = false;
+                this.filename_entry.text = fileinfo.get_display_name();
+                this.filename_entry.grab_focus();
+            } else {
+                this.open(file);
+            }
             return;
         case DIRECTORY:
             this.root_directory = file;
             return;
         default:
             return;
-        }
-    }
-
-    private void
-    action_open() {
-        GLib.FileInfo? selection;
-        if (this.filter_view_enabled) {
-            selection = this.filter_view.selection;
-        } else {
-            selection = (GLib.FileInfo?) this.selection.get_item(0);
-        }
-        if (selection != null) {
-            this.open_fileinfo(selection);
         }
     }
 
@@ -134,14 +134,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
         this.dialog_actions.add_action(new GLib.PropertyAction("show-binary", this, "show-binary"));
         this.dialog_actions.add_action(new GLib.PropertyAction("show-hidden", this, "show-hidden"));
-
-        var open_action = new GLib.SimpleAction("open", null);
-        open_action.activate.connect(this.action_open);
-        this.dialog_actions.add_action(open_action);
-        //this.notify["selection"].connect((d, pspec) => {
-        //    open_action.set_enabled(this.selection.get_n_items() > 0);
-        //});
-        //open_action.set_enabled(this.selection.get_n_items() > 0);
 
         this.notify["filter-view-enabled"].connect(this.view_stack_update_visible_child);
         this.notify["view-mode"].connect(this.view_stack_update_visible_child);
@@ -267,6 +259,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 // chance to consume it first.
                 if (buffer_controller.enabled) {
                     this.filter_view_enabled = false;
+                    this.view_stack.grab_focus();
                     return true;
                 }
                 return false;
@@ -428,6 +421,125 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.tree_view.file_activated.connect(this.on_tree_view_file_activated);
     }
 
+    /* === Action Bars ====================================================== */
+
+    /* --- Open Bar --------------------------------------------------------- */
+
+    [GtkChild]
+    private unowned Gtk.ActionBar open_bar;
+
+    [GtkChild]
+    private unowned Gtk.Button open_button;
+
+    private GLib.SimpleAction open_action;
+
+    private void
+    open_action_on_activate() {
+        GLib.FileInfo? selection;
+        if (this.filter_view_enabled) {
+            selection = this.filter_view.selection;
+        } else {
+            selection = (GLib.FileInfo?) this.selection.get_item(0);
+        }
+        if (selection != null) {
+            this.open_fileinfo(selection);
+        }
+    }
+
+    private void
+    open_action_update_enabled() {
+        if (this.filter_view_enabled) {
+            this.open_action.set_enabled(this.filter_view.selection != null);
+        } else {
+            this.open_action.set_enabled(this.selection.get_n_items() > 0);
+        }
+    }
+
+    private void
+    open_bar_update_visibility() {
+        if (this.mode == OPEN) {
+            this.open_bar.visible = true;
+            this.default_widget = open_button;
+        } else {
+            this.open_bar.visible = false;
+        }
+    }
+
+    private void
+    open_bar_init() {
+        this.open_action = new GLib.SimpleAction("open", null);
+        this.open_action.activate.connect(this.open_action_on_activate);
+        this.dialog_actions.add_action(this.open_action);
+
+        this.open_action_update_enabled();
+        this.notify["selection"].connect(this.open_action_update_enabled);
+        this.notify["filter-view-enabled"].connect(this.open_action_update_enabled);
+        this.filter_view.notify["selection"].connect(this.open_action_update_enabled);
+
+        this.notify["mode"].connect(this.open_bar_update_visibility);
+        this.open_bar_update_visibility();
+    }
+
+    /* --- Save Bar --------------------------------------------------------- */
+
+    [GtkChild]
+    private unowned Gtk.ActionBar save_bar;
+
+    [GtkChild]
+    private unowned Gtk.Entry filename_entry;
+
+    public string filename {
+        get { return this.filename_entry.text; }
+        set { this.filename_entry.text = value; }
+    }
+
+    private void
+    save_bar_update_visibility() {
+        if (this.mode == SAVE) {
+            this.save_bar.visible = true;
+            this.default_widget = save_button;
+        } else {
+            this.save_bar.visible = false;
+        }
+    }
+
+    [GtkChild]
+    private unowned Gtk.Button save_button;
+
+    private GLib.SimpleAction save_action;
+
+    private void
+    save_action_on_activate() {
+        var filename = this.filename_entry.text.strip();
+        return_if_fail(filename != "");
+        this.open(this.root_directory.get_child(filename));
+    }
+
+    private void
+    save_action_update_enabled() {
+        save_action.set_enabled(this.filename_entry.text.strip() != "");
+    }
+
+    private void
+    save_bar_init() {
+        this.save_action = new GLib.SimpleAction("save", null);
+        this.save_action.activate.connect(this.save_action_on_activate);
+        this.dialog_actions.add_action(this.save_action);
+
+        this.filename_entry.notify["text"].connect(this.save_action_update_enabled);
+        this.save_action_update_enabled();
+
+        this.notify["mode"].connect(this.save_bar_update_visibility);
+        this.save_bar_update_visibility();
+
+        this.notify["selection"].connect(() => {
+            var item = (GLib.FileInfo?) this.selection.get_item(0);
+            if (item != null && item.get_file_type() == REGULAR) {
+                this.filename_entry.text = item.get_display_name();
+            }
+        });
+    }
+
     /* === Lifecycle ======================================================== */
 
     class construct {
@@ -451,6 +563,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.list_view_init();
         this.icon_view_init();
         this.tree_view_init();
+        this.open_bar_init();
+        this.save_bar_init();
 
         this.insert_action_group("dialog", this.dialog_actions);
 
@@ -567,6 +681,103 @@ public sealed class Brk.FileDialog : GLib.Object {
 
         if (cancellable != null && cancellable.is_cancelled()) {
             throw new GLib.IOError.CANCELLED("open cancelled");
+        }
+
+        return result;
+    }
+
+    /**
+     * Opens a new file chooser dialog to allow the user to select a path for
+     * writing.
+     *
+     * If the user closes the chooser without selecting a file will return NULL.
+     * Will throw a CANCELLED error if interrupted.
+     */
+    public async GLib.File?
+    save(Gtk.Window? parent, GLib.Cancellable? cancellable) throws Error {
+        if (cancellable != null && cancellable.is_cancelled()) {
+            throw new GLib.IOError.CANCELLED("save cancelled");
+        }
+
+        var window = new Brk.FileDialogWindow();
+        window.set_transient_for(parent);
+        window.mode = SAVE;
+
+        Brk.FileDialogState? state = parent.get_data("bricks-file-dialog-state");
+        if (state != null) {
+            window.view_mode = state.view_mode;
+            window.show_binary = state.show_binary;
+            window.show_hidden = state.show_hidden;
+            window.root_directory = state.root_directory;
+            window.expanded = {};
+            window.sort_columns = {};
+        } else {
+            window.view_mode = LIST;
+            window.root_directory = GLib.File.new_for_path(
+                GLib.Environment.get_current_dir()
+            );
+            window.expanded = {};
+            window.sort_columns = {};
+        }
+
+        if (this.initial_file != null) {
+            window.root_directory = this.initial_file.get_parent() ?? window.root_directory;
+            window.filename = this.initial_file.get_basename() ?? "";
+        } else {
+            if (this.initial_folder != null) {
+                window.root_directory = this.initial_folder;
+            }
+            if (this.initial_name != null) {
+                window.filename = this.initial_name;
+            }
+        }
+
+        GLib.File? result = null;
+        bool done = false;
+
+        ulong cancellable_id = 0;
+        if (cancellable != null) {
+            cancellable_id = cancellable.connect((c) => {
+                if (!done) {
+                    done = true;
+                    window.close();
+                    this.save.callback();
+                }
+            });
+        }
+        window.open.connect((file) => {
+            result = file;
+            if (!done) {
+                done = true;
+                window.close();
+                this.save.callback();
+            }
+        });
+        ((Gtk.Widget) window).unrealize.connect(() => {
+            if (!done) {
+                done = true;
+                this.save.callback();
+            }
+        });
+        window.present();
+        yield;
+
+        if (cancellable != null) {
+            cancellable.disconnect(cancellable_id);
+        }
+
+        var new_state = new FileDialogState() {
+            view_mode = window.view_mode,
+            show_binary = window.show_binary,
+            show_hidden = window.show_hidden,
+            root_directory = window.root_directory,
+            expanded = null,
+            sort_columns = null,
+        };
+        parent.set_data("bricks-file-dialog-state", new_state);
+
+        if (cancellable != null && cancellable.is_cancelled()) {
+            throw new GLib.IOError.CANCELLED("save cancelled");
         }
 
         return result;

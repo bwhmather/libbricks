@@ -136,7 +136,7 @@
           </object>
         </property>
         <child type="bottom">
-          <object class="GtkActionBar" id="action_bar">
+          <object class="GtkActionBar" id="open_bar">
             <child type="end">
               <object class="GtkButton">
                 <property name="label">Cancel</property>
@@ -144,9 +144,46 @@
               </object>
             </child>
             <child type="end">
-              <object class="GtkButton">
+              <object class="GtkButton" id="open_button">
                 <property name="label">Open</property>
                 <property name="action-name">dialog.open</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child type="bottom">
+          <object class="GtkActionBar" id="save_bar">
+            <child type="start">
+              <object class="GtkBox">
+                <property name="spacing">6</property>
+                <property name="margin-start">6</property>
+                <property name="margin-end">6</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Filename:</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="filename_entry">
+                    <property name="width-request">240</property>
+                    <property name="activates-default">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton">
+                <property name="label">Cancel</property>
+                <property name="action-name">window.close</property>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton" id="save_button">
+                <property name="label">Save</property>
+                <property name="action-name">dialog.save</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
