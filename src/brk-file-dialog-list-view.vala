@@ -307,6 +307,40 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
         this.column_view.activate.connect(this.on_column_view_activate);
     }
 
+    /* === Focus ============================================================ */
+
+    private Gtk.DirectionType pending_focus_direction;
+
+    public override bool
+    focus(Gtk.DirectionType direction) {
+        this.pending_focus_direction = direction;
+        if (base.focus(direction)) {
+            return true;
+        }
+        var root = this.get_root() as Gtk.Root;
+        if (root == null) {
+            return false;
+        }
+        root.set_focus(this);
+        return true;
+    }
+
+    private void
+    selection_model_on_items_changed(GLib.ListModel _, uint pos, uint removed, uint added) {
+        if (added == 0 || !this.is_focus()) {
+            return;
+        }
+        base.focus(this.pending_focus_direction);
+    }
+
+    private void
+    focus_init() {
+        this.notify["selection-model"].connect((obj, pspec) => {
+            this.selection_model.items_changed.connect(this.selection_model_on_items_changed);
+        });
+        this.selection_model.items_changed.connect(this.selection_model_on_items_changed);
+    }
+
     /* === Lifecycle ======================================================== */
 
     class construct {
@@ -314,9 +348,11 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     }
 
     construct {
+        this.focusable = true;
         this.selection_init();
         this.sorting_init();
         this.view_init();
+        this.focus_init();
     }
 
     public override void

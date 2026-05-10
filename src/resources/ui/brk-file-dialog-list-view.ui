@@ -8,6 +8,7 @@
         <property name="vscrollbar-policy">always</property>
         <property name="child">
           <object class="GtkColumnView" id="column_view">
+            <property name="focusable">true</property>
             <property name="tab-behavior">cell</property>
             <style>
               <class name="data-table"/>

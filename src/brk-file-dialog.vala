@@ -569,7 +569,11 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.insert_action_group("dialog", this.dialog_actions);
 
         this.map.connect(() => {
-            this.view_stack.grab_focus();
+            if (this.mode == SAVE) {
+                this.filename_entry.grab_focus();
+            } else {
+                this.view_stack.visible_child.child_focus(TAB_FORWARD);
+            }
         });
     }
 
