@@ -64,32 +64,23 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     [GtkChild]
     private unowned Gtk.Stack view_stack;
 
-    public bool filter_view_enabled { get; set; }
-    public bool edit_location_enabled { get; set; }
-    // This is the view that should be shown when filter mode is not enabled.
     public Brk.FileDialogViewMode view_mode { get; set; default = LIST; }
 
     public bool show_binary { get; set; }
     public bool show_hidden { get; set; }
 
     private void
+    toolbar_update_visibility() {
+        this.quick_open_entry.visible = this.quick_open_enabled;
+        this.quick_open_button_group.hexpand = this.quick_open_enabled;
+
+        this.path_bar.visible = !this.quick_open_enabled;
+
+        this.view_button_group.visible = !this.quick_open_enabled;
+    }
+
+    private void
     view_stack_update_visible_child() {
-        if (this.filter_view_enabled) {
-            this.filter_entry.visible = true;
-            this.path_bar.visible = false;
-            this.view_button_group.visible = false;
-
-            this.view_stack.visible_child = this.filter_view;
-            return;
-        }
-
-        this.filter_entry.visible = false;
-        this.view_button_group.visible = true;
-        if (this.edit_location_enabled) {
-            this.path_bar.visible = false;
-        } else {
-            this.path_bar.visible = true;
-        }
         switch (this.view_mode) {
         case LIST:
             this.view_stack.visible_child = this.list_view;
@@ -109,7 +100,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         switch (fileinfo.get_file_type()) {
         case REGULAR:
             if (this.mode == SAVE) {
-                this.filter_view_enabled = false;
                 this.filename_entry.text = fileinfo.get_display_name();
                 this.filename_entry.grab_focus();
             } else {
@@ -128,50 +118,52 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     views_init() {
         this.bind_property("root-directory", this.path_bar, "root-directory", BIDIRECTIONAL | SYNC_CREATE);
 
-        this.dialog_actions.add_action(new GLib.PropertyAction("filter", this, "filter-view-enabled"));
+        this.dialog_actions.add_action(new GLib.PropertyAction("quick-open", this, "quick-open-enabled"));
 
         this.dialog_actions.add_action(new GLib.PropertyAction("view-mode", this, "view-mode"));
 
         this.dialog_actions.add_action(new GLib.PropertyAction("show-binary", this, "show-binary"));
         this.dialog_actions.add_action(new GLib.PropertyAction("show-hidden", this, "show-hidden"));
 
-        this.notify["filter-view-enabled"].connect(this.view_stack_update_visible_child);
+        this.notify["quick-open-enabled"].connect(this.toolbar_update_visibility);
+        this.toolbar_update_visibility();
+
         this.notify["view-mode"].connect(this.view_stack_update_visible_child);
         this.view_stack_update_visible_child();
 
-        // Unhandled keypresses get redirected to the filter view entry and, if
-        // handled there, result in a switch to filter mode.
+        // Unhandled keypresses get redirected to the quick open entry and, if
+        // handled there, result in a switch to quick open mode.
         var event_controller = new Gtk.EventControllerKey();
         event_controller.name = "Redirect";
         event_controller.propagation_phase = BUBBLE;
         event_controller.key_pressed.connect((controller, keyval, keycode, modifiers) => {
-            if (event_controller.forward(this.filter_entry.get_delegate())) {
-                this.filter_view_enabled = true;
-                // It's more usual for the forwarding widget to keep focus but
-                // we need the entry to have focus so that it can enable event
-                // buffering on submit.
-                this.filter_entry.grab_focus_without_selecting();
+            if (this.quick_open_enabled) {
+                return false;
+            }
+            if (event_controller.forward(this.quick_open_entry.get_delegate())) {
+                this.quick_open_entry.grab_focus_without_selecting();
+                this.quick_open_enabled = true;
                 return true;
             }
+            this.quick_open_enabled = false;
             return false;
         });
         this.outer_view.add_controller(event_controller);
 
-        var filter_cancel_controller = new Gtk.ShortcutController();
-        filter_cancel_controller.add_shortcut(new Gtk.Shortcut(
+        var quick_open_cancel_controller = new Gtk.ShortcutController();
+        quick_open_cancel_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("Escape"),
             new Gtk.CallbackAction(() => {
-                // Partially duplicated on filter entry to capture Escape
+                // Partially duplicated on quick open entry to capture Escape
                 // during CAPTURE phasee when buffering enabled.
-                if (this.filter_view_enabled) {
-                    this.filter_view_enabled = false;
-                    this.view_stack.grab_focus();
+                if (this.quick_open_enabled) {
+                    this.quick_open_enabled = false;
                     return true;
                 }
                 return false;
             })
         ));
-        this.inner_view.add_controller(filter_cancel_controller);
+        this.inner_view.add_controller(quick_open_cancel_controller);
 
         var cancel_controller = new Gtk.ShortcutController();
         cancel_controller.add_shortcut(new Gtk.Shortcut(
@@ -184,167 +176,57 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.outer_view.add_controller(cancel_controller);
     }
 
-    /* --- Filter View ------------------------------------------------------ */
+    /* --- Quick Open ------------------------------------------------------- */
+
+    public bool quick_open_enabled { get; set; default=false; }
 
     [GtkChild]
-    private unowned Brk.ButtonGroup filter_button_group;
+    private unowned Brk.ButtonGroup quick_open_button_group;
 
     [GtkChild]
-    private unowned Gtk.Entry filter_entry;
-
-    [GtkChild]
-    private unowned Brk.FileDialogFilterView filter_view;
-
-    // Keyboard input on the filter entry can be handled asnychronously if the
-    // view is still catching up.  Navigation (using up and down keys  before
-    // the entry is submitted is buffered manually here.  Everything after the
-    // entry is submitted is buffered using a Gtk.EventControllerBuffer.  Input
-    // anywhere else is handled synchronously and ignores these two mechanisms.
-    private int[] filter_entry_navigate = null;
-    private bool filter_entry_submit = false;
+    private unowned Brk.QuickOpenEntry quick_open_entry;
 
     private void
-    filter_entry_clear_commands() {
-        this.filter_entry_navigate = null;
-        this.filter_entry_submit = false;
-    }
-
-    private void
-    filter_entry_play_commands() {
-        if (this.filter_view.loading) {
-            return;
-        }
-
-        foreach (int step in this.filter_entry_navigate) {
-            while (step < 0) {
-                this.filter_view.select_prev();
-                step += 1;
-            }
-            while (step > 0) {
-                this.filter_view.select_next();
-                step -= 1;
-            }
-        }
-        if (this.filter_entry_submit) {
-            var selection = this.filter_view.selection;
-            if (selection != null) {
-                this.open_fileinfo(selection);
-            }
-        }
-
-        this.filter_entry_navigate = null;
-        this.filter_entry_submit = false;
-    }
-
-
-    private void
-    filter_view_init() {
-        var buffer_controller = new Gtk.EventControllerBuffer();
-        buffer_controller.propagation_phase = CAPTURE;
-        buffer_controller.discarded.connect(() => {
-            // Queued commands are effectively the same as buffered input.
-            // If we lose the input buffer then commands should also be dropped.
-            this.filter_entry_clear_commands();
+    quick_open_init() {
+        this.quick_open_entry.file_activated.connect((fileinfo) => {
+            this.open_fileinfo(fileinfo);
         });
 
-        var cancel_controller = new Gtk.ShortcutController();
-        cancel_controller.propagation_phase = CAPTURE;
-        cancel_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Escape"),
-            new Gtk.CallbackAction(() => {
-                // This shortcut controller is only installed so that we can
-                // bypass the keyboard buffer and cancel a long running query
-                // without having to wait until it finishes.  Usually we want
-                // to wait until BUBBLE so that the input method can get a
-                // chance to consume it first.
-                if (buffer_controller.enabled) {
-                    this.filter_view_enabled = false;
-                    this.view_stack.grab_focus();
-                    return true;
-                }
-                return false;
-            })
-        ));
-
-        var shortcut_controller = new Gtk.ShortcutController();
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Up"),
-            new Gtk.CallbackAction(() => {
-                return_val_if_fail(!this.filter_entry_submit, false);  // Should be caught by buffer.
-                this.filter_entry_navigate += -1;
-                this.filter_entry_play_commands();
-                return true;
-            })
-        ));
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Down"),
-            new Gtk.CallbackAction(() => {
-                return_val_if_fail(!this.filter_entry_submit, false);  // Should be caught by buffer.
-                this.filter_entry_navigate += 1;
-                this.filter_entry_play_commands();
-                return true;
-            })
-        ));
-
-        // The order here is important.  The cancel controller must be able to
-        // intercept events before they are buffered.  The shortcut controller
-        // must not receive events until after they are released.
-        this.filter_entry.add_controller(cancel_controller);
-        this.filter_entry.add_controller(buffer_controller);
-        this.filter_entry.add_controller(shortcut_controller);
-
-        this.filter_entry.activate.connect(() => {
-            return_if_fail(!this.filter_entry_submit);  // Should be caught by buffer.
-            buffer_controller.enable();
-            this.filter_entry_submit = true;
-            this.filter_entry_play_commands();
-        });
-
-        this.filter_entry.bind_property("text", this.filter_view, "query", SYNC_CREATE);
-        this.filter_entry.notify["text"].connect((fe, pspec) => {
-            // Buffered keyboard events will have happened before whatever
-            // changed the entry (for example, a careful middle click paste)
-            // and so can't be replayed after.
-            buffer_controller.discard();
-        });
-        this.filter_entry.notify["cursor-position"].connect((fe, pspec) => {
-            // Likewise, replaying events after moving the cursor would cause
-            // text to be entered in the wrong place.
-            buffer_controller.discard();
-        });
-        this.filter_view.notify["loading"].connect((fv, pspec) => {
-            if (!this.filter_view.loading) {
-                this.filter_entry_play_commands();
-                buffer_controller.replay();
-            }
-        });
-
-        this.notify["filter-view-enabled"].connect((v, pspec) => {
-            if (!this.filter_view_enabled) {
-                // Clear the filter entry text so that next time filter view is
+        this.notify["quick-open-enabled"].connect((v, pspec) => {
+            if (!this.quick_open_enabled) {
+                // Clear the quick open entry text so that next quick open is
                 // enabled it can start from a clean slate.
-                this.filter_entry.text = "";
+                this.quick_open_entry.text = "";
+                this.view_stack.grab_focus();
             }
         });
-        this.filter_entry.notify["text"].connect((fe, pspec) => {
-            if (this.filter_entry.text == "") {
-                // Exit filter view when text is deleted.  This won't be
-                // triggered on entering filter view as entry is cleared while
-                // closed.
-                this.filter_view_enabled = false;
+        this.quick_open_entry.notify["text"].connect((fe, pspec) => {
+            if (this.quick_open_entry.text == "") {
+                // Exit quick open when text is deleted.  This won't be
+                // triggered on enabling the quick open entry as the entry is
+                // cleared when closed.
+                this.quick_open_enabled = false;
             }
         });
 
         this.notify["root-directory"].connect((fd, pspec) => {
-            this.filter_view_enabled = false;
+            this.quick_open_enabled = false;
         });
 
-        this.bind_property("filter-view-enabled", this.filter_button_group, "hexpand", SYNC_CREATE);
+        this.bind_property("root-directory", this.quick_open_entry, "root-directory", SYNC_CREATE);
+        this.bind_property("show-binary", this.quick_open_entry, "show-binary", SYNC_CREATE);
+        this.bind_property("show-hidden", this.quick_open_entry, "show-hidden", SYNC_CREATE);
 
-        // Settings.
-        this.bind_property("root-directory", this.filter_view, "root-directory", SYNC_CREATE);
-        this.bind_property("show-binary", this.filter_view, "show-binary", SYNC_CREATE);
-        this.bind_property("show-hidden", this.filter_view, "show-hidden", SYNC_CREATE);
+        this.notify["focus-widget"].connect(() => {
+            if (!this.quick_open_enabled) {
+                return;
+            }
+            var fw = this.focus_widget;
+            if (fw != null && (fw == this.quick_open_entry || fw.is_ancestor(this.quick_open_entry))) {
+                return;
+            }
+            this.quick_open_enabled = false;
+        });
     }
 
     /* --- List View -------------------------------------------------------- */
@@ -369,13 +251,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 // Apply current selection to list view when switching from a
                 // different view.
                 this.list_view.selection = this.selection;
-            }
-        });
-        this.notify["filter-view-enabled"].connect((v, pspec) => {
-            if (this.view_mode == LIST) {
-                // Resync selection to match list view when coming out of filter
-                // mode.
-                this.selection = this.list_view.selection;
             }
         });
         this.list_view.notify["selection"].connect((v, pspec) => {
@@ -435,12 +310,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     open_action_on_activate() {
-        GLib.FileInfo? selection;
-        if (this.filter_view_enabled) {
-            selection = this.filter_view.selection;
-        } else {
-            selection = (GLib.FileInfo?) this.selection.get_item(0);
-        }
+        GLib.FileInfo? selection = (GLib.FileInfo?) this.selection.get_item(0);
         if (selection != null) {
             this.open_fileinfo(selection);
         }
@@ -448,11 +318,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     open_action_update_enabled() {
-        if (this.filter_view_enabled) {
-            this.open_action.set_enabled(this.filter_view.selection != null);
-        } else {
-            this.open_action.set_enabled(this.selection.get_n_items() > 0);
-        }
+        this.open_action.set_enabled(this.selection.get_n_items() > 0);
     }
 
     private void
@@ -473,8 +339,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
         this.open_action_update_enabled();
         this.notify["selection"].connect(this.open_action_update_enabled);
-        this.notify["filter-view-enabled"].connect(this.open_action_update_enabled);
-        this.filter_view.notify["selection"].connect(this.open_action_update_enabled);
 
         this.notify["mode"].connect(this.open_bar_update_visibility);
         this.open_bar_update_visibility();
@@ -544,7 +408,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     class construct {
         typeof (Brk.FileDialogPathBar).ensure();
-        typeof (Brk.FileDialogFilterView).ensure();
+        typeof (Brk.QuickOpenEntry).ensure();
         typeof (Brk.FileDialogListView).ensure();
         typeof (Brk.FileDialogIconView).ensure();
         typeof (Brk.FileDialogTreeView).ensure();
@@ -559,7 +423,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.bind_property("root-directory", this.directory_list, "file", SYNC_CREATE);
 
         this.views_init();
-        this.filter_view_init();
+        this.quick_open_init();
         this.list_view_init();
         this.icon_view_init();
         this.tree_view_init();

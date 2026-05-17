@@ -211,6 +211,12 @@ internal sealed class Brk.FileDialogFilterView : Gtk.Widget {
 
     private async void
     update_matches(GLib.Cancellable cancellable) {
+        /*GLib.Timeout.add(500, update_matches.callback);
+        yield;
+        if (cancellable.is_cancelled()) {
+            return;
+        }*/
+
         // Rules:
         //  1. Before every `yield`, the query stack must be left in a valid
         //     state.
