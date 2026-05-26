@@ -560,11 +560,15 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
 
         foreach (int step in this.navigate) {
             while (step < 0) {
-                this.selection_model.selected -= 1;
+                if (this.selection_model.selected > 0) {
+                    this.selection_model.selected -= 1;
+                }
                 step += 1;
             }
             while (step > 0) {
-                this.selection_model.selected += 1;
+                if (this.selection_model.selected + 1 < this.list_store.get_n_items()) {
+                    this.selection_model.selected += 1;
+                }
                 step -= 1;
             }
         }
