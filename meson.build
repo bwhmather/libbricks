@@ -86,7 +86,6 @@ sources = [
   'src/brk-main.vala',
   'src/brk-button-group.vala',
   'src/brk-file-dialog.vala',
-  'src/brk-file-dialog-filter-view.vala',
   'src/brk-file-dialog-icon-view.vala',
   'src/brk-file-dialog-list-view.vala',
   'src/brk-file-dialog-tree-view.vala',
