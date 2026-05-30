@@ -114,6 +114,11 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         //drag_icon.child = new Gtk.Box(VERTICAL, 0);
         drag_icon.child = new Gtk.Label(".");
 
+        if (this.page.drag_timeout != null) {
+            this.page.drag_timeout.destroy();
+            this.page.drag_timeout = null;
+        }
+
         if (r == Gdk.DragCancelReason.NO_TARGET) {
             var new_view = this.page.drag_source.create_window();
             if (new_view != null) {
