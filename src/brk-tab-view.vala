@@ -262,7 +262,7 @@ public sealed class Brk.TabPage : GLib.Object {
 
     internal GLib.Source? drag_timeout;
 
-    internal Gtk.Widget? last_focus;
+    internal GLib.WeakRef last_focus;
 
     /**
      * The child widget that this page wraps.
@@ -367,7 +367,7 @@ public sealed class Brk.TabPage : GLib.Object {
     dispose() {
         this.tab = null;
         this.bin = null;
-        this.last_focus = null;
+        this.last_focus.set(null);
         base.dispose();
     }
 
@@ -1195,7 +1195,7 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
         for (var i = 0; i < this.view.n_pages; i++) {
             var page = this.view.get_page(i);
             if (page.bin.get_child_visible() && focused != null && focused.is_ancestor(page.bin)) {
-                page.last_focus = focused;
+                page.last_focus.set(focused);
                 contains_focus = true;
             }
         }
@@ -1205,7 +1205,7 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
         }
 
         if (contains_focus && this.view.selected_page != null) {
-            var last = this.view.selected_page.last_focus;
+            var last = this.view.selected_page.last_focus.get() as Gtk.Widget?;
             if (last == null || !last.grab_focus()) {
                 this.view.selected_page.bin.child_focus(Gtk.DirectionType.TAB_FORWARD);
             }
@@ -1229,7 +1229,7 @@ private sealed class Brk.TabViewStack : Gtk.Widget {
             return false;
         }
 
-        var last = this.view.selected_page.last_focus;
+        var last = this.view.selected_page.last_focus.get() as Gtk.Widget?;
         if (last != null && last.grab_focus()) {
             return true;
         }
