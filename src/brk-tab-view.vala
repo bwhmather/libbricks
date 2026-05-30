@@ -618,8 +618,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         var page = Brk.TabPage.get_for_drag(drop.drag);
         page.drag = null;
 
-        var expected = drop.get_actions();
-        drop.finish(COPY);  // TODO
+        drop.finish(MOVE);
         return true;
     }
 
