@@ -114,8 +114,8 @@ Types of windows:
 
 ## Themeing `libbricks` Applications
 
-`libbricks` maintains two separate contracts:
-  - A contract with theme authors: CSS classes.
+`libbricks` will eventually maintain two separate contracts:
+  - A contract with theme authors: most likely CSS classes, but possibly variables as in `libadwaita`.
   - A contract with application developers: Widgets.
 
 Application developers using `libbricks` should not need to manually set margins or separation.
