@@ -661,12 +661,14 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         this.left_button.add_css_class("navigation-button");
         this.left_button.add_css_class("left");
         this.left_button.action_name = "tabs.backwards";
+        this.left_button.focus_on_click = false;
         this.left_button.insert_before(this, null);
 
         this.right_button = new Gtk.Button.from_icon_name("go-next-symbolic");
         this.right_button.add_css_class("navigation-button");
         this.right_button.add_css_class("right");
         this.right_button.action_name = "tabs.forwards";
+        this.right_button.focus_on_click = false;
         this.right_button.insert_after(this, null);
 
         this.view.pages.items_changed.connect(this.on_pages_items_changed);
