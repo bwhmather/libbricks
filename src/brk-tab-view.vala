@@ -660,11 +660,13 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         this.left_button = new Gtk.Button.from_icon_name("go-previous-symbolic");
         this.left_button.add_css_class("navigation-button");
         this.left_button.add_css_class("left");
+        this.left_button.action_name = "tabs.backwards";
         this.left_button.insert_before(this, null);
 
         this.right_button = new Gtk.Button.from_icon_name("go-next-symbolic");
         this.right_button.add_css_class("navigation-button");
         this.right_button.add_css_class("right");
+        this.right_button.action_name = "tabs.forwards";
         this.right_button.insert_after(this, null);
 
         this.view.pages.items_changed.connect(this.on_pages_items_changed);
@@ -1440,10 +1442,31 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.selected_page = this.get_page(target);
     }
 
+    private GLib.SimpleAction backwards_action;
+    private void
+    on_backwards_action_activate() {
+        return_if_fail(this.selected_page != null);
+        var selected = this.get_page_position(this.selected_page);
+        return_if_fail(selected != 0);
+        this.selected_page = this.get_page(selected - 1);
+    }
+
+    private GLib.SimpleAction forwards_action;
+    private void
+    on_forwards_action_activate() {
+        return_if_fail(this.selected_page != null);
+        var selected = this.get_page_position(this.selected_page);
+        return_if_fail(selected < this.page_list.n_items - 1);
+        this.selected_page = this.get_page(selected + 1);
+    }
+
     private void
     update_navigation_actions() {
         this.prev_action.set_enabled(this.n_pages > 0);
         this.next_action.set_enabled(this.n_pages > 0);
+
+        this.backwards_action.set_enabled(this.n_pages > 0 && this.selected_page != this.get_page(0));
+        this.forwards_action.set_enabled(this.n_pages > 0 && this.selected_page != this.get_page(this.n_pages - 1));
     }
 
     construct {
@@ -1470,6 +1493,14 @@ public sealed class Brk.TabView : Gtk.Widget {
         this.next_action = new GLib.SimpleAction("next", null);
         this.next_action.activate.connect(this.on_next_action_activate);
         this.tabs_actions.add_action(this.next_action);
+
+        this.backwards_action = new GLib.SimpleAction("backwards", null);
+        this.backwards_action.activate.connect(this.on_backwards_action_activate);
+        this.tabs_actions.add_action(this.backwards_action);
+
+        this.forwards_action = new GLib.SimpleAction("forwards", null);
+        this.forwards_action.activate.connect(this.on_forwards_action_activate);
+        this.tabs_actions.add_action(this.forwards_action);
 
         this.notify["selected-page"].connect(this.update_navigation_actions);
         this.notify["n-pages"].connect(this.update_navigation_actions);
