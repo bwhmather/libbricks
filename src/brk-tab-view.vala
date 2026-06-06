@@ -1395,41 +1395,9 @@ public sealed class Brk.TabView : Gtk.Widget {
     public signal void page_detached(Brk.TabPage page);
     public signal void setup_menu(Brk.TabPage? page);
 
-    private void
-    select_prev_page() {
-        var target = this.get_page_position(this.selected_page);
-        if (target == 0) {
-            target = this.page_list.n_items;
-        }
-        target -= 1;
-        this.selected_page = this.get_page(target);
-    }
-
-    private void
-    select_next_page() {
-        var target = this.get_page_position(this.selected_page);
-        target += 1;
-        if (target >= this.page_list.n_items) {
-            target = 0;
-        }
-        this.selected_page = this.get_page(target);
-    }
-
     static construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
         set_css_name("tabview");
-    }
-
-    private bool
-    on_control_shift_tab() {
-        this.select_prev_page();
-        return true;
-    }
-
-    private bool
-    on_control_tab() {
-        this.select_next_page();
-        return true;
     }
 
     private void
@@ -1446,20 +1414,39 @@ public sealed class Brk.TabView : Gtk.Widget {
         }
     }
 
-    construct {
-        var shortcut_controller = new Gtk.ShortcutController();
-        shortcut_controller.propagation_phase = CAPTURE;
-        shortcut_controller.scope = GLOBAL;
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("<Control><Shift>Tab"),
-            new Gtk.CallbackAction(this.on_control_shift_tab)
-        ));
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("<Control>Tab"),
-            new Gtk.CallbackAction(this.on_control_tab)
-        ));
-        this.add_controller(shortcut_controller);
+    public GLib.SimpleActionGroup tabs_actions = new GLib.SimpleActionGroup();
 
+    private GLib.SimpleAction prev_action;
+    private void
+    on_prev_action_activate() {
+        return_if_fail(this.selected_page != null);
+        var target = this.get_page_position(this.selected_page);
+        if (target == 0) {
+            target = this.page_list.n_items;
+        }
+        target -= 1;
+        this.selected_page = this.get_page(target);
+    }
+
+    private GLib.SimpleAction next_action;
+    private void
+    on_next_action_activate() {
+        return_if_fail(this.selected_page != null);
+        var target = this.get_page_position(this.selected_page);
+        target += 1;
+        if (target >= this.page_list.n_items) {
+            target = 0;
+        }
+        this.selected_page = this.get_page(target);
+    }
+
+    private void
+    update_navigation_actions() {
+        this.prev_action.set_enabled(this.n_pages > 0);
+        this.next_action.set_enabled(this.n_pages > 0);
+    }
+
+    construct {
         this.page_list = new GLib.ListStore(typeof(Brk.TabPage));
         this.page_list.notify["n-items"].connect(this.on_page_list_notify_n_items);
 
@@ -1475,6 +1462,33 @@ public sealed class Brk.TabView : Gtk.Widget {
 
         this.stack = new Brk.TabViewStack(this);
         this.stack.insert_before(this, null);
+
+        this.prev_action = new GLib.SimpleAction("prev", null);
+        this.prev_action.activate.connect(this.on_prev_action_activate);
+        this.tabs_actions.add_action(this.prev_action);
+
+        this.next_action = new GLib.SimpleAction("next", null);
+        this.next_action.activate.connect(this.on_next_action_activate);
+        this.tabs_actions.add_action(this.next_action);
+
+        this.notify["selected-page"].connect(this.update_navigation_actions);
+        this.notify["n-pages"].connect(this.update_navigation_actions);
+        this.update_navigation_actions();
+
+        this.insert_action_group("tabs", this.tabs_actions);
+
+        var shortcut_controller = new Gtk.ShortcutController();
+        shortcut_controller.propagation_phase = CAPTURE;
+        shortcut_controller.scope = GLOBAL;
+        shortcut_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("<Control><Shift>Tab"),
+            new Gtk.NamedAction("tabs.prev")
+        ));
+        shortcut_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("<Control>Tab"),
+            new Gtk.NamedAction("tabs.next")
+        ));
+        this.add_controller(shortcut_controller);
     }
 
     public override void
