@@ -151,13 +151,13 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     }
 
     private void
-    directory_list_on_items_changed(GLib.ListModel _, uint position, uint removed, uint added) {
+    sort_model_on_items_changed(GLib.ListModel _, uint position, uint removed, uint added) {
         // Check if any of the newly added items is in the pending
         // selection and should be selected.
         var selected = new Gtk.Bitset.empty();
         var mask = new Gtk.Bitset.range(position, added);
         for (var i = position; i < position + added; i++) {
-            var fileinfo = this.directory_list.get_item(i) as GLib.FileInfo;
+            var fileinfo = this.sort_model.get_item(i) as GLib.FileInfo;
             var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
             if (this.pending_selection.steal(file)) {
                 selected.add(i);
@@ -189,9 +189,10 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
             // This binding requires that the directory list is bound to the
             // selection model first.  Do not move before the call to rebuild
             // the selection.
-            this.directory_list.items_changed.connect(this.directory_list_on_items_changed);
             this.directory_list.notify["loading"].connect(this.directory_list_on_notify_loading);
         });
+
+        this.sort_model.items_changed.connect(this.sort_model_on_items_changed);
     }
 
     /* === View ============================================================= */
