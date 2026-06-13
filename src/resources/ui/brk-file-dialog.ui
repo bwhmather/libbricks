@@ -12,15 +12,19 @@
             <property name="focusable">false</property>
             <property name="hexpand">true</property>
             <property name="vexpand">true</property>
-            <child>
+            <property name="shrink-start-child">false</property>
+            <property name="resize-start-child">false</property>
+            <property name="shrink-end-child">false</property>
+            <property name="resize-end-child">true</property>
+            <property name="start-child">
               <object class="GtkBox">
                 <child>
                   <object class="GtkListView">
                   </object>
                 </child>
               </object>
-            </child>
-            <child>
+            </property>
+            <property name="end-child">
               <object class="BrkToolbarView" id="inner_view">
                 <child type="top">
                   <object class="BrkToolbar">
@@ -124,7 +128,7 @@
                   </object>
                 </property>
               </object>
-            </child>
+            </property>
           </object>
         </property>
         <child type="bottom">
