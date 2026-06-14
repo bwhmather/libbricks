@@ -6,6 +6,7 @@
 
 private sealed class Brk.FileDialogPathBar : Gtk.Widget {
     public GLib.File root_directory { get; set; }
+    public bool editing { get; set; }
 
     private Gtk.ToggleButton edit_toggle;
     private Gtk.Entry edit_entry;
@@ -22,21 +23,8 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
             button.clicked.connect(() => {
                 this.root_directory = target;
             });
+            this.bind_property("editing", button, "visible", SYNC_CREATE | INVERT_BOOLEAN);
             button.insert_before(this, this.get_first_child());
-        }
-        this.update_visible();
-    }
-
-    private void
-    update_visible() {
-        bool editting = edit_toggle.active;
-        this.edit_entry.visible = editting;
-        for (
-            var segment = this.get_first_child();
-            segment != this.edit_entry;
-            segment = segment.get_next_sibling()
-        ) {
-            segment.visible = !editting;
         }
     }
 
@@ -50,13 +38,14 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
 
         this.edit_toggle = new Gtk.ToggleButton();
         this.edit_toggle.set_icon_name("document-edit");
+        this.bind_property("editing", this.edit_toggle, "active", SYNC_CREATE | BIDIRECTIONAL);
         edit_toggle.set_parent(this);
 
         this.edit_entry = new Gtk.Entry();
         this.edit_entry.hexpand = true;
         edit_entry.insert_before(this, this.edit_toggle);
+        this.bind_property("editing", this.edit_entry, "visible", SYNC_CREATE);
 
-        this.edit_toggle.notify["active"].connect(this.update_visible);
         this.notify["root-directory"].connect(this.update_segments);
         this.update_segments();
     }
