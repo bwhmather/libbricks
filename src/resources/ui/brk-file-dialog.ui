@@ -5,6 +5,7 @@
     <property name="destroy-with-parent">true</property>
     <property name="default-width">640</property>
     <property name="default-height">480</property>
+
     <child>
       <object class="BrkToolbarView" id="outer_view">
         <property name="content">
@@ -17,9 +18,16 @@
             <property name="shrink-end-child">false</property>
             <property name="resize-end-child">true</property>
             <property name="start-child">
-              <object class="GtkBox">
+              <object class="GtkScrolledWindow">
+                <property name="hscrollbar-policy">never</property>
+                <style>
+                  <class name="sidebar"/>
+                </style>
                 <child>
-                  <object class="GtkListView">
+                  <object class="GtkListBox" id="sidebar_list_box">
+                    <style>
+                      <class name="navigation-sidebar"/>
+                    </style>
                   </object>
                 </child>
               </object>

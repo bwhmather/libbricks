@@ -15,6 +15,39 @@ private enum Brk.FileDialogViewMode {
     TREE
 }
 
+private sealed class Brk.FileDialogSidebarRow : Gtk.ListBoxRow {
+    public string label { get; construct; }
+    public GLib.Icon icon { get; construct; }
+    public GLib.File file { get; construct; }
+
+    private Gtk.Image icon_widget;
+    private Gtk.Label label_widget;
+
+    class construct {
+        set_layout_manager_type(typeof (Gtk.BoxLayout));
+    }
+
+    construct {
+        this.icon_widget = new Gtk.Image.from_gicon(this.icon);
+        this.icon_widget.set_parent(this);
+
+        this.label_widget = new Gtk.Label(this.label);
+        this.label_widget.halign = START;
+        this.label_widget.insert_after(this, this.icon_widget);
+    }
+
+    public Brk.FileDialogSidebarRow.for_file(string label, GLib.Icon icon, GLib.File file) {
+        Object(label: label, icon: icon, file: file);
+    }
+
+    public override void
+    dispose() {
+        this.icon_widget.unparent();
+        this.label_widget.unparent();
+        base.dispose();
+    }
+}
+
 private sealed class Brk.FileDialogState {
     public Brk.FileDialogViewMode view_mode;
 
@@ -296,6 +329,32 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.tree_view.file_activated.connect(this.on_tree_view_file_activated);
     }
 
+    /* === Sidebar ========================================================== */
+
+    [GtkChild]
+    private unowned Gtk.ListBox sidebar_list_box;
+
+    private void
+    sidebar_init() {
+        this.sidebar_list_box.append(new FileDialogSidebarRow.for_file(
+            _("Home"),
+            new GLib.ThemedIcon("user-home"),
+            GLib.File.new_for_path(GLib.Environment.get_home_dir())
+        ));
+        this.sidebar_list_box.append(new FileDialogSidebarRow.for_file(
+            _("Filesystem"),
+            new GLib.ThemedIcon("drive-harddisk"),
+            GLib.File.new_for_path("/")
+        ));
+
+        this.sidebar_list_box.row_activated.connect((row) => {
+            var sidebar_row = row as FileDialogSidebarRow;
+            if (sidebar_row != null) {
+                this.root_directory = sidebar_row.file;
+            }
+        });
+    }
+
     /* === Action Bars ====================================================== */
 
     /* --- Open Bar --------------------------------------------------------- */
@@ -427,6 +486,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.list_view_init();
         this.icon_view_init();
         this.tree_view_init();
+        this.sidebar_init();
         this.open_bar_init();
         this.save_bar_init();
 
