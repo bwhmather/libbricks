@@ -37,7 +37,7 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
         this.add_css_class("linked");
 
         this.edit_toggle = new Gtk.ToggleButton();
-        this.edit_toggle.set_icon_name("document-edit");
+        this.edit_toggle.set_icon_name("go-jump");
         this.bind_property("editing", this.edit_toggle, "active", SYNC_CREATE | BIDIRECTIONAL);
         edit_toggle.set_parent(this);
 
