@@ -88,7 +88,7 @@ internal sealed class Brk.FileDialogListView : Gtk.Widget {
     internal Gtk.SelectionModel selection_model { get; set; default = new Gtk.NoSelection(null); }
     // Files that should be in the current selection but haven't been loaded
     // into the directory list yet.
-    private GLib.HashTable<GLib.File, void *> pending_selection = new GLib.HashTable<GLib.File, GLib.FileInfo>(GLib.File.hash, GLib.File.equal);
+    private GLib.HashTable<GLib.File, GLib.FileInfo> pending_selection = new GLib.HashTable<GLib.File, GLib.FileInfo>(GLib.File.hash, GLib.File.equal);
 
     public GLib.ListModel selection {
         owned get {
