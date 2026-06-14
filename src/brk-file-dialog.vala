@@ -83,10 +83,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     /* === Views ============================================================ */
 
     [GtkChild]
-    private unowned Brk.ToolbarView outer_view;
-
-    [GtkChild]
-    private unowned Brk.ToolbarView inner_view;
+    private unowned Brk.ToolbarView toolbar_view;
 
     [GtkChild]
     private unowned Brk.FileDialogPathBar path_bar;
@@ -181,10 +178,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
             this.quick_open_enabled = false;
             return false;
         });
-        this.outer_view.add_controller(event_controller);
+        this.toolbar_view.add_controller(event_controller);
 
-        var quick_open_cancel_controller = new Gtk.ShortcutController();
-        quick_open_cancel_controller.add_shortcut(new Gtk.Shortcut(
+        var cancel_controller = new Gtk.ShortcutController();
+        cancel_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("Escape"),
             new Gtk.CallbackAction(() => {
                 // Partially duplicated on quick open entry to capture Escape
@@ -193,20 +190,11 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                     this.quick_open_enabled = false;
                     return true;
                 }
-                return false;
-            })
-        ));
-        this.inner_view.add_controller(quick_open_cancel_controller);
-
-        var cancel_controller = new Gtk.ShortcutController();
-        cancel_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Escape"),
-            new Gtk.CallbackAction(() => {
                 this.close();
                 return true;
             })
         ));
-        this.outer_view.add_controller(cancel_controller);
+        this.toolbar_view.add_controller(cancel_controller);
     }
 
     /* --- Quick Open ------------------------------------------------------- */
