@@ -50,6 +50,14 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
         this.update_segments();
     }
 
+    public override bool
+    grab_focus() {
+        if (this.editing) {
+            return this.edit_entry.grab_focus();
+        }
+        return base.grab_focus();
+    }
+
     public override void
     dispose() {
         while (this.get_last_child() != null) {

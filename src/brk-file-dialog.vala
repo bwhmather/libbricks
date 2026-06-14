@@ -105,6 +105,9 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.quick_open_button_group.hexpand = this.quick_open_enabled;
 
         this.path_bar.visible = !this.quick_open_enabled;
+        if (!this.quick_open_enabled) {
+            this.path_bar.editing = false;
+        }
 
         this.view_button_group.visible = !this.quick_open_enabled;
     }
@@ -146,8 +149,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     views_init() {
-        this.bind_property("root-directory", this.path_bar, "root-directory", BIDIRECTIONAL | SYNC_CREATE);
-
         this.dialog_actions.add_action(new GLib.PropertyAction("quick-open", this, "quick-open-enabled"));
 
         this.dialog_actions.add_action(new GLib.PropertyAction("view-mode", this, "view-mode"));
@@ -190,11 +191,33 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                     this.quick_open_enabled = false;
                     return true;
                 }
+                if (this.path_bar.editing) {
+                    this.path_bar.editing = false;
+                    return true;
+                }
                 this.close();
                 return true;
             })
         ));
         this.toolbar_view.add_controller(cancel_controller);
+
+        this.bind_property("root-directory", this.path_bar, "root-directory", BIDIRECTIONAL | SYNC_CREATE);
+        this.path_bar.notify["editing"].connect(() => {
+            if (this.path_bar.editing) {
+                this.quick_open_enabled = false;
+            }
+        });
+
+        var goto_controller = new Gtk.ShortcutController();
+        goto_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("<Control>l"),
+            new Gtk.CallbackAction(() => {
+                this.path_bar.editing = true;
+                this.path_bar.grab_focus();
+                return true;
+            })
+        ));
+        this.toolbar_view.add_controller(goto_controller);
     }
 
     /* --- Quick Open ------------------------------------------------------- */
