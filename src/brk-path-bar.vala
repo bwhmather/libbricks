@@ -46,6 +46,19 @@ private sealed class Brk.FileDialogPathBar : Gtk.Widget {
         edit_entry.insert_before(this, this.edit_toggle);
         this.bind_property("editing", this.edit_entry, "visible", SYNC_CREATE);
 
+        this.notify["root-directory"].connect(() => {
+            this.edit_entry.text = this.root_directory?.get_path() ?? "";
+        });
+
+        this.edit_entry.activate.connect(() => {
+            var file = GLib.File.new_for_path(this.edit_entry.text);
+            if (file.query_file_type(NONE) != DIRECTORY) {
+                return;
+            }
+            this.root_directory = file;
+            this.editing = false;
+        });
+
         this.notify["root-directory"].connect(this.update_segments);
         this.update_segments();
     }
