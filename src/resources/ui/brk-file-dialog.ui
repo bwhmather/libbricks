@@ -118,7 +118,41 @@
                 <child>
                   <object class="GtkStackPage">
                     <property name="child">
-                      <object class="BrkFileDialogListView" id="list_view">
+                      <object class="GtkScrolledWindow" id="list_view">
+                        <property name="focusable">true</property>
+                        <property name="hexpand">true</property>
+                        <property name="vexpand">true</property>
+                        <property name="vscrollbar-policy">always</property>
+                        <property name="child">
+                          <object class="GtkColumnView" id="list_view_column_view">
+                            <property name="focusable">true</property>
+                            <property name="tab-behavior">cell</property>
+                            <style>
+                              <class name="data-table"/>
+                            </style>
+                            <child>
+                              <object class="GtkColumnViewColumn" id="list_view_name_column">
+                                <property name="title">Name</property>
+                                <property name="expand">true</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkColumnViewColumn" id="list_view_size_column">
+                                <property name="title">Size</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkColumnViewColumn" id="list_view_type_column">
+                                <property name="title">Type</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkColumnViewColumn" id="modified_column">
+                                <property name="title">Modified</property>
+                              </object>
+                            </child>
+                          </object>
+                        </property>
                       </object>
                     </property>
                   </object>

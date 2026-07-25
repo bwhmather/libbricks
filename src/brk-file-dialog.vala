@@ -4,6 +4,48 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+private unowned string
+get_category_from_content_type(string content_type) {
+    // List opied from gtkfilechooserwidget.c:get_category_from_content_type.
+    // They copied it from src/nautilus_file.c:get_description().
+    // Represented as switch statement because vala is awesome and does the
+    // right thing.
+    switch (GLib.ContentType.get_generic_icon_name(content_type)) {
+    case "application-x-executable":
+        return _("Program");
+    case "audio-x-generic":
+        return _("Audio");
+    case "font-x-generic":
+        return _("Font");
+    case "image-x-generic":
+        return _("Image");
+    case "package-x-generic":
+        return _("Archive");
+    case "text-html":
+        return _("Markup");
+    case "text-x-generic":
+        return _("Text");
+    case "text-x-generic-template":
+        return _("Text");
+    case "text-x-script":
+        return _("Program");
+    case "video-x-generic":
+        return _("Video");
+    case "x-office-address-book":
+        return _("Contacts");
+    case "x-office-calendar":
+        return _("Calendar");
+    case "x-office-document":
+        return _("Document");
+    case "x-office-presentation":
+        return _("Presentation");
+    case "x-office-spreadsheet":
+        return _("Spreadsheet");
+    default:
+        return _("Unknown");
+    }
+}
+
 private enum Brk.FileDialogMode {
     OPEN,
     SAVE,
@@ -75,6 +117,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     public signal void open(GLib.File result);
 
     public GLib.ListModel selection { get; set; default=new GLib.ListStore(typeof (GLib.FileInfo)); }
+    public bool select_multiple { get; set; }
 
     public GLib.SimpleActionGroup dialog_actions = new GLib.SimpleActionGroup();
 
@@ -278,31 +321,260 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     public string[] sort_columns;
 
     [GtkChild]
-    private unowned Brk.FileDialogListView list_view;
+    private unowned Gtk.ScrolledWindow list_view;
+
+    [GtkChild]
+    private unowned Gtk.ColumnView list_view_column_view;
+
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn list_view_name_column;
+
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn list_view_size_column;
+
+    [GtkChild]
+    private unowned Gtk.ColumnViewColumn list_view_type_column;
+
+    private Gtk.SortListModel list_view_sort_model = new Gtk.SortListModel(null, null);
+
+    internal Gtk.SelectionModel list_view_selection_model { get; set; default = new Gtk.NoSelection(null); }
+    // Files that should be in the current selection but haven't been loaded
+    // into the directory list yet.
+    private GLib.HashTable<GLib.File, GLib.FileInfo> list_view_pending_selection = new GLib.HashTable<GLib.File, GLib.FileInfo>(GLib.File.hash, GLib.File.equal);
 
     private void
-    on_list_view_file_activated(GLib.FileInfo fileinfo) {
-        this.open_fileinfo(fileinfo);
+    list_view_save_selection() {
+        var list_model = this.list_view_selection_model as GLib.ListModel;
+        var result = new GLib.ListStore(typeof(GLib.FileInfo));
+        for (var i = 0; i < list_model.get_n_items(); i++) {
+            if (this.list_view_selection_model.is_selected(i)) {
+                result.append(this.list_view_selection_model.get_item(i) as GLib.FileInfo);
+            }
+        }
+        list_view_pending_selection.foreach((_, fileinfo) => {
+            result.append(fileinfo as GLib.FileInfo);
+        });
+        this.selection = result;
+    }
+
+    private void
+    list_view_restore_selection() {
+        var selection = this.selection;
+        this.list_view_pending_selection.remove_all();
+        var root_directory = this.directory_list.file;
+        for (var i = 0; i < (selection != null? selection.get_n_items() : 0); i++) {
+            var fileinfo = selection.get_item(i) as GLib.FileInfo;
+            var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
+            if (!file.has_parent(root_directory)) {
+                // File not visible in current state of view.  Only safe thing
+                // to do is to clear the entire selection.  Silently dropping
+                // just some files from the selection or worse leaving invisible
+                // files selected is not acceptable.
+                this.list_view_pending_selection.remove_all();
+                break;
+            }
+            this.list_view_pending_selection[file] = fileinfo;
+        }
+        var selected = new Gtk.Bitset.empty();
+        var mask = new Gtk.Bitset.range(0, this.list_view_sort_model.n_items);
+        for (var i = 0; i < this.list_view_sort_model.n_items; i++) {
+            var fileinfo = this.list_view_sort_model.get_item(i) as GLib.FileInfo;
+            var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
+            if (this.list_view_pending_selection.steal(file)) {
+                selected.add(i);
+            }
+        }
+        this.list_view_selection_model.set_selection(selected, mask);
+    }
+
+    private void
+    list_view_rebuild_selection() {
+        if (this.select_multiple) {
+            this.list_view_selection_model = new Gtk.MultiSelection(this.list_view_sort_model);
+        } else {
+            this.list_view_selection_model = new Gtk.SingleSelection(this.list_view_sort_model);
+        }
+        this.list_view_selection_model.selection_changed.connect((sm, p, n_items) => {
+            if (this.view_mode == LIST) {
+                this.list_view_save_selection();
+            }
+        });
+        this.list_view_restore_selection();
+    }
+
+    private void
+    list_view_on_sort_model_items_changed(GLib.ListModel _, uint position, uint removed, uint added) {
+        // Check if any of the newly added items is in the pending selection and
+        // should be selected.
+        var selected = new Gtk.Bitset.empty();
+        var mask = new Gtk.Bitset.range(position, added);
+        for (var i = position; i < position + added; i++) {
+            var fileinfo = this.list_view_sort_model.get_item(i) as GLib.FileInfo;
+            var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
+            if (this.list_view_pending_selection.steal(file)) {
+                selected.add(i);
+            }
+        }
+        this.list_view_selection_model.set_selection(selected, mask);
+    }
+
+    private void
+    list_view_on_directory_list_notify_loading(GLib.Object _, GLib.ParamSpec pspec) {
+        if (!this.directory_list.loading) {
+            // All files that actually exist in the directory should now also be
+            // in the directory list model.  Any files in the selection that
+            // aren't in the directory list model don't exist anymore and should
+            // be removed.
+            this.list_view_pending_selection.remove_all();
+            this.list_view_save_selection();
+        }
+    }
+
+    private void
+    list_view_name_column_init() {
+        var factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            listitem.child = new Brk.FileThumbnail();
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var thumbnail = (Brk.FileThumbnail) listitem.child;
+            thumbnail.fileinfo = (GLib.FileInfo) listitem.item;
+        });
+        this.list_view_name_column.factory = factory;
+        var sorter = new Gtk.CustomSorter((aptr, bptr) => {
+            var ainfo = (GLib.FileInfo) aptr;
+            var aname = ainfo.get_name();
+            var akey = aname.collate_key_for_filename();
+
+            var binfo = (GLib.FileInfo) bptr;
+            var bname = binfo.get_name();
+            var bkey = bname.collate_key_for_filename();
+
+            return Gtk.Ordering.from_cmpfunc(GLib.strcmp(akey, bkey));
+        });
+        this.list_view_name_column.sorter = sorter;
+    }
+
+    private void
+    list_view_size_column_init() {
+        var factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var label = new Gtk.Label("");
+            label.halign = START;
+            listitem.child = label;
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            Gtk.Label label = (Gtk.Label) listitem.child;
+            GLib.FileInfo info = (GLib.FileInfo) listitem.item;
+            label.label = GLib.format_size(info.get_size());
+        });
+        this.list_view_size_column.factory = factory;
+        var sorter = new Gtk.CustomSorter((aptr, bptr) => {
+            var ainfo = (GLib.FileInfo) aptr;
+            var asize = ainfo.get_size();
+
+            var binfo = (GLib.FileInfo) bptr;
+            var bsize = binfo.get_size();
+
+            if (asize < bsize) return Gtk.Ordering.SMALLER;
+            if (asize > bsize) return Gtk.Ordering.LARGER;
+            return Gtk.Ordering.EQUAL;
+        });
+        this.list_view_size_column.sorter = sorter;
+    }
+
+    private void
+    list_view_type_column_init() {
+        var factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var label = new Gtk.Label("");
+            label.halign = START;
+            listitem.child = label;
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            Gtk.Label label = (Gtk.Label) listitem.child;
+            GLib.FileInfo info = (GLib.FileInfo) listitem.item;
+            var content_type = info.get_content_type();
+            label.label = get_category_from_content_type(content_type);
+        });
+        this.list_view_type_column.factory = factory;
+    }
+
+    private void
+    list_view_on_column_view_activate(Gtk.ColumnView cv, uint position) {
+        var fileinfo = this.list_view_selection_model.get_item(position) as GLib.FileInfo;
+        if (fileinfo != null) {
+            this.open_fileinfo(fileinfo);
+        }
+    }
+
+    // Direction that focus was last moving in when it entered the list view.
+    private Gtk.DirectionType list_view_focus_direction = Gtk.DirectionType.TAB_FORWARD;
+
+    private void
+    list_view_grab_focus(Gtk.DirectionType direction) {
+        this.list_view_focus_direction = direction;
+        if (this.list_view.child_focus(direction)) {
+            return;
+        }
+        // Nothing to focus yet.  Park focus on the scrolled window, which is
+        // focusable, so that it can be handed on to the rows once the
+        // directory list has loaded.
+        this.set_focus(this.list_view);
+    }
+
+    private void
+    list_view_on_selection_model_items_changed(GLib.ListModel _, uint pos, uint removed, uint added) {
+        if (added == 0 || this.focus_widget != this.list_view) {
+            return;
+        }
+        this.list_view.child_focus(this.list_view_focus_direction);
     }
 
     private void
     list_view_init() {
-        this.list_view.directory_list = this.directory_list;
-        this.list_view.file_activated.connect(this.on_list_view_file_activated);
+        this.list_view_sort_model.model = this.directory_list;
+
+        this.notify["select-multiple"].connect((lv, pspec) => {
+            this.list_view_rebuild_selection();
+        });
+        this.list_view_rebuild_selection();
 
         this.notify["view-mode"].connect(() => {
             if (this.view_mode == LIST) {
-                // Apply current selection to list view when switching from a
-                // different view.
-                this.list_view.selection = this.selection;
+                // Apply the shared selection to the list view when switching
+                // to it from a different view.
+                this.list_view_restore_selection();
             }
         });
-        this.list_view.notify["selection"].connect((v, pspec) => {
-            if (this.view_mode == LIST) {
-                // Sync selection to match list view when list view visible.
-                this.selection = this.list_view.selection;
-            }
+
+        // This handler requires that the directory list is bound to the
+        // selection model first.  Do not move before the call to rebuild the
+        // selection.
+        this.directory_list.notify["loading"].connect(this.list_view_on_directory_list_notify_loading);
+
+        this.list_view_sort_model.items_changed.connect(this.list_view_on_sort_model_items_changed);
+
+        this.list_view_name_column_init();
+        this.list_view_size_column_init();
+        this.list_view_type_column_init();
+
+        this.list_view_column_view.sort_by_column(this.list_view_name_column, ASCENDING);
+
+        this.bind_property("list-view-selection-model", this.list_view_column_view, "model", SYNC_CREATE);
+        this.list_view_column_view.bind_property("sorter", this.list_view_sort_model, "sorter", SYNC_CREATE);
+        this.list_view_column_view.activate.connect(this.list_view_on_column_view_activate);
+
+        this.notify["list-view-selection-model"].connect((obj, pspec) => {
+            this.list_view_selection_model.items_changed.connect(this.list_view_on_selection_model_items_changed);
         });
+        this.list_view_selection_model.items_changed.connect(this.list_view_on_selection_model_items_changed);
     }
 
     /* --- Icon View -------------------------------------------------------- */
@@ -479,7 +751,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     class construct {
         typeof (Brk.FileDialogPathBar).ensure();
         typeof (Brk.QuickOpenEntry).ensure();
-        typeof (Brk.FileDialogListView).ensure();
         typeof (Brk.FileDialogIconView).ensure();
         typeof (Brk.FileDialogTreeView).ensure();
     }
@@ -506,6 +777,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.map.connect(() => {
             if (this.mode == SAVE) {
                 this.filename_entry.grab_focus();
+            } else if (this.view_mode == LIST) {
+                this.list_view_grab_focus(TAB_FORWARD);
             } else {
                 this.view_stack.visible_child.child_focus(TAB_FORWARD);
             }
