@@ -989,7 +989,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     construct {
         this.directory_list = new Gtk.DirectoryList(
-            "standard::icon,standard::name,standard::display-name,standard::size,time::modified,standard::type,standard::content-type,thumbnail::path,thumbnail::is-valid",
+            "standard::icon,standard::name,standard::display-name,standard::size,time::modified,standard::type,standard::content-type,thumbnail::path",
             this.root_directory
         );
         directory_list.monitored = true;
