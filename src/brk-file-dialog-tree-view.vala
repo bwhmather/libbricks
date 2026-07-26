@@ -11,8 +11,8 @@ internal sealed class Brk.FileDialogTreeView : Gtk.Widget {
 
     /* --- Directory State -------------------------------------------------- */
 
-    private Gtk.DirectoryList _directory_list;
-    public Gtk.DirectoryList directory_list {
+    private GLib.ListModel _directory_list;
+    public GLib.ListModel directory_list {
         get {
             if (this._directory_list == null) {
                 this._directory_list = new Gtk.DirectoryList("", null);

@@ -128,9 +128,7 @@ private sealed class Brk.FileDialogState {
 [GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-file-dialog.ui")]
 private sealed class Brk.FileDialogWindow : Gtk.Window {
     // Path to root folder under mount.
-
     public GLib.File root_directory { get; set; }
-    public Gtk.DirectoryList directory_list;
 
     public signal void open(GLib.File result);
 
@@ -140,6 +138,38 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     public GLib.SimpleActionGroup dialog_actions = new GLib.SimpleActionGroup();
 
     public Brk.FileDialogMode mode { get; set; default = OPEN; }
+
+    /* === Directory Model ================================================== */
+
+    // Contents of the root directory, less anything the current filter settings
+    // say shouldn't be shown.  Every view reads from this rather than from the
+    // directory list directly.
+    private Gtk.FilterListModel directory_model;
+    private Gtk.CustomFilter filter;
+
+    public bool loading { get; internal set; }
+
+    private void
+    directory_model_init() {
+        var directory_list = new Gtk.DirectoryList(
+            "standard::icon,standard::name,standard::display-name,standard::size,time::modified,standard::type,standard::content-type,standard::is-hidden,standard::is-backup,thumbnail::path",
+            this.root_directory
+        );
+        directory_list.monitored = true;
+        this.bind_property("root-directory", directory_list, "file", SYNC_CREATE);
+        directory_list.bind_property("loading", this, "loading", SYNC_CREATE);
+
+        this.filter = new Gtk.CustomFilter((item) => {
+            var fileinfo = (GLib.FileInfo) item;
+            if (!this.show_hidden && (fileinfo.get_is_hidden() || fileinfo.get_is_backup())) {
+                return false;
+            }
+            return true;
+        });
+        this.directory_model = new Gtk.FilterListModel(directory_list, this.filter);
+
+        this.notify["show-hidden"].connect(() => this.filter.changed(DIFFERENT));
+    }
 
     /* === Views ============================================================ */
 
@@ -379,11 +409,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     list_view_restore_selection() {
         var selection = this.selection;
         this.list_view_pending_selection.remove_all();
-        var root_directory = this.directory_list.file;
         for (var i = 0; i < (selection != null? selection.get_n_items() : 0); i++) {
             var fileinfo = selection.get_item(i) as GLib.FileInfo;
             var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
-            if (!file.has_parent(root_directory)) {
+            if (!file.has_parent(this.root_directory)) {
                 // File not visible in current state of view.  Only safe thing
                 // to do is to clear the entire selection.  Silently dropping
                 // just some files from the selection or worse leaving invisible
@@ -437,8 +466,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     }
 
     private void
-    list_view_on_directory_list_notify_loading(GLib.Object _, GLib.ParamSpec pspec) {
-        if (!this.directory_list.loading) {
+    list_view_on_notify_loading(GLib.Object _, GLib.ParamSpec pspec) {
+        if (!this.loading) {
             // All files that actually exist in the directory should now also be
             // in the directory list model.  Any files in the selection that
             // aren't in the directory list model don't exist anymore and should
@@ -572,7 +601,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     list_view_init() {
-        this.list_view_sort_model.model = this.directory_list;
+        this.list_view_sort_model.model = this.directory_model;
 
         this.notify["select-multiple"].connect((lv, pspec) => {
             this.list_view_rebuild_selection();
@@ -590,7 +619,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         // This handler requires that the directory list is bound to the
         // selection model first.  Do not move before the call to rebuild the
         // selection.
-        this.directory_list.notify["loading"].connect(this.list_view_on_directory_list_notify_loading);
+        this.notify["loading"].connect(this.list_view_on_notify_loading);
 
         this.list_view_sort_model.items_changed.connect(this.list_view_on_sort_model_items_changed);
 
@@ -644,11 +673,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     icon_view_restore_selection() {
         var selection = this.selection;
         this.icon_view_pending_selection.remove_all();
-        var root_directory = this.directory_list.file;
         for (var i = 0; i < (selection != null? selection.get_n_items() : 0); i++) {
             var fileinfo = selection.get_item(i) as GLib.FileInfo;
             var file = fileinfo.get_attribute_object("standard::file") as GLib.File;
-            if (!file.has_parent(root_directory)) {
+            if (!file.has_parent(this.root_directory)) {
                 // File not visible in current state of view.  Only safe thing
                 // to do is to clear the entire selection.  Silently dropping
                 // just some files from the selection or worse leaving invisible
@@ -702,8 +730,8 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     }
 
     private void
-    icon_view_on_directory_list_notify_loading(GLib.Object _, GLib.ParamSpec pspec) {
-        if (!this.directory_list.loading) {
+    icon_view_on_notify_loading(GLib.Object _, GLib.ParamSpec pspec) {
+        if (!this.loading) {
             // All files that actually exist in the directory should now also be
             // in the directory list model.  Any files in the selection that
             // aren't in the directory list model don't exist anymore and should
@@ -784,7 +812,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     icon_view_init() {
-        this.icon_view_sort_model.model = this.directory_list;
+        this.icon_view_sort_model.model = this.directory_model;
         this.icon_view_sort_model.sorter = new Gtk.CustomSorter((aptr, bptr) => {
             var ainfo = (GLib.FileInfo) aptr;
             var aname = ainfo.get_name();
@@ -811,7 +839,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         // This handler requires that the directory list is bound to the
         // selection model first.  Do not move before the call to rebuild the
         // selection.
-        this.directory_list.notify["loading"].connect(this.icon_view_on_directory_list_notify_loading);
+        this.notify["loading"].connect(this.icon_view_on_notify_loading);
 
         this.icon_view_sort_model.items_changed.connect(this.icon_view_on_sort_model_items_changed);
 
@@ -841,7 +869,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     tree_view_init() {
-        this.tree_view.directory_list = this.directory_list;
+        this.tree_view.directory_list = this.directory_model;
         this.tree_view.file_activated.connect(this.on_tree_view_file_activated);
     }
 
@@ -988,13 +1016,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     }
 
     construct {
-        this.directory_list = new Gtk.DirectoryList(
-            "standard::icon,standard::name,standard::display-name,standard::size,time::modified,standard::type,standard::content-type,thumbnail::path",
-            this.root_directory
-        );
-        directory_list.monitored = true;
-        this.bind_property("root-directory", this.directory_list, "file", SYNC_CREATE);
-
+        this.directory_model_init();
         this.views_init();
         this.quick_open_init();
         this.list_view_init();
