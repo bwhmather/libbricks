@@ -13,7 +13,7 @@
             <child>
               <object class="BrkButtonGroup" id="quick_open_button_group">
                 <child>
-                  <object class="GtkToggleButton" id="quick_open_view_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.quick-open</property>
                     <property name="icon-name">edit-find</property>
                     <property name="tooltip-text">Toggle search (automatic on text input)</property>
@@ -34,7 +34,7 @@
             <child>
               <object class="BrkButtonGroup" id="view_button_group">
                 <child>
-                  <object class="GtkToggleButton" id="icon_view_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.view-mode</property>
                     <property name="action-target">&apos;icon&apos;</property>
                     <property name="icon-name">view-grid</property>
@@ -42,7 +42,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkToggleButton" id="list_view_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.view-mode</property>
                     <property name="action-target">&apos;list&apos;</property>
                     <property name="icon-name">view-list</property>
@@ -50,7 +50,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkToggleButton" id="tree_view_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.view-mode</property>
                     <property name="action-target">&apos;tree&apos;</property>
                     <property name="icon-name">view-tree</property>
@@ -62,14 +62,14 @@
             <child>
               <object class="BrkButtonGroup">
                 <child>
-                  <object class="GtkToggleButton" id="show_binary_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.show-binary</property>
                     <property name="label">01</property>
                     <property name="tooltip-text">Show binary files (Ctrl+B)</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkToggleButton" id="show_hidden_toggle">
+                  <object class="GtkToggleButton">
                     <property name="action-name">dialog.show-hidden</property>
                     <property name="label">.h</property>
                     <property name="tooltip-text">Show hidden files (Ctrl+H)</property>
@@ -159,7 +159,7 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkColumnViewColumn" id="modified_column">
+                              <object class="GtkColumnViewColumn">
                                 <property name="title">Modified</property>
                               </object>
                             </child>
