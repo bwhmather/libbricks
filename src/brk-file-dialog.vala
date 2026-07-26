@@ -46,6 +46,24 @@ get_category_from_content_type(string content_type) {
     }
 }
 
+private void
+selection_model_set_selection(Gtk.SelectionModel model, Gtk.Bitset selected, Gtk.Bitset mask) {
+    if (model.set_selection(selected, mask)) {
+        return;
+    }
+    Gtk.BitsetIter iter = {};
+    uint position;
+    if (iter.init_last(mask, out position)) {
+        do {
+            if (selected.contains(position)) {
+                model.select_item(position, false);
+            } else {
+                model.unselect_item(position);
+            }
+        } while (iter.previous(out position));
+    }
+}
+
 private enum Brk.FileDialogMode {
     OPEN,
     SAVE,
@@ -384,7 +402,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 selected.add(i);
             }
         }
-        this.list_view_selection_model.set_selection(selected, mask);
+        selection_model_set_selection(this.list_view_selection_model, selected, mask);
     }
 
     private void
@@ -415,7 +433,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 selected.add(i);
             }
         }
-        this.list_view_selection_model.set_selection(selected, mask);
+        selection_model_set_selection(this.list_view_selection_model, selected, mask);
     }
 
     private void
@@ -649,7 +667,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 selected.add(i);
             }
         }
-        this.icon_view_selection_model.set_selection(selected, mask);
+        selection_model_set_selection(this.icon_view_selection_model, selected, mask);
     }
 
     private void
@@ -680,7 +698,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
                 selected.add(i);
             }
         }
-        this.icon_view_selection_model.set_selection(selected, mask);
+        selection_model_set_selection(this.icon_view_selection_model, selected, mask);
     }
 
     private void
