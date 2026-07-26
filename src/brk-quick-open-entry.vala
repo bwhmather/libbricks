@@ -681,12 +681,25 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         var factory = new Gtk.SignalListItemFactory();
         factory.setup.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
-            listitem.child = new Brk.FileThumbnail();
+
+            var box = new Gtk.Box(HORIZONTAL, 6);
+            box.append(new Brk.FileThumbnail());
+
+            var label = new Gtk.Label("");
+            label.halign = START;
+            box.append(label);
+
+            listitem.child = box;
         });
         factory.bind.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
-            var thumbnail = (Brk.FileThumbnail) listitem.child;
-            thumbnail.fileinfo = (GLib.FileInfo) listitem.item;
+            var box = (Gtk.Box) listitem.child;
+            var thumbnail = (Brk.FileThumbnail) box.get_first_child();
+            var label = (Gtk.Label) box.get_last_child();
+            var fileinfo = (GLib.FileInfo) listitem.item;
+
+            thumbnail.fileinfo = fileinfo;
+            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
         });
         this.list_view.factory = factory;
         this.list_view.model = this.selection_model;

@@ -4,48 +4,53 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+
 internal sealed class Brk.FileThumbnail : Gtk.Widget {
     public GLib.FileInfo? fileinfo { get; set; }
 
-    private Gtk.Image thumbnail;
-    private Gtk.Label label;
+    public int thumbnail_size { get; set; default = 16; }
+
+    private Gtk.Image image;
 
     class construct {
-        set_layout_manager_type(typeof (Gtk.BoxLayout));
+        set_layout_manager_type(typeof (Gtk.BinLayout));
+    }
+
+    private void
+    update_image() {
+        if (this.fileinfo == null) {
+            this.image.clear();
+            return;
+        }
+
+        if (this.thumbnail_size >= 32) {
+            var path = this.fileinfo.get_attribute_byte_string("thumbnail::path");
+            if (path != null && this.fileinfo.get_attribute_boolean("thumbnail::is-valid")) {
+                this.image.set_from_file(path);
+                return;
+            }
+        }
+
+        var icon_theme = Gtk.IconTheme.get_for_display(this.get_display());
+        var icon = this.fileinfo.get_icon();
+        if (icon == null || !icon_theme.has_gicon(icon)) {
+          icon = new GLib.ThemedIcon("text-x-generic");
+        }
+        this.image.set_from_gicon(icon);
     }
 
     construct {
-        this.thumbnail = new Gtk.Image();
-        thumbnail.set_parent(this);
+        this.image = new Gtk.Image();
+        image.set_parent(this);
+        this.bind_property("thumbnail-size", this.image, "pixel-size", SYNC_CREATE);
 
-        this.label = new Gtk.Label("");
-        label.halign = START;
-        label.insert_after(this, this.thumbnail);
-
-        this.notify["fileinfo"].connect(() => {
-            if (this.fileinfo == null) {
-                return;
-            }
-
-            var icon_theme = Gtk.IconTheme.get_for_display(this.get_display());
-            var icon = this.fileinfo.get_icon();
-            if (icon == null || !icon_theme.has_gicon(icon)) {
-              icon = new GLib.ThemedIcon("text-x-generic");
-            }
-            this.thumbnail.set_from_gicon(icon);
-
-            if (this.fileinfo.has_attribute("bricks::markup")) {
-                this.label.set_markup(this.fileinfo.get_attribute_string("bricks::markup"));
-            } else {
-                this.label.set_text(this.fileinfo.get_attribute_string("standard::display-name"));
-            }
-        });
+        this.notify["fileinfo"].connect(this.update_image);
+        this.notify["thumbnail-size"].connect(this.update_image);
     }
 
     public override void
     dispose() {
-        this.thumbnail.unparent();
-        this.label.unparent();
+        this.image.unparent();
         base.dispose();
     }
 }
