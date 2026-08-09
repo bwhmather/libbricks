@@ -12,7 +12,19 @@ cc = meson.get_compiler('c')
 
 glib_dep = dependency('glib-2.0')
 gio_dep = dependency('gio-2.0')
-gtk_dep = dependency('gtk4', include_type: 'system')
+gtk_dep = dependency(
+  'gtk4',
+  default_options: [
+    'introspection=enabled',
+    'media-gstreamer=disabled',
+    'build-demos=false',
+    'build-examples=false',
+    'build-testsuite=false',
+    'build-tests=false',
+    'werror=false',
+  ],
+  include_type: 'system',
+)
 math_dep = cc.find_library('m')
 
 deps = [
