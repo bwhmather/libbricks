@@ -139,6 +139,12 @@ toolbarview>bar>revealer>grid {
 	padding: 5px;
 }
 
+/* --- Action Bar ----------------------------------------------------------- */
+
+toolbarview>bar>actionbar>revealer>box  {
+    border: none;
+}
+
 /* --- Status Bar ----------------------------------------------------------- */
 
 statusbar {
@@ -150,6 +156,12 @@ statusbar button {
 	border: none;
 	background: none;
 	padding: 0;
+}
+
+/* --- Tables --------------------------------------------------------------- */
+
+columnview > header > button:first-child {
+	border-left-width: 0px;
 }
 
 /* --- Preferences ---------------------------------------------------------- */
