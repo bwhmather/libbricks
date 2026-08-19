@@ -31,6 +31,12 @@
     opacity: 0.7;
 }
 
+/* --- Layout --------------------------------------------------------------- */
+
+grid, box {
+	border-spacing: 5px;
+}
+
 /* --- Tab View ------------------------------------------------------------- */
 
 /* Tabs */
@@ -126,6 +132,13 @@ toolbarview tabview tabpages {
     border-bottom: 0;
 }
 
+toolbarview>bar>box,
+toolbarview>bar>grid,
+toolbarview>bar>revealer>box,
+toolbarview>bar>revealer>grid {
+	padding: 5px;
+}
+
 /* --- Status Bar ----------------------------------------------------------- */
 
 statusbar {
@@ -157,11 +170,3 @@ preferencesgroup > list > row {
 preferencesgroup > list > row > box {
     border-spacing: 10px;
 }
-
-/* --- Grids ---------------------------------------------------------------- */
-
-grid {
-    border-spacing: 5px;
-    padding: 5px;
-}
-
