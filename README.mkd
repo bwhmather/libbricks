@@ -55,6 +55,15 @@ Applications are free to pick and choose different parts.
 `libbricks` applications are structured very similarly to KDE applications.
 We would like the breeze GTK theme to support `libbricks` widgets and will do what we can to make it straightforward.
 
+### Why Vala?
+
+Vala compiles down to the GObject C that you would have written if you had time.
+It deals with all the busy work of `ref`, `unref` and `ref_sink`, of property and signal definition and subclassing for you so that you can worry about something useful.
+At the same time those details remain close to the surface and, if you are coming to Vala from C, you will rarely feel like you are being forced to do something that doesn't make sense under the hood.
+
+Vala APIs are, by default, easy to generate bindings for and so the use of Vala for libbricks doesn't constrain you to using Vala for your application.
+Libbricks should be just as easy to use from C, Python, Rust or any other language with decent GIR support.
+
 
 ### Known users
 
