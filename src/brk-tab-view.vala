@@ -1585,7 +1585,7 @@ public sealed class Brk.TabView : Gtk.Widget {
     }
 
     internal void
-    detach_page(Brk.TabPage page) {
+    detach_page(owned Brk.TabPage page) {
         uint position;
         return_if_fail(this.page_list.find(page, out position));
         if (this.selected_page == page) {
