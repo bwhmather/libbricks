@@ -61,7 +61,7 @@ internal sealed class Brk.StyleManager : GLib.Object {
         if (variant != null) {
             file = "brk-%s.css".printf(variant);
         } else {
-            file = "gtk.css";
+            file = "brk.css";
         }
 
         // First look in the user's data directory.
