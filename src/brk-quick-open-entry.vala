@@ -554,9 +554,7 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
 
     private void
     play_commands() {
-        if (this.loading) {
-            return;
-        }
+        return_if_fail(!this.loading);
 
         foreach (int step in this.navigate) {
             while (step < 0) {
@@ -617,7 +615,9 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             new Gtk.CallbackAction(() => {
                 return_val_if_fail(!this.submit, false);  // Should be caught by buffer.
                 this.navigate += -1;
-                this.play_commands();
+                if (!this.loading) {
+                    this.play_commands();
+                }
                 return true;
             })
         ));
@@ -626,7 +626,9 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             new Gtk.CallbackAction(() => {
                 return_val_if_fail(!this.submit, false);  // Should be caught by buffer.
                 this.navigate += 1;
-                this.play_commands();
+                if (!this.loading) {
+                    this.play_commands();
+                }
                 return true;
             })
         ));
@@ -647,9 +649,13 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
 
         this.text_input.activate.connect(() => {
             return_if_fail(!this.submit);  // Should be caught by buffer.
-            buffer_controller.enable();
             this.submit = true;
-            this.play_commands();
+            if (this.loading) {
+                buffer_controller.enable();
+            } else {
+                this.play_commands();
+                buffer_controller.replay();
+            }
         });
 
         this.bind_property("text", this.text_input, "text", SYNC_CREATE | BIDIRECTIONAL);
