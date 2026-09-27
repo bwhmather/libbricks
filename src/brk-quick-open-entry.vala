@@ -184,24 +184,21 @@ private bool match_subquery(
     }
 }
 
-[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-quick-open-entry.ui")]
-internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
+internal sealed class Brk.DirectoryFuzzySearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
 
     /* === State ============================================================ */
 
-    public string text { get; set; default = ""; }
+    public override string search { get; set; default = ""; }
+    private bool _loading = false;
+    public override bool loading { get { return this._loading; } }
 
     public GLib.File? root_directory { get; set; default = null; }
     public bool show_binary { get; set; }
     public bool show_hidden { get; set; }
 
-    public bool loading { get; private set; default = false; }
-    public GLib.FileInfo? selection { get { return this.selection_model.selected_item as GLib.FileInfo?; }}
-
     /* === Model ============================================================ */
 
     private GLib.ListStore list_store;
-    private Gtk.SingleSelection selection_model;
 
     private QueryStackEntry[] query_stack = null;
     private void
@@ -221,7 +218,7 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         //     and no further changes must be made if set.
         try {
             GLib.File? root = this.root_directory;
-            string query = this.text;
+            string query = this.search;
             bool show_binary = this.show_binary;
             bool show_hidden = this.show_hidden;
 
@@ -244,11 +241,11 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             if (root == null) {
                 this.query_stack_truncate(0);
                 this.list_store.remove_all();
-                this.selection_model.selected = 0;
                 return;
             }
 
-            this.loading = true;
+            this._loading = true;
+            this.notify_property("loading");
 
             if (this.query_stack.length <= n || this.query_stack[n].subquery != subquery) {
                 // Truncate before doing anything else to leave stack in valid
@@ -453,8 +450,8 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             // derived from a different query.
             this.query_stack_truncate(n + 1);
             this.list_store.splice(0, this.list_store.get_n_items(), this.query_stack[n].matches);
-            this.selection_model.selected = 0;
-            this.loading = false;
+            this._loading = false;
+            this.notify_property("loading");
 
         } catch (GLib.IOError.CANCELLED _) {
             // We don't know if another query is going to be triggered so can't
@@ -465,8 +462,8 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         } catch {
             this.query_stack_truncate(0);
             this.list_store.remove_all();
-            this.selection_model.selected = 0;
-            this.loading = false;
+            this._loading = false;
+            this.notify_property("loading");
             // TODO
             return;
         }
@@ -480,10 +477,10 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             this.query_cancellable = null;
         }
 
-        if (!this.get_mapped() || this.root_directory == null || this.text == "") {
+        if (this.root_directory == null || this.search == "") {
             this.list_store.remove_all();
-            this.selection_model.selected = 0;
-            this.loading = false;
+            this._loading = false;
+            this.notify_property("loading");
             return;
         }
 
@@ -496,16 +493,11 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
     private void
     model_init() {
         this.list_store = new GLib.ListStore(typeof(GLib.FileInfo));
-        this.selection_model = new Gtk.SingleSelection(this.list_store);
-        this.selection_model.notify["selected-item"].connect((sm, pspec) => {
-            this.notify_property("selection");
-        });
-
         this.notify["root-directory"].connect((fv, pspec) => {
             this.query_stack_truncate(0);
             this.update();
         });
-        this.notify["text"].connect((fv, pspec) => {
+        this.notify["search"].connect((fv, pspec) => {
             this.update();
         });
         this.notify["show-binary"].connect((fv, pspec) => {
@@ -516,13 +508,74 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             this.query_stack_truncate(0);
             this.update();
         });
-        this.map.connect(() => {
-            this.update();
-        });
-        this.unmap.connect(() => {
-            this.update();
-        });
         this.update();
+    }
+
+    /* === List Model Implementation ======================================== */
+
+    public override GLib.Object?
+    get_item(uint position) {
+        return this.list_store.get_item(position);
+    }
+
+    public override GLib.Type
+    get_item_type() {
+        return typeof(GLib.FileInfo);
+    }
+
+    public override uint
+    get_n_items() {
+        return this.list_store.get_n_items();
+    }
+
+    /* === Lifecycle ======================================================== */
+
+    construct {
+        this.model_init();
+        this.list_store.items_changed.connect(this.items_changed);
+    }
+}
+
+public interface Brk.SearchModel : GLib.ListModel {
+    public abstract string search { get; set; default = ""; }
+    public abstract bool loading { get; default = false; }
+}
+
+[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-quick-open-entry.ui")]
+internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
+
+    /* === State ============================================================ */
+
+    public string text { get; set; default = ""; }
+
+    public GLib.File? root_directory { get; set; default = null; }
+    public bool show_binary { get; set; }
+    public bool show_hidden { get; set; }
+
+    public bool loading { get; protected set; default = false; }
+    public GLib.FileInfo? selection { get { return this.selection_model.selected_item as GLib.FileInfo?; }}
+
+    /* === Model ============================================================ */
+
+    private Brk.DirectoryFuzzySearchModel search_model;
+    private Gtk.SingleSelection selection_model;
+
+    private void
+    model_init() {
+        this.search_model = new Brk.DirectoryFuzzySearchModel();
+        this.bind_property("text", this.search_model, "search", SYNC_CREATE);
+        this.search_model.bind_property("loading", this, "loading", SYNC_CREATE);
+        this.bind_property("root-directory", this.search_model, "root-directory", SYNC_CREATE);
+        this.bind_property("show-binary", this.search_model, "show-binary", SYNC_CREATE);
+        this.bind_property("show-hidden", this.search_model, "show-hidden", SYNC_CREATE);
+
+        this.selection_model = new Gtk.SingleSelection(this.search_model);
+        this.selection_model.notify["selected-item"].connect((sm, pspec) => {
+            this.notify_property("selection");
+        });
+        this.search_model.items_changed.connect(() => {
+            this.selection_model.selected = 0;
+        });
     }
 
     /* === Text Entry ======================================================= */
@@ -564,7 +617,7 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
                 step += 1;
             }
             while (step > 0) {
-                if (this.selection_model.selected + 1 < this.list_store.get_n_items()) {
+                if (this.selection_model.selected + 1 < this.search_model.get_n_items()) {
                     this.selection_model.selected += 1;
                 }
                 step -= 1;
