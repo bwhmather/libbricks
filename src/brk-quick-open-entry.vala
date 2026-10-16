@@ -184,7 +184,7 @@ private bool match_subquery(
     }
 }
 
-internal sealed class Brk.DirectoryFuzzySearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
+internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
 
     /* === State ============================================================ */
 
@@ -557,12 +557,12 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
 
     /* === Model ============================================================ */
 
-    private Brk.DirectoryFuzzySearchModel search_model;
+    private Brk.QuickOpenSearchModel search_model;
     private Gtk.SingleSelection selection_model;
 
     private void
     model_init() {
-        this.search_model = new Brk.DirectoryFuzzySearchModel();
+        this.search_model = new Brk.QuickOpenSearchModel();
         this.bind_property("text", this.search_model, "search", SYNC_CREATE);
         this.search_model.bind_property("loading", this, "loading", SYNC_CREATE);
         this.bind_property("root-directory", this.search_model, "root-directory", SYNC_CREATE);
@@ -737,32 +737,6 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
 
     private void
     popover_init() {
-        var factory = new Gtk.SignalListItemFactory();
-        factory.setup.connect((listitem_) => {
-            var listitem = (Gtk.ListItem) listitem_;
-
-            var box = new Gtk.Box(HORIZONTAL, 6);
-            box.append(new Brk.FileThumbnail());
-
-            var label = new Gtk.Label("");
-            label.halign = START;
-            box.append(label);
-
-            listitem.child = box;
-        });
-        factory.bind.connect((listitem_) => {
-            var listitem = (Gtk.ListItem) listitem_;
-            var box = (Gtk.Box) listitem.child;
-            var thumbnail = (Brk.FileThumbnail) box.get_first_child();
-            var label = (Gtk.Label) box.get_last_child();
-            var fileinfo = (GLib.FileInfo) listitem.item;
-
-            thumbnail.fileinfo = fileinfo;
-            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
-        });
-        this.list_view.factory = factory;
-        this.list_view.model = this.selection_model;
-
         this.notify["text"].connect((_, pspec) => {
             if (this.text != "") {
                 this.popover.popup();

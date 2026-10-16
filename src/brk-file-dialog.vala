@@ -319,11 +319,52 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.ButtonGroup quick_open_button_group;
 
     [GtkChild]
-    private unowned Brk.QuickOpenEntry quick_open_entry;
+    private unowned Brk.Entry quick_open_entry;
 
     private void
     quick_open_init() {
-        this.quick_open_entry.file_activated.connect((fileinfo) => {
+        var model = new Brk.QuickOpenSearchModel();
+        this.bind_property("root-directory", model, "root-directory", SYNC_CREATE);
+        this.bind_property("show-binary", model, "show-binary", SYNC_CREATE);
+        this.bind_property("show-hidden", model, "show-hidden", SYNC_CREATE);
+
+        var factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+
+            var box = new Gtk.Box(HORIZONTAL, 6);
+            box.append(new Brk.FileThumbnail());
+
+            var label = new Gtk.Label("");
+            label.halign = START;
+            box.append(label);
+
+            listitem.child = box;
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var box = (Gtk.Box) listitem.child;
+            var thumbnail = (Brk.FileThumbnail) box.get_first_child();
+            var label = (Gtk.Label) box.get_last_child();
+            var fileinfo = (GLib.FileInfo) listitem.item;
+
+            thumbnail.fileinfo = fileinfo;
+            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
+        });
+
+
+        this.quick_open_entry.completion_model = model;
+        this.quick_open_entry.completion_factory = factory;
+        this.quick_open_entry.completion_expression =
+
+        this.quick_open_entry.activate.connect(() => {
+            var target = this.root_directory.resolve_relative_path();
+
+            // TODO a) blocking, b) unnecessary.
+            // We should be able to make Brk.Entry (optionally) validate that
+            // the search text precisely matches a completion and then yield
+            // that.
+            var fileinfo = target.query_info();
             this.open_fileinfo(fileinfo);
         });
 
@@ -347,10 +388,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         this.notify["root-directory"].connect((fd, pspec) => {
             this.quick_open_enabled = false;
         });
-
-        this.bind_property("root-directory", this.quick_open_entry, "root-directory", SYNC_CREATE);
-        this.bind_property("show-binary", this.quick_open_entry, "show-binary", SYNC_CREATE);
-        this.bind_property("show-hidden", this.quick_open_entry, "show-hidden", SYNC_CREATE);
 
         this.notify["focus-widget"].connect(() => {
             if (!this.quick_open_enabled) {

@@ -20,7 +20,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="BrkQuickOpenEntry" id="quick_open_entry">
+                  <object class="BrkEntry" id="quick_open_entry">
                     <property name="hexpand">true</property>
                   </object>
                 </child>
