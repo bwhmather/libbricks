@@ -87,6 +87,7 @@ add_project_arguments(
     '--vapidir', meson.current_source_dir() / 'vapi',
     '--enable-deprecated',
     '--abi-stability',
+    '--disable-since-check',
     language: 'vala'
 )
 
@@ -103,12 +104,14 @@ add_project_arguments([
 sources = [
     'src/brk-main.vala',
     'src/brk-button-group.vala',
+    'src/brk-entry.vala',
     'src/brk-file-dialog.vala',
     'src/brk-file-dialog-tree-view.vala',
     'src/brk-file-thumbnail.vala',
     'src/brk-path-bar.vala',
     'src/brk-preferences.vala',
     'src/brk-quick-open-entry.vala',
+    'src/brk-search-model.vala',
     'src/brk-statusbar.vala',
     'src/brk-style-manager.vala',
     'src/brk-tab-view.vala',
@@ -145,5 +148,6 @@ libbricks_dep = declare_dependency(
 )
 
 if not meson.is_subproject()
-    subdir('docs')
+    # subdir('docs')
+    subdir('demos')
 endif
