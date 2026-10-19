@@ -99,7 +99,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
         drag.actions = MOVE;
 
         // Disable default drag icon.
-        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        var drag_icon = new Gtk.DragIcon.get_for_drag(drag);
         //drag_icon.child = new Gtk.Box(VERTICAL, 0);
         drag_icon.child = new Gtk.Label(".");
 
@@ -110,7 +110,7 @@ private sealed class Brk.TabPageTab : Gtk.Widget {
     on_drag_cancel(Gtk.DragSource s, Gdk.Drag drag, Gdk.DragCancelReason r) {
         assert(this.page.drag == drag);
 
-        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        var drag_icon = new Gtk.DragIcon.get_for_drag(drag);
         //drag_icon.child = new Gtk.Box(VERTICAL, 0);
         drag_icon.child = new Gtk.Label(".");
 
@@ -520,7 +520,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
         }
         page.drag_timeout = null;
 
-        var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+        var drag_icon = new Gtk.DragIcon.get_for_drag(drag);
         drag_icon.child = new Gtk.Label(".");  // TODO old icon won't be replaced if fully transparent...
 
         if (page.drag_source != this.view && page.drag_source.has_page(page)) {
@@ -552,7 +552,7 @@ private sealed class Brk.TabViewTabs : Gtk.Widget {
             page.drag_timeout = null;
             this.view.detach_page(page);
 
-            var drag_icon = Gtk.DragIcon.get_for_drag(drag) as Gtk.DragIcon;
+            var drag_icon = new Gtk.DragIcon.get_for_drag(drag);
             drag_icon.child = new Brk.TabDragView(page);
 
             return false;
