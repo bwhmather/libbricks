@@ -10,7 +10,14 @@ pkgconfig = import('pkgconfig')
 
 cc = meson.get_compiler('c')
 
-glib_dep = dependency('glib-2.0')
+glib_dep = dependency(
+    'glib-2.0',
+    default_options: [
+        'introspection=disabled',
+        'werror=false',
+    ],
+    include_type: 'system',
+)
 gio_dep = dependency('gio-2.0')
 gtk_dep = dependency(
     'gtk4',
