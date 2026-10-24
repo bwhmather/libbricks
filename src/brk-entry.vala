@@ -98,9 +98,11 @@ public sealed class Brk.Entry : Gtk.Widget {
     private void
     completion_rebuild() {
         // Tear down previous completion setups.
-        this.completion_search_binding?.unbind();
-        this.completion_search_binding = null;
-        this.completion_selection_model.model = null;
+        if (this.completion_popover != null) {
+            this.completion_search_binding?.unbind();
+            this.completion_search_binding = null;
+            this.completion_selection_model.model = null;
+        }
 
         // Early return if anything missing.
         if (this.completion_model == null) {
@@ -212,7 +214,14 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_dispose() {
+        this.completion_popover?.unparent();
+        this.completion_popover = null;
+        this.completion_list_view = null;
+        this.completion_selection_model = null;
 
+        this.completion_needs_rebuild = false;
+        this.completion_search_binding?.unbind();
+        this.completion_search_binding = null;
     }
 
     /* === Text Entry ======================================================= */
@@ -379,6 +388,12 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input.set_parent(this);
     }
 
+    private void
+    text_input_dispose() {
+        this.text_input?.unparent();
+        this.text_input = null;
+    }
+
     /* === Lifecycle ======================================================== */
 
     class construct {
@@ -393,9 +408,8 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     public override void
     dispose() {
-        while (this.get_last_child() != null) {
-            this.get_last_child().unparent();
-        }
+        this.completion_dispose();
+        this.text_input_dispose();
         base.dispose();
     }
 }
