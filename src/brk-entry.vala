@@ -402,7 +402,9 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     public override void
     dispose() {
-        this.dispose_template(typeof(Brk.QuickOpenEntry));
+        while (this.get_last_child() != null) {
+            this.get_last_child().unparent();
+        }
         base.dispose();
     }
 }
