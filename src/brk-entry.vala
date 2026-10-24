@@ -87,7 +87,7 @@ public sealed class Brk.Entry : Gtk.Widget {
      * the behaviour of browser address bars where selecting a completion
      * immediately submits.
      */
-    public signal void completion_activate(GLib.Object);
+    public signal void completion_activate(GLib.Object selected);
 
     private Brk.SearchModel completion_search_model;
     private Gtk.SingleSelection completion_selection_model;
