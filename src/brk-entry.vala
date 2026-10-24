@@ -86,7 +86,7 @@ public sealed class Brk.Entry : Gtk.Widget {
             can_unselect = true
         };
         this.completion_selection_model.items_changed.connect(() => {
-            if (this.completion_selection_model.get_n_items() > 0) {
+            if (this.text.length > 0 && this.completion_selection_model.get_n_items() > 0) {
                 this.completion_popover.popup();
             } else {
                 this.completion_popover.popdown();
@@ -98,13 +98,9 @@ public sealed class Brk.Entry : Gtk.Widget {
     private void
     completion_rebuild() {
         // Tear down previous completion setups.
-        if (this.completion_search_binding != null) {
-            this.completion_search_binding.unbind();
-            this.completion_search_binding = null;
-        }
-        if (this.completion_selection_model != null) {
-            this.completion_selection_model.model = null;
-        }
+        this.completion_search_binding?.unbind();
+        this.completion_search_binding = null;
+        this.completion_selection_model.model = null;
 
         // Early return if anything missing.
         if (this.completion_model == null) {
@@ -119,7 +115,8 @@ public sealed class Brk.Entry : Gtk.Widget {
 
         // Initialise model.
         if (this.completion_model is Brk.SearchModel) {
-            this.completion_search_binding = this.bind_property("text", (Brk.SearchModel) this.completion_model, "search", SYNC_CREATE);
+            var search_model = (Brk.SearchModel) this.completion_model;
+            this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
             this.completion_selection_model.model = this.completion_model;
         } else {
             var filter = new Gtk.StringFilter(expression) {
@@ -127,7 +124,8 @@ public sealed class Brk.Entry : Gtk.Widget {
                 ignore_case = true
             };
             this.bind_property("text", filter, "search", SYNC_CREATE);
-            this.completion_selection_model.model = new Gtk.FilterListModel(this.completion_model, filter);
+            var filter_model = new Gtk.FilterListModel(this.completion_model, filter);
+            this.completion_selection_model.model = (GLib.ListModel) filter_model;
         }
 
         // Initialise list item factory.
