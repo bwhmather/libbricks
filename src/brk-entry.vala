@@ -47,7 +47,7 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
         this.bind_property("search", filter, "search", SYNC_CREATE);
 
         this.filter_list_model = new Gtk.FilterListModel(null, filter);
-        this.bind_property("model", this.filter_list_model, "model");
+        this.bind_property("model", this.filter_list_model, "model", SYNC_CREATE);
         this.filter_list_model.items_changed.connect((position, removed, added) => {
             this.items_changed(position, removed, added);
         });
