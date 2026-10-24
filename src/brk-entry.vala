@@ -155,7 +155,10 @@ public sealed class Brk.Entry : Gtk.Widget {
             }
         });
 
-        this.completion_selection_model = new Gtk.SingleSelection(this.completion_search_model);
+        this.completion_selection_model = new Gtk.SingleSelection(this.completion_search_model) {
+            autoselect = false,
+            can_unselect = true
+        };
 
         this.completion_list_view.model = this.completion_selection_model;
         if (this.completion_factory != null) {
