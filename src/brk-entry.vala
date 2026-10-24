@@ -90,6 +90,7 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.Popover? completion_popover;
     private Gtk.ListView? completion_list_view;
     private Gtk.SingleSelection? completion_selection_model;
+    private Gtk.EventControllerFocus? completion_focus_controller;
 
     // Model specific completion state.  Invalidated whenever one of the
     // completion properties changes.
@@ -133,13 +134,26 @@ public sealed class Brk.Entry : Gtk.Widget {
             can_unselect = true
         };
         this.completion_selection_model.items_changed.connect(() => {
-            if (this.text.length > 0 && this.completion_selection_model.get_n_items() > 0) {
+            if (
+                this.completion_focus_controller.contains_focus &&
+                this.text.length > 0 &&
+                this.completion_selection_model.get_n_items() > 0
+            ) {
                 this.completion_popover.popup();
             } else {
-                this.completion_popover.popdown();
+                this.completion_clear();
             }
         });
         this.completion_list_view.model = this.completion_selection_model;
+
+        // Initialise focus controller.
+        this.completion_focus_controller = new Gtk.EventControllerFocus();
+        this.completion_focus_controller.notify["contains-focus"].connect(() => {
+            if (!this.completion_focus_controller.contains_focus) {
+                this.completion_clear();
+            }
+        });
+        this.add_controller(this.completion_focus_controller);
     }
 
     private void
@@ -200,11 +214,6 @@ public sealed class Brk.Entry : Gtk.Widget {
     }
 
     private void
-    completion_show() {
-        this.completion_popover.popup();
-    }
-
-    private void
     completion_clear() {
         this.completion_popover.popdown();
     }
@@ -248,25 +257,22 @@ public sealed class Brk.Entry : Gtk.Widget {
                 this.completion_needs_rebuild = false;
             }
         });
-
-        var focus_controller = new Gtk.EventControllerFocus();
-        focus_controller.notify["contains-focus"].connect(() => {
-            if (!focus_controller.contains_focus) {
-            }
-        });
-        this.add_controller(focus_controller);
     }
 
     private void
     completion_dispose() {
-        this.completion_popover?.unparent();
-        this.completion_popover = null;
-        this.completion_list_view = null;
-        this.completion_selection_model = null;
-
         this.completion_needs_rebuild = false;
         this.completion_search_binding?.unbind();
         this.completion_search_binding = null;
+
+        if (completion_popover != null) {
+            this.remove_controller(this.completion_focus_controller);
+            this.completion_focus_controller = null;
+            this.completion_list_view = null;
+            this.completion_selection_model = null;
+            this.completion_popover.unparent();
+            this.completion_popover = null;
+        }
     }
 
     /* === Text Entry ======================================================= */
