@@ -4,61 +4,10 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
-    private Gtk.FilterListModel filter_list_model;
-
-    public GLib.ListModel model { get; construct set; }
-
-    /**
-     * The expression to evaluate on each item to get a string to compare with.
-     */
-    public Gtk.Expression? expression { get; construct set; default = null; }
-    public bool ignore_case { get; construct set; default = true; }
-
-    /* === Search Model Interface =========================================== */
-
-    public string search { get; set; }
-    public bool loading { get { return false; } }
-
-    /* === List Model Interface ============================================= */
-
-    public GLib.Object?
-    get_item(uint position) {
-        return this.filter_list_model.get_item(position);
-    }
-
-    public GLib.Type
-    get_item_type() {
-        return this.filter_list_model.get_item_type();
-    }
-
-    public uint
-    get_n_items() {
-        return this.filter_list_model.get_n_items();
-    }
-
-    /* === Lifecycle ======================================================== */
-
-    construct {
-        var filter = new Gtk.StringFilter(null);
-        filter.match_mode = PREFIX;
-        this.bind_property("expression", filter, "expression", SYNC_CREATE);
-        this.bind_property("ignore-case", filter, "ignore-case", SYNC_CREATE);
-        this.bind_property("search", filter, "search", SYNC_CREATE);
-
-        this.filter_list_model = new Gtk.FilterListModel(null, filter);
-        this.bind_property("model", this.filter_list_model, "model", SYNC_CREATE);
-        this.filter_list_model.items_changed.connect((position, removed, added) => {
-            this.items_changed(position, removed, added);
-        });
-    }
-}
 
 public sealed class Brk.Entry : Gtk.Widget {
 
     /* === Completion ======================================================= */
-
-    private bool completion_enabled = false;
 
     /**
      * An optional list model containing possible values for the entry.
@@ -89,22 +38,23 @@ public sealed class Brk.Entry : Gtk.Widget {
      */
     public signal void completion_activate(GLib.Object selected);
 
-    private Brk.SearchModel? completion_search_model;
-    private Gtk.SingleSelection? completion_selection_model;
-
+    // Common completion state.  Scoped from the first point at which the search
+    // model becomes valid to dispose.
     private Gtk.Popover? completion_popover;
     private Gtk.ListView? completion_list_view;
+    private Gtk.SingleSelection? completion_selection_model;
+
+    // Derived from completion_model and possibly completion_expression.  Cached.
+    private Gtk.FilterListModel? completion_filter_model;
 
     private void
     completion_rebuild() {
         // Tear down previous completion setups.
 
-
         // Early return if anything missing.
         if (this.completion_model == null) {
             return;
         }
-
 
         // Setup fixed stuff: the popover, list view, etc.
         if (this.completion_popover == null) {
@@ -129,6 +79,21 @@ public sealed class Brk.Entry : Gtk.Widget {
             };
             this.completion_list_view.add_css_class("data-table");
             scrolled_window.child = this.completion_list_view;
+
+            this.completion_selection_model = new Gtk.SingleSelection(null) {
+                autoselect = false,
+                can_unselect = true
+            };
+
+            this.completion_selection_model.items_changed.connect(() => {
+                if (this.completion_selection_model.get_n_items() > 0) {
+                    this.completion_popover.popup();
+                } else {
+                    this.completion_popover.popdown();
+                }
+            });
+
+            this.completion_list_view.model = this.completion_selection_model;
         }
 
         // Bind new models and factories.
@@ -138,29 +103,23 @@ public sealed class Brk.Entry : Gtk.Widget {
         }
 
         if (this.completion_model is Brk.SearchModel) {
-            this.completion_search_model = (Brk.SearchModel) this.completion_model;
+            this.bind_property("text", (Brk.SearchModel) this.completion_model, "search", SYNC_CREATE);
+            this.completion_filter_model = null;
+            this.completion_selection_model.model = this.completion_model;
         } else {
-            var search_model = new Brk.StaticSearchModel();
-            search_model.model = this.completion_model;
-            search_model.expression = expression;
-            this.completion_search_model = search_model;
+            if (this.completion_filter_model == null) {
+                var filter = new Gtk.StringFilter(null);
+                filter.match_mode = PREFIX;
+                filter.ignore_case = true;
+                this.bind_property("text", filter, "search", SYNC_CREATE);
+
+                this.completion_filter_model = new Gtk.FilterListModel(null, filter);
+            }
+            ((Gtk.StringFilter) this.completion_filter_model.filter).expression = expression;
+            this.completion_filter_model.model = this.completion_model;
+            this.completion_selection_model.model = this.completion_filter_model;
         }
 
-        this.bind_property("text", this.completion_search_model, "search", SYNC_CREATE);
-        this.completion_search_model.items_changed.connect(() => {
-            if (this.completion_search_model.get_n_items() > 0) {
-                this.completion_popover.popup();
-            } else {
-                this.completion_popover.popdown();
-            }
-        });
-
-        this.completion_selection_model = new Gtk.SingleSelection(this.completion_search_model) {
-            autoselect = false,
-            can_unselect = true
-        };
-
-        this.completion_list_view.model = this.completion_selection_model;
         if (this.completion_factory != null) {
             this.completion_list_view.factory = this.completion_factory;
         } else {
@@ -180,7 +139,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 expression.evaluate(listitem.item, ref val);
                 label.label = val.get_string();
             });
-          this.completion_list_view.factory = factory;
+            this.completion_list_view.factory = factory;
         }
     }
 
@@ -192,7 +151,6 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_clear() {
-        this.completion_search_model.search = "";
         this.completion_popover.popdown();
     }
 
