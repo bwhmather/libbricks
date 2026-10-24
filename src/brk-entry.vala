@@ -4,6 +4,53 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
+    private Gtk.FilterListModel filter_list_model;
+
+    public GLib.ListModel model { get; construct set; }
+
+    /**
+     * The expression to evaluate on each item to get a string to compare with.
+     */
+    public Gtk.Expression? expression { get; construct set; default = null; }
+
+    /* === Search Model Interface =========================================== */
+
+    public string search { get; set; default = ""; }
+    public bool loading { get { return false; } }
+
+    /* === List Model Interface ============================================= */
+
+    public GLib.Object?
+    get_item(uint position) {
+        return this.filter_list_model.get_item(position);
+    }
+
+    public GLib.Type
+    get_item_type() {
+        return this.filter_list_model.get_item_type();
+    }
+
+    public uint
+    get_n_items() {
+        return this.filter_list_model.get_n_items();
+    }
+
+    /* === Lifecycle ======================================================== */
+
+    construct {
+        var filter = new Gtk.StringFilter(null);
+        filter.match_mode = PREFIX;
+        this.bind_property("expression", filter, "expression", SYNC_CREATE);
+        this.bind_property("search", filter, "search", SYNC_CREATE);
+
+        this.filter_list_model = new Gtk.FilterListModel(null, filter);
+        this.bind_property("model", this.filter_list_model, "model", SYNC_CREATE);
+        this.filter_list_model.items_changed.connect((position, removed, added) => {
+            this.items_changed(position, removed, added);
+        });
+    }
+}
 
 public sealed class Brk.Entry : Gtk.Widget {
 
@@ -116,19 +163,17 @@ public sealed class Brk.Entry : Gtk.Widget {
         }
 
         // Initialise model.
+        Brk.SearchModel search_model;
         if (this.completion_model is Brk.SearchModel) {
-            var search_model = (Brk.SearchModel) this.completion_model;
-            this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
-            this.completion_selection_model.model = this.completion_model;
+            search_model = (Brk.SearchModel) this.completion_model;
         } else {
-            var filter = new Gtk.StringFilter(expression) {
-                match_mode = PREFIX,
-                ignore_case = true
+            search_model = new StaticSearchModel() {
+                model = this.completion_model,
+                expression = expression
             };
-            this.bind_property("text", filter, "search", SYNC_CREATE);
-            var filter_model = new Gtk.FilterListModel(this.completion_model, filter);
-            this.completion_selection_model.model = (GLib.ListModel) filter_model;
         }
+        this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
+        this.completion_selection_model.model = search_model;
 
         // Initialise list item factory.
         if (this.completion_factory != null) {
