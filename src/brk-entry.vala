@@ -89,11 +89,11 @@ public sealed class Brk.Entry : Gtk.Widget {
      */
     public signal void completion_activate(GLib.Object selected);
 
-    private Brk.SearchModel completion_search_model;
-    private Gtk.SingleSelection completion_selection_model;
+    private Brk.SearchModel? completion_search_model;
+    private Gtk.SingleSelection? completion_selection_model;
 
-    private Gtk.Popover completion_popover;
-    private Gtk.ListView completion_list_view;
+    private Gtk.Popover? completion_popover;
+    private Gtk.ListView? completion_list_view;
 
     private void
     completion_rebuild() {
