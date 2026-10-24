@@ -44,82 +44,93 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.ListView? completion_list_view;
     private Gtk.SingleSelection? completion_selection_model;
 
-    // Derived from completion_model and possibly completion_expression.  Cached.
-    private Gtk.FilterListModel? completion_filter_model;
+    // Model specific completion state.  Invalidated whenever one of the
+    // completion properties changes.
+    private bool completion_needs_rebuild = false;
+    private GLib.Binding? completion_search_binding;
+
+    private void
+    completion_init_widgets() {
+        if (this.completion_popover != null) {
+            return;
+        }
+
+        // Initialise popover.
+        this.completion_popover = new Gtk.Popover() {
+            halign = START,
+            position = BOTTOM,
+            has_arrow = false,
+            autohide = false,
+            width_request = 400,
+            height_request = 300
+        };
+        this.completion_popover.set_parent(this);
+
+        // Initialise scrolled window.
+        var scrolled_window = new Gtk.ScrolledWindow() {
+            hexpand = true,
+            vexpand = true
+        };
+        this.completion_popover.child = scrolled_window;
+
+        // Initialise ist view.
+        this.completion_list_view = new Gtk.ListView(null, null) {
+            tab_behavior = ITEM,
+        };
+        this.completion_list_view.add_css_class("data-table");
+        scrolled_window.child = this.completion_list_view;
+
+        // Initialise selection model.
+        this.completion_selection_model = new Gtk.SingleSelection(null) {
+            autoselect = false,
+            can_unselect = true
+        };
+        this.completion_selection_model.items_changed.connect(() => {
+            if (this.completion_selection_model.get_n_items() > 0) {
+                this.completion_popover.popup();
+            } else {
+                this.completion_popover.popdown();
+            }
+        });
+        this.completion_list_view.model = this.completion_selection_model;
+    }
 
     private void
     completion_rebuild() {
         // Tear down previous completion setups.
+        if (this.completion_search_binding != null) {
+            this.completion_search_binding.unbind();
+            this.completion_search_binding = null;
+        }
+        if (this.completion_selection_model != null) {
+            this.completion_selection_model.model = null;
+        }
 
         // Early return if anything missing.
         if (this.completion_model == null) {
             return;
         }
 
-        // Setup fixed stuff: the popover, list view, etc.
-        if (this.completion_popover == null) {
-            this.completion_popover = new Gtk.Popover() {
-                halign = START,
-                position = BOTTOM,
-                has_arrow = false,
-                autohide = false,
-                width_request = 400,
-                height_request = 300
-            };
-            this.completion_popover.set_parent(this);
-
-            var scrolled_window = new Gtk.ScrolledWindow() {
-                hexpand = true,
-                vexpand = true
-            };
-            this.completion_popover.child = scrolled_window;
-
-            this.completion_list_view = new Gtk.ListView(null, null) {
-                tab_behavior = ITEM,
-            };
-            this.completion_list_view.add_css_class("data-table");
-            scrolled_window.child = this.completion_list_view;
-
-            this.completion_selection_model = new Gtk.SingleSelection(null) {
-                autoselect = false,
-                can_unselect = true
-            };
-
-            this.completion_selection_model.items_changed.connect(() => {
-                if (this.completion_selection_model.get_n_items() > 0) {
-                    this.completion_popover.popup();
-                } else {
-                    this.completion_popover.popdown();
-                }
-            });
-
-            this.completion_list_view.model = this.completion_selection_model;
-        }
-
-        // Bind new models and factories.
+        // Initialise expression,
         var expression = this.completion_expression;
         if (expression == null) {
             expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
         }
 
+        // Initialise model.
         if (this.completion_model is Brk.SearchModel) {
-            this.bind_property("text", (Brk.SearchModel) this.completion_model, "search", SYNC_CREATE);
-            this.completion_filter_model = null;
+            this.completion_search_binding = this.bind_property("text", (Brk.SearchModel) this.completion_model, "search", SYNC_CREATE);
             this.completion_selection_model.model = this.completion_model;
         } else {
-            if (this.completion_filter_model == null) {
-                var filter = new Gtk.StringFilter(null);
-                filter.match_mode = PREFIX;
-                filter.ignore_case = true;
-                this.bind_property("text", filter, "search", SYNC_CREATE);
-
-                this.completion_filter_model = new Gtk.FilterListModel(null, filter);
-            }
-            ((Gtk.StringFilter) this.completion_filter_model.filter).expression = expression;
-            this.completion_filter_model.model = this.completion_model;
-            this.completion_selection_model.model = this.completion_filter_model;
+            var filter = new Gtk.StringFilter(expression) {
+                match_mode = PREFIX,
+                ignore_case = true
+            };
+            this.bind_property("text", filter, "search", SYNC_CREATE);
+            this.completion_selection_model.model = new Gtk.FilterListModel(this.completion_model, filter);
         }
 
+        // Initialise list item factory.
         if (this.completion_factory != null) {
             this.completion_list_view.factory = this.completion_factory;
         } else {
@@ -145,7 +156,6 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_show() {
-        this.completion_rebuild();
         this.completion_popover.popup();
     }
 
@@ -167,7 +177,18 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_invalidate() {
-        this.completion_rebuild();
+        if (this.completion_model != null) {
+            this.completion_init_widgets();
+        }
+
+        // Defer until first map so that properties set during construction
+        // result in a single rebuild.
+        if (this.get_mapped()) {
+            this.completion_rebuild();
+            this.completion_needs_rebuild = false;
+        } else {
+            this.completion_needs_rebuild = true;
+        }
     }
 
     private void
@@ -175,6 +196,13 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.notify["completion-model"].connect(this.completion_invalidate);
         this.notify["completion-factory"].connect(this.completion_invalidate);
         this.notify["completion-expression"].connect(this.completion_invalidate);
+
+        this.map.connect(() => {
+            if (this.completion_needs_rebuild) {
+                this.completion_rebuild();
+                this.completion_needs_rebuild = false;
+            }
+        });
 
         var focus_controller = new Gtk.EventControllerFocus();
         focus_controller.notify["contains-focus"].connect(() => {
@@ -184,6 +212,10 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.add_controller(focus_controller);
     }
 
+    private void
+    completion_dispose() {
+
+    }
 
     /* === Text Entry ======================================================= */
 
