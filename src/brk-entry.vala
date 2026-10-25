@@ -85,6 +85,72 @@ public sealed class Brk.Entry : Gtk.Widget {
      */
     public signal void completion_activate(GLib.Object selected);
 
+    /* --- Completion Search State ------------------------------------------ */
+
+    // Model specific completion state.  Invalidated whenever one of the
+    // completion properties changes.
+    private bool completion_needs_rebuild = false;
+    private GLib.Binding? completion_search_binding;
+
+    private void
+    completion_rebuild() {
+        // Tear down previous completion setups.
+        if (this.completion_popover != null) {
+            this.completion_search_binding?.unbind();
+            this.completion_search_binding = null;
+            this.completion_selection_model.model = null;
+        }
+
+        // Early return if anything missing.
+        if (this.completion_model == null) {
+            return;
+        }
+
+        // Initialise expression,
+        var expression = this.completion_expression;
+        if (expression == null) {
+            expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
+        }
+
+        // Initialise model.
+        Brk.SearchModel search_model;
+        if (this.completion_model is Brk.SearchModel) {
+            search_model = (Brk.SearchModel) this.completion_model;
+        } else {
+            search_model = new StaticSearchModel() {
+                model = this.completion_model,
+                expression = expression
+            };
+        }
+        this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
+        this.completion_selection_model.model = search_model;
+
+        // Initialise list item factory.
+        if (this.completion_factory != null) {
+            this.completion_list_view.factory = this.completion_factory;
+        } else {
+            var factory = new Gtk.SignalListItemFactory();
+            factory.setup.connect((listitem_) => {
+                var listitem = (Gtk.ListItem) listitem_;
+
+                var label = new Gtk.Label("");
+                label.halign = START;
+
+                listitem.child = label;
+            });
+            factory.bind.connect((listitem_) => {
+                var listitem = (Gtk.ListItem) listitem_;
+                var label = (Gtk.Label) listitem.child;
+                GLib.Value val = GLib.Value(typeof(string));
+                expression.evaluate(listitem.item, ref val);
+                label.label = val.get_string();
+            });
+            this.completion_list_view.factory = factory;
+        }
+    }
+
+    /* --- Completion Widget State ------------------------------------------ */
+
     // Common completion state.  Scoped from the first point at which the search
     // model becomes valid to dispose.
     private Gtk.Popover? completion_popover;
@@ -92,10 +158,6 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.SingleSelection? completion_selection_model;
     private Gtk.EventControllerFocus? completion_focus_controller;
 
-    // Model specific completion state.  Invalidated whenever one of the
-    // completion properties changes.
-    private bool completion_needs_rebuild = false;
-    private GLib.Binding? completion_search_binding;
 
     private void
     completion_init_widgets() {
@@ -157,63 +219,6 @@ public sealed class Brk.Entry : Gtk.Widget {
     }
 
     private void
-    completion_rebuild() {
-        // Tear down previous completion setups.
-        if (this.completion_popover != null) {
-            this.completion_search_binding?.unbind();
-            this.completion_search_binding = null;
-            this.completion_selection_model.model = null;
-        }
-
-        // Early return if anything missing.
-        if (this.completion_model == null) {
-            return;
-        }
-
-        // Initialise expression,
-        var expression = this.completion_expression;
-        if (expression == null) {
-            expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
-        }
-
-        // Initialise model.
-        Brk.SearchModel search_model;
-        if (this.completion_model is Brk.SearchModel) {
-            search_model = (Brk.SearchModel) this.completion_model;
-        } else {
-            search_model = new StaticSearchModel() {
-                model = this.completion_model,
-                expression = expression
-            };
-        }
-        this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
-        this.completion_selection_model.model = search_model;
-
-        // Initialise list item factory.
-        if (this.completion_factory != null) {
-            this.completion_list_view.factory = this.completion_factory;
-        } else {
-            var factory = new Gtk.SignalListItemFactory();
-            factory.setup.connect((listitem_) => {
-                var listitem = (Gtk.ListItem) listitem_;
-
-                var label = new Gtk.Label("");
-                label.halign = START;
-
-                listitem.child = label;
-            });
-            factory.bind.connect((listitem_) => {
-                var listitem = (Gtk.ListItem) listitem_;
-                var label = (Gtk.Label) listitem.child;
-                GLib.Value val = GLib.Value(typeof(string));
-                expression.evaluate(listitem.item, ref val);
-                label.label = val.get_string();
-            });
-            this.completion_list_view.factory = factory;
-        }
-    }
-
-    private void
     completion_clear() {
         this.completion_popover.popdown();
     }
@@ -244,6 +249,7 @@ public sealed class Brk.Entry : Gtk.Widget {
             this.completion_needs_rebuild = true;
         }
     }
+
 
     private void
     completion_init() {
