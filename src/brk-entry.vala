@@ -4,6 +4,26 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
+public enum Brk.EntryCompletionMode {
+    /**
+     * The entry acts in plain completion mode.
+     *
+     * Completions are hints that can be used to populate the text box   Inline
+     * completion uses the common prefix of all currently possible completions
+     * and no completion is highlighted by default.
+     */
+    COMPLETE,
+
+    /**
+     * The entry acts more as a search box, combo box, or quick open menu.
+     *
+     * Completions are the possible values for the text.  One is always selected
+     * and is activated on enter.  Inline completion uses the selected completion
+     * rather than the common prefix.
+     */
+    SELECT
+}
+
 private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
     private Gtk.FilterListModel filter_list_model;
 
@@ -79,9 +99,29 @@ public sealed class Brk.Entry : Gtk.Widget {
     public Gtk.Expression? completion_expression { get; set; }
 
     /**
+     * When text is shorter than this length, no completions will be shown.  Set
+     * to zero to show all possible completions immediately on focus in.
+     */
+    public int completion_minimum_key_length { get; set; default = 1; }
+
+    /**
+     */
+    public Brk.EntryCompletionMode completion_mode { get; set; default = COMPLETE; }
+
+    /**
+     * Determines whether a preview of the completion should be show inline in
+     * the text box while typing.
+     *
+     * In COMPLETE mode this will be the common prefix of all possible
+     * completions.  In SELECT mode it will be the rest of the completion that
+     * is currently highlighted.
+     */
+    public bool completion_inline { get; set; default = false; }
+
+    /**
      * Triggered when a user accepts a completion.  This can be used to match
      * the behaviour of browser address bars where selecting a completion
-     * immediately submits.
+     * immediately submits.  Typically used with SELECT mode.
      */
     public signal void completion_activate(GLib.Object selected);
 
