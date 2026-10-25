@@ -25,6 +25,7 @@ public enum Brk.EntryCompletionMode {
 }
 
 private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel {
+    private Gtk.StringFilter filter;
     private Gtk.FilterListModel filter_list_model;
 
     public GLib.ListModel model { get; construct set; }
@@ -57,17 +58,29 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
 
     /* === Lifecycle ======================================================== */
 
+    private void
+    update_filter() {
+        if (search != null) {
+            this.filter.expression = this.expression;
+            this.filter.search = this.search;
+            this.filter_list_model.model = this.model;
+        } else {
+            this.filter_list_model.model = null;
+        }
+    }
+
     construct {
-        var filter = new Gtk.StringFilter(null);
-        filter.match_mode = PREFIX;
-        this.bind_property("expression", filter, "expression", SYNC_CREATE);
-        this.bind_property("search", filter, "search", SYNC_CREATE);
+        this.filter = new Gtk.StringFilter(null) {
+            match_mode = PREFIX,
+        };
 
         this.filter_list_model = new Gtk.FilterListModel(null, filter);
-        this.bind_property("model", this.filter_list_model, "model", SYNC_CREATE);
         this.filter_list_model.items_changed.connect((position, removed, added) => {
             this.items_changed(position, removed, added);
         });
+
+        this.notify.connect(this.update_filter);
+        this.update_filter();
     }
 }
 
@@ -131,6 +144,7 @@ public sealed class Brk.Entry : Gtk.Widget {
     // Model specific completion state.  Invalidated whenever one of the
     // completion properties changes.
     private bool completion_needs_rebuild = false;
+    private Brk.SearchModel completion_search_model;
     private GLib.Binding? completion_search_binding;
 
     private void
@@ -153,18 +167,15 @@ public sealed class Brk.Entry : Gtk.Widget {
             expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
         }
 
-        // Initialise model.
-        Brk.SearchModel search_model;
         if (this.completion_model is Brk.SearchModel) {
-            search_model = (Brk.SearchModel) this.completion_model;
+            this.completion_search_model = (Brk.SearchModel) this.completion_model;
         } else {
-            search_model = new StaticSearchModel() {
+            this.completion_search_model = new StaticSearchModel() {
                 model = this.completion_model,
                 expression = expression
             };
         }
-        this.completion_search_binding = this.bind_property("text", search_model, "search", SYNC_CREATE);
-        this.completion_selection_model.model = search_model;
+        this.completion_selection_model.model = this.completion_search_model;
 
         // Initialise list item factory.
         if (this.completion_factory != null) {
@@ -317,7 +328,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 // to wait until BUBBLE so that the input method can get a
                 // chance to consume it first.
                 if (buffer_controller.enabled) {
-                    this.text = "";
+                    this.completion_search_model.search = null;
                     return true;
                 }
                 return false;
@@ -345,6 +356,16 @@ public sealed class Brk.Entry : Gtk.Widget {
                     this.completion_play_commands();
                 }
                 return true;
+            })
+        ));
+        shortcut_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("Escape"),
+            new Gtk.CallbackAction(() => {
+                if (this.completion_search_model?.search != null) {
+                    this.completion_search_model.search = null;
+                    return true;
+                }
+                return false;
             })
         ));
 
@@ -383,6 +404,18 @@ public sealed class Brk.Entry : Gtk.Widget {
             // Likewise, replaying events after moving the cursor would cause
             // text to be entered in the wrong place.
             buffer_controller.discard();
+        });
+
+        this.text_input.notify["text"].connect((fe, pspec) => {
+            if (this.completion_search_model == null) {
+                return;
+            }
+            var text = text_input.text;
+            if (text.length >= this.completion_minimum_key_length) {
+                this.completion_search_model.search = text;
+            } else {
+                this.completion_search_model.search = null;
+            }
         });
     }
 
