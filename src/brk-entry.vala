@@ -37,7 +37,6 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
     /* === Search Model Interface =========================================== */
 
     public string? search { get; set; default = ""; }
-    public bool loading { get { return false; } }
 
     /* === List Model Interface ============================================= */
 
@@ -125,6 +124,8 @@ public sealed class Brk.Entry : Gtk.Widget {
      */
     public signal void completion_activate(GLib.Object selected);
 
+    public bool completion_loading { get; private set; default = false; }
+
     /* --- Completion Search State ------------------------------------------ */
 
     // Model specific completion state.  Invalidated whenever one of the
@@ -198,6 +199,46 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.SingleSelection? completion_selection_model;
     private Gtk.EventControllerFocus? completion_focus_controller;
 
+    // Keyboard input on the text entry can be handled asnychronously if the
+    // view is still catching up.  Navigation (using up and down keys  before
+    // the entry is submitted is buffered manually here.  Everything after the
+    // entry is submitted is buffered using a Gtk.EventControllerBuffer.  Input
+    // anywhere else is handled synchronously and ignores these two mechanisms.
+    private int[] completion_navigate = null;
+    private bool completion_submit = false;
+
+    private void
+    completion_clear_commands() {
+        this.completion_navigate = null;
+        this.completion_submit = false;
+    }
+
+    private void
+    completion_play_commands() {
+        return_if_fail(!this.completion_loading);
+
+        foreach (int step in this.completion_navigate) {
+            var selection_model = this.completion_selection_model;
+            while (step < 0) {
+                if (selection_model.selected > 0) {
+                    selection_model.selected -= 1;
+                }
+                step += 1;
+            }
+            while (step > 0) {
+                if (selection_model.selected + 1 < selection_model.get_n_items()) {
+                    selection_model.selected += 1;
+                }
+                step -= 1;
+            }
+        }
+        if (this.completion_submit) {
+            this.completion_accept();
+        }
+
+        this.completion_navigate = null;
+        this.completion_submit = false;
+    }
 
     private void
     completion_init_widgets() {
@@ -256,6 +297,93 @@ public sealed class Brk.Entry : Gtk.Widget {
             }
         });
         this.add_controller(this.completion_focus_controller);
+
+        var buffer_controller = new Gtk.EventControllerBuffer();
+        buffer_controller.propagation_phase = CAPTURE;
+        buffer_controller.discarded.connect(() => {
+            // Queued commands are effectively the same as buffered input.
+            // If we lose the input buffer then commands should also be dropped.
+            this.completion_clear_commands();
+        });
+
+        var cancel_controller = new Gtk.ShortcutController();
+        cancel_controller.propagation_phase = CAPTURE;
+        cancel_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("Escape"),
+            new Gtk.CallbackAction(() => {
+                // This shortcut controller is only installed so that we can
+                // bypass the keyboard buffer and cancel a long running query
+                // without having to wait until it finishes.  Usually we want
+                // to wait until BUBBLE so that the input method can get a
+                // chance to consume it first.
+                if (buffer_controller.enabled) {
+                    this.text = "";
+                    return true;
+                }
+                return false;
+            })
+        ));
+
+        var shortcut_controller = new Gtk.ShortcutController();
+        shortcut_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("Up"),
+            new Gtk.CallbackAction(() => {
+                return_val_if_fail(!this.completion_submit, false);  // Should be caught by buffer.
+                this.completion_navigate += -1;
+                if (!this.completion_loading) {
+                    this.completion_play_commands();
+                }
+                return true;
+            })
+        ));
+        shortcut_controller.add_shortcut(new Gtk.Shortcut(
+            Gtk.ShortcutTrigger.parse_string("Down"),
+            new Gtk.CallbackAction(() => {
+                return_val_if_fail(!this.completion_submit, false);  // Should be caught by buffer.
+                this.completion_navigate += 1;
+                if (!this.completion_loading) {
+                    this.completion_play_commands();
+                }
+                return true;
+            })
+        ));
+
+        // The order here is important.  The cancel controller must be able to
+        // intercept events before they are buffered.  The shortcut controller
+        // must not receive events until after they are released.
+        this.text_input.add_controller(cancel_controller);
+        this.text_input.add_controller(buffer_controller);
+        this.text_input.add_controller(shortcut_controller);
+
+        this.notify["completion-loading"].connect((_, pspec) => {
+            if (!this.completion_loading) {
+                this.completion_play_commands();
+                buffer_controller.replay();
+            }
+        });
+
+        this.text_input.activate.connect(() => {
+            return_if_fail(!this.completion_submit);  // Should be caught by buffer.
+            this.completion_submit = true;
+            if (this.completion_loading) {
+                buffer_controller.enable();
+            } else {
+                this.completion_play_commands();
+                buffer_controller.replay();
+            }
+        });
+
+        this.text_input.notify["text"].connect((fe, pspec) => {
+            // Buffered keyboard events will have happened before whatever
+            // changed the entry (for example, a careful middle click paste)
+            // and so can't be replayed after.
+            buffer_controller.discard();
+        });
+        this.text_input.notify["cursor-position"].connect((_, pspec) => {
+            // Likewise, replaying events after moving the cursor would cause
+            // text to be entered in the wrong place.
+            buffer_controller.discard();
+        });
     }
 
     private void
