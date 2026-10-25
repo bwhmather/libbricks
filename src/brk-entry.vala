@@ -352,6 +352,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 // to wait until BUBBLE so that the input method can get a
                 // chance to consume it first.
                 if (buffer_controller.enabled) {
+                    buffer_controller.discard();
                     this.completion_search_model.search = null;
                     return true;
                 }
