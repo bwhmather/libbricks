@@ -20,8 +20,10 @@
                   </object>
                 </child>
                 <child>
-                  <object class="BrkQuickOpenEntry" id="quick_open_entry">
+                  <object class="BrkEntry" id="quick_open_entry">
                     <property name="hexpand">true</property>
+                    <property name="completion-mode">select</property>
+                    <property name="completion-minimum-key-length">0</property>
                   </object>
                 </child>
               </object>

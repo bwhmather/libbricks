@@ -9,5 +9,5 @@ public interface Brk.SearchModel : GLib.ListModel {
 }
 
 public interface Brk.AsyncSearchModel : Brk.SearchModel {
-    public abstract bool loading { get; }
+    public abstract bool loading { get; protected set; }
 }

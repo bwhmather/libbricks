@@ -137,6 +137,12 @@ public sealed class Brk.Entry : Gtk.Widget {
      */
     public signal void completion_activate(GLib.Object selected);
 
+    /**
+     * Triggered when a user explicitly dismisses the completion by hitting the
+     * escape key.
+     */
+    public signal void completion_dismiss();
+
     public bool completion_loading { get; private set; default = false; }
 
     /* --- Completion Search State ------------------------------------------ */
@@ -370,6 +376,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 if (buffer_controller.enabled) {
                     buffer_controller.discard();
                     this.completion_search_model.search = null;
+                    this.completion_dismiss();
                     return true;
                 }
                 return false;

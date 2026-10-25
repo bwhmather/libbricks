@@ -276,12 +276,6 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
         cancel_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("Escape"),
             new Gtk.CallbackAction(() => {
-                // Partially duplicated on quick open entry to capture Escape
-                // during CAPTURE phasee when buffering enabled.
-                if (this.quick_open_enabled) {
-                    this.quick_open_enabled = false;
-                    return true;
-                }
                 if (this.path_bar.editing) {
                     this.path_bar.editing = false;
                     return true;
@@ -319,12 +313,43 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
     private unowned Brk.ButtonGroup quick_open_button_group;
 
     [GtkChild]
-    private unowned Brk.QuickOpenEntry quick_open_entry;
+    private unowned Brk.Entry quick_open_entry;
 
     private void
     quick_open_init() {
-        this.quick_open_entry.file_activated.connect((fileinfo) => {
-            this.open_fileinfo(fileinfo);
+        var factory = new Gtk.SignalListItemFactory();
+        factory.setup.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+
+            var box = new Gtk.Box(HORIZONTAL, 6);
+            box.append(new Brk.FileThumbnail());
+
+            var label = new Gtk.Label("");
+            label.halign = START;
+            box.append(label);
+
+            listitem.child = box;
+        });
+        factory.bind.connect((listitem_) => {
+            var listitem = (Gtk.ListItem) listitem_;
+            var box = (Gtk.Box) listitem.child;
+            var thumbnail = (Brk.FileThumbnail) box.get_first_child();
+            var label = (Gtk.Label) box.get_last_child();
+            var fileinfo = (GLib.FileInfo) listitem.item;
+
+            thumbnail.fileinfo = fileinfo;
+            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
+        });
+        this.quick_open_entry.completion_factory = factory;
+
+        var search_model = new Brk.QuickOpenSearchModel();
+        this.quick_open_entry.completion_model = search_model;
+
+        this.quick_open_entry.completion_activate.connect((fileinfo) => {
+            this.open_fileinfo((GLib.FileInfo) fileinfo);
+        });
+        this.quick_open_entry.completion_dismiss.connect(() => {
+            this.quick_open_enabled = false;
         });
 
         this.notify["quick-open-enabled"].connect((v, pspec) => {
@@ -348,9 +373,9 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
             this.quick_open_enabled = false;
         });
 
-        this.bind_property("root-directory", this.quick_open_entry, "root-directory", SYNC_CREATE);
-        this.bind_property("show-binary", this.quick_open_entry, "show-binary", SYNC_CREATE);
-        this.bind_property("show-hidden", this.quick_open_entry, "show-hidden", SYNC_CREATE);
+        this.bind_property("root-directory", search_model, "root-directory", SYNC_CREATE);
+        this.bind_property("show-binary", search_model, "show-binary", SYNC_CREATE);
+        this.bind_property("show-hidden", search_model, "show-hidden", SYNC_CREATE);
 
         this.notify["focus-widget"].connect(() => {
             if (!this.quick_open_enabled) {
@@ -1011,7 +1036,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     class construct {
         typeof (Brk.FileDialogPathBar).ensure();
-        typeof (Brk.QuickOpenEntry).ensure();
+        typeof (Brk.Entry).ensure();
         typeof (Brk.FileDialogTreeView).ensure();
     }
 

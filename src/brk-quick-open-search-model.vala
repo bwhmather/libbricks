@@ -184,24 +184,40 @@ private bool match_subquery(
     }
 }
 
-[GtkTemplate (ui = "/com/bwhmather/Bricks/ui/brk-quick-open-entry.ui")]
-internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
+internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Brk.SearchModel, Brk.AsyncSearchModel {
 
     /* === State ============================================================ */
-
-    public string text { get; set; default = ""; }
 
     public GLib.File? root_directory { get; set; default = null; }
     public bool show_binary { get; set; }
     public bool show_hidden { get; set; }
 
-    public bool loading { get; private set; default = false; }
-    public GLib.FileInfo? selection { get { return this.selection_model.selected_item as GLib.FileInfo?; }}
+    /* === Search Model Interface =========================================== */
 
-    /* === Model ============================================================ */
+    public string? search { get; set; default = ""; }
+
+    public bool loading { get; protected set; }
+
+    /* === List Model Interface ============================================= */
 
     private GLib.ListStore list_store;
-    private Gtk.SingleSelection selection_model;
+
+    public GLib.Object?
+    get_item(uint position) {
+        return this.list_store.get_item(position);
+    }
+
+    public GLib.Type
+    get_item_type() {
+        return typeof(GLib.FileInfo);
+    }
+
+    public uint
+    get_n_items() {
+        return this.list_store.get_n_items();
+    }
+
+    /* === Query ============================================================ */
 
     private QueryStackEntry[] query_stack = null;
     private void
@@ -221,7 +237,7 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         //     and no further changes must be made if set.
         try {
             GLib.File? root = this.root_directory;
-            string query = this.text;
+            string query = this.search;
             bool show_binary = this.show_binary;
             bool show_hidden = this.show_hidden;
 
@@ -244,7 +260,6 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             if (root == null) {
                 this.query_stack_truncate(0);
                 this.list_store.remove_all();
-                this.selection_model.selected = 0;
                 return;
             }
 
@@ -453,7 +468,6 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             // derived from a different query.
             this.query_stack_truncate(n + 1);
             this.list_store.splice(0, this.list_store.get_n_items(), this.query_stack[n].matches);
-            this.selection_model.selected = 0;
             this.loading = false;
 
         } catch (GLib.IOError.CANCELLED _) {
@@ -465,8 +479,7 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         } catch {
             this.query_stack_truncate(0);
             this.list_store.remove_all();
-            this.selection_model.selected = 0;
-            this.loading = false;
+            this.loading =false;
             // TODO
             return;
         }
@@ -480,9 +493,8 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             this.query_cancellable = null;
         }
 
-        if (!this.get_mapped() || this.root_directory == null || this.text == "") {
+        if (this.root_directory == null || this.search == null) {
             this.list_store.remove_all();
-            this.selection_model.selected = 0;
             this.loading = false;
             return;
         }
@@ -493,19 +505,19 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
         });
     }
 
-    private void
-    model_init() {
+    /* === Lifecycle ======================================================== */
+
+    construct {
         this.list_store = new GLib.ListStore(typeof(GLib.FileInfo));
-        this.selection_model = new Gtk.SingleSelection(this.list_store);
-        this.selection_model.notify["selected-item"].connect((sm, pspec) => {
-            this.notify_property("selection");
+        this.list_store.items_changed.connect((position, removed, added) => {
+            this.items_changed(position, removed, added);
         });
 
         this.notify["root-directory"].connect((fv, pspec) => {
             this.query_stack_truncate(0);
             this.update();
         });
-        this.notify["text"].connect((fv, pspec) => {
+        this.notify["search"].connect((fv, pspec) => {
             this.update();
         });
         this.notify["show-binary"].connect((fv, pspec) => {
@@ -516,243 +528,14 @@ internal sealed class Brk.QuickOpenEntry : Gtk.Widget {
             this.query_stack_truncate(0);
             this.update();
         });
-        this.map.connect(() => {
-            this.update();
-        });
-        this.unmap.connect(() => {
-            this.update();
-        });
-        this.update();
-    }
-
-    /* === Text Entry ======================================================= */
-
-    [GtkChild]
-    private unowned Gtk.Text text_input;
-
-    public unowned Gtk.Widget get_delegate() {
-        return this.text_input;
-    }
-
-    public bool grab_focus_without_selecting() {
-        return this.text_input.grab_focus_without_selecting();
-    }
-
-    // Keyboard input on the text entry can be handled asnychronously if the
-    // view is still catching up.  Navigation (using up and down keys  before
-    // the entry is submitted is buffered manually here.  Everything after the
-    // entry is submitted is buffered using a Gtk.EventControllerBuffer.  Input
-    // anywhere else is handled synchronously and ignores these two mechanisms.
-    private int[] navigate = null;
-    private bool submit = false;
-
-    private void
-    clear_commands() {
-        this.navigate = null;
-        this.submit = false;
-    }
-
-    private void
-    play_commands() {
-        return_if_fail(!this.loading);
-
-        foreach (int step in this.navigate) {
-            while (step < 0) {
-                if (this.selection_model.selected > 0) {
-                    this.selection_model.selected -= 1;
-                }
-                step += 1;
-            }
-            while (step > 0) {
-                if (this.selection_model.selected + 1 < this.list_store.get_n_items()) {
-                    this.selection_model.selected += 1;
-                }
-                step -= 1;
-            }
-        }
-        if (this.submit) {
-            var fileinfo = this.selection;
-            if (fileinfo != null) {
-                this.file_activated(fileinfo);
-            }
-        }
-
-        this.navigate = null;
-        this.submit = false;
-    }
-
-    private void
-    text_input_init() {
-        var buffer_controller = new Gtk.EventControllerBuffer();
-        buffer_controller.propagation_phase = CAPTURE;
-        buffer_controller.discarded.connect(() => {
-            // Queued commands are effectively the same as buffered input.
-            // If we lose the input buffer then commands should also be dropped.
-            this.clear_commands();
-        });
-
-        var cancel_controller = new Gtk.ShortcutController();
-        cancel_controller.propagation_phase = CAPTURE;
-        cancel_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Escape"),
-            new Gtk.CallbackAction(() => {
-                // This shortcut controller is only installed so that we can
-                // bypass the keyboard buffer and cancel a long running query
-                // without having to wait until it finishes.  Usually we want
-                // to wait until BUBBLE so that the input method can get a
-                // chance to consume it first.
-                if (buffer_controller.enabled) {
-                    this.text = "";
-                    return true;
-                }
-                return false;
-            })
-        ));
-
-        var shortcut_controller = new Gtk.ShortcutController();
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Up"),
-            new Gtk.CallbackAction(() => {
-                return_val_if_fail(!this.submit, false);  // Should be caught by buffer.
-                this.navigate += -1;
-                if (!this.loading) {
-                    this.play_commands();
-                }
-                return true;
-            })
-        ));
-        shortcut_controller.add_shortcut(new Gtk.Shortcut(
-            Gtk.ShortcutTrigger.parse_string("Down"),
-            new Gtk.CallbackAction(() => {
-                return_val_if_fail(!this.submit, false);  // Should be caught by buffer.
-                this.navigate += 1;
-                if (!this.loading) {
-                    this.play_commands();
-                }
-                return true;
-            })
-        ));
-
-        // The order here is important.  The cancel controller must be able to
-        // intercept events before they are buffered.  The shortcut controller
-        // must not receive events until after they are released.
-        this.text_input.add_controller(cancel_controller);
-        this.text_input.add_controller(buffer_controller);
-        this.text_input.add_controller(shortcut_controller);
-
-        this.notify["loading"].connect((_, pspec) => {
-            if (!this.loading) {
-                this.play_commands();
-                buffer_controller.replay();
-            }
-        });
-
-        this.text_input.activate.connect(() => {
-            return_if_fail(!this.submit);  // Should be caught by buffer.
-            this.submit = true;
-            if (this.loading) {
-                buffer_controller.enable();
-            } else {
-                this.play_commands();
-                buffer_controller.replay();
-            }
-        });
-
-        this.bind_property("text", this.text_input, "text", SYNC_CREATE | BIDIRECTIONAL);
-        this.text_input.notify["text"].connect((fe, pspec) => {
-            // Buffered keyboard events will have happened before whatever
-            // changed the entry (for example, a careful middle click paste)
-            // and so can't be replayed after.
-            buffer_controller.discard();
-        });
-        this.text_input.notify["cursor-position"].connect((_, pspec) => {
-            // Likewise, replaying events after moving the cursor would cause
-            // text to be entered in the wrong place.
-            buffer_controller.discard();
-        });
-    }
-
-    /* === Popover ========================================================== */
-
-    [GtkChild]
-    private unowned Gtk.Popover popover;
-
-    [GtkChild]
-    private unowned Gtk.ListView list_view;
-
-    public signal void file_activated(GLib.FileInfo fileinfo);
-
-    private void
-    popover_init() {
-        var factory = new Gtk.SignalListItemFactory();
-        factory.setup.connect((listitem_) => {
-            var listitem = (Gtk.ListItem) listitem_;
-
-            var box = new Gtk.Box(HORIZONTAL, 6);
-            box.append(new Brk.FileThumbnail());
-
-            var label = new Gtk.Label("");
-            label.halign = START;
-            box.append(label);
-
-            listitem.child = box;
-        });
-        factory.bind.connect((listitem_) => {
-            var listitem = (Gtk.ListItem) listitem_;
-            var box = (Gtk.Box) listitem.child;
-            var thumbnail = (Brk.FileThumbnail) box.get_first_child();
-            var label = (Gtk.Label) box.get_last_child();
-            var fileinfo = (GLib.FileInfo) listitem.item;
-
-            thumbnail.fileinfo = fileinfo;
-            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
-        });
-        this.list_view.factory = factory;
-        this.list_view.model = this.selection_model;
-
-        this.notify["text"].connect((_, pspec) => {
-            if (this.text != "") {
-                this.popover.popup();
-            } else {
-                this.popover.popdown();
-            }
-        });
-
-        var focus_controller = new Gtk.EventControllerFocus();
-        focus_controller.enter.connect(() => {
-            if (this.text != "") {
-                this.popover.popup();
-            }
-        });
-        focus_controller.leave.connect(() => {
-            this.popover.popdown();
-        });
-        this.add_controller(focus_controller);
-
-        var key_controller = new Gtk.EventControllerKey();
-        key_controller.propagation_phase = BUBBLE;
-        key_controller.key_pressed.connect((controller, keyval, keycode, modifiers) => {
-            return key_controller.forward(this.text_input);
-        });
-        ((Gtk.Widget) this.popover).add_controller(key_controller);
-    }
-
-    /* === Lifecycle ======================================================== */
-
-    class construct {
-        set_layout_manager_type(typeof (Gtk.BoxLayout));
-        set_css_name("entry");
-    }
-
-    construct {
-        this.model_init();
-        this.text_input_init();
-        this.popover_init();
     }
 
     public override void
     dispose() {
-        this.dispose_template(typeof(Brk.QuickOpenEntry));
+        if (this.query_cancellable != null) {
+            this.query_cancellable.cancel();
+            this.query_cancellable = null;
+        }
         base.dispose();
     }
 }

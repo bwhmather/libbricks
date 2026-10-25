@@ -110,7 +110,7 @@ sources = [
     'src/brk-file-thumbnail.vala',
     'src/brk-path-bar.vala',
     'src/brk-preferences.vala',
-    'src/brk-quick-open-entry.vala',
+    'src/brk-quick-open-search-model.vala',
     'src/brk-search-model.vala',
     'src/brk-statusbar.vala',
     'src/brk-style-manager.vala',
