@@ -468,7 +468,7 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_invalidate() {
-        if (this.completion_model != null) {
+        if (this.completion_model != null && this.completion_popover == null) {
             this.completion_init_view();
             this.completion_init_keyboard();
         }
