@@ -201,6 +201,11 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.completion_update_search();
         this.completion_selection_model.model = this.completion_search_model;
 
+        // SELECT completion mode requires a selection.  COMPLETE just provides
+        // the option to complete.
+        this.completion_selection_model.autoselect = this.completion_mode == SELECT;
+        this.completion_selection_model.can_unselect = this.completion_mode != SELECT;
+
         // Initialise list item factory.
         if (this.completion_factory != null) {
             this.completion_list_view.factory = this.completion_factory;
