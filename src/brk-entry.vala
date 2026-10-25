@@ -37,7 +37,7 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
 
     /* === Search Model Interface =========================================== */
 
-    public string? search { get; set; default = ""; }
+    public string? search { get; set; default = null; }
 
     /* === List Model Interface ============================================= */
 
@@ -148,10 +148,26 @@ public sealed class Brk.Entry : Gtk.Widget {
     private GLib.Binding? completion_search_binding;
 
     private void
+    completion_update_search() {
+        if (this.completion_search_model == null) {
+            return;
+        }
+        var text = this.text_input.text;
+        if (text.char_count() >= this.completion_minimum_key_length) {
+            this.completion_search_model.search = text;
+        } else {
+            this.completion_search_model.search = null;
+        }
+    }
+
+    private void
     completion_rebuild_state() {
         // Tear down previous completion setups.
         if (this.completion_popover != null) {
             this.completion_selection_model.model = null;
+        }
+        if (this.completion_search_model != null) {
+            this.completion_search_model.search = null;
         }
         this.completion_search_model = null;
         this.completion_search_binding?.unbind();
@@ -176,6 +192,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 expression = expression
             };
         }
+        this.completion_update_search();
         this.completion_selection_model.model = this.completion_search_model;
 
         // Initialise list item factory.
@@ -431,15 +448,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         });
 
         this.text_input.notify["text"].connect((fe, pspec) => {
-            if (this.completion_search_model == null) {
-                return;
-            }
-            var text = text_input.text;
-            if (text.length >= this.completion_minimum_key_length) {
-                this.completion_search_model.search = text;
-            } else {
-                this.completion_search_model.search = null;
-            }
+            this.completion_update_search();
         });
     }
 
