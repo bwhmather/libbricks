@@ -5,6 +5,9 @@
  */
 
 public interface Brk.SearchModel : GLib.ListModel {
-    public abstract string search { get; set; default = ""; }
-    public abstract bool loading { get; default = false; }
+    public abstract string? search { get; set; }
+}
+
+public interface Brk.AsyncSearchModel : Brk.SearchModel {
+    public abstract bool loading { get; }
 }

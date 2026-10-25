@@ -16,7 +16,7 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
 
     /* === Search Model Interface =========================================== */
 
-    public string search { get; set; default = ""; }
+    public string? search { get; set; default = ""; }
     public bool loading { get { return false; } }
 
     /* === List Model Interface ============================================= */
