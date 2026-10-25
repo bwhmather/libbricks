@@ -148,13 +148,14 @@ public sealed class Brk.Entry : Gtk.Widget {
     private GLib.Binding? completion_search_binding;
 
     private void
-    completion_rebuild() {
+    completion_rebuild_state() {
         // Tear down previous completion setups.
         if (this.completion_popover != null) {
-            this.completion_search_binding?.unbind();
-            this.completion_search_binding = null;
             this.completion_selection_model.model = null;
         }
+        this.completion_search_model = null;
+        this.completion_search_binding?.unbind();
+        this.completion_search_binding = null;
 
         // Early return if anything missing.
         if (this.completion_model == null) {
@@ -201,7 +202,13 @@ public sealed class Brk.Entry : Gtk.Widget {
         }
     }
 
-    /* --- Completion Widget State ------------------------------------------ */
+    private void
+    completion_dispose_state() {
+        this.completion_search_binding?.unbind();
+        this.completion_search_binding = null;
+    }
+
+    /* --- Completion View State -------------------------------------------- */
 
     // Common completion state.  Scoped from the first point at which the search
     // model becomes valid to dispose.
@@ -210,49 +217,8 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.SingleSelection? completion_selection_model;
     private Gtk.EventControllerFocus? completion_focus_controller;
 
-    // Keyboard input on the text entry can be handled asnychronously if the
-    // view is still catching up.  Navigation (using up and down keys  before
-    // the entry is submitted is buffered manually here.  Everything after the
-    // entry is submitted is buffered using a Gtk.EventControllerBuffer.  Input
-    // anywhere else is handled synchronously and ignores these two mechanisms.
-    private int[] completion_navigate = null;
-    private bool completion_submit = false;
-
     private void
-    completion_clear_commands() {
-        this.completion_navigate = null;
-        this.completion_submit = false;
-    }
-
-    private void
-    completion_play_commands() {
-        return_if_fail(!this.completion_loading);
-
-        foreach (int step in this.completion_navigate) {
-            var selection_model = this.completion_selection_model;
-            while (step < 0) {
-                if (selection_model.selected > 0) {
-                    selection_model.selected -= 1;
-                }
-                step += 1;
-            }
-            while (step > 0) {
-                if (selection_model.selected + 1 < selection_model.get_n_items()) {
-                    selection_model.selected += 1;
-                }
-                step -= 1;
-            }
-        }
-        if (this.completion_submit) {
-            this.completion_accept();
-        }
-
-        this.completion_navigate = null;
-        this.completion_submit = false;
-    }
-
-    private void
-    completion_init_widgets() {
+    completion_init_view() {
         if (this.completion_popover != null) {
             return;
         }
@@ -308,7 +274,65 @@ public sealed class Brk.Entry : Gtk.Widget {
             }
         });
         this.add_controller(this.completion_focus_controller);
+    }
 
+    private void
+    completion_dispose_view() {
+        if (completion_popover != null) {
+            this.remove_controller(this.completion_focus_controller);
+            this.completion_focus_controller = null;
+            this.completion_list_view = null;
+            this.completion_selection_model = null;
+            this.completion_popover.unparent();
+            this.completion_popover = null;
+        }
+    }
+
+    /* --- Completion Keyboard Interaction ---------------------------------- */
+
+    // Keyboard input on the text entry can be handled asnychronously if the
+    // view is still catching up.  Navigation (using up and down keys  before
+    // the entry is submitted is buffered manually here.  Everything after the
+    // entry is submitted is buffered using a Gtk.EventControllerBuffer.  Input
+    // anywhere else is handled synchronously and ignores these two mechanisms.
+    private int[] completion_navigate = null;
+    private bool completion_submit = false;
+
+    private void
+    completion_clear_commands() {
+        this.completion_navigate = null;
+        this.completion_submit = false;
+    }
+
+    private void
+    completion_play_commands() {
+        return_if_fail(!this.completion_loading);
+
+        foreach (int step in this.completion_navigate) {
+            var selection_model = this.completion_selection_model;
+            while (step < 0) {
+                if (selection_model.selected > 0) {
+                    selection_model.selected -= 1;
+                }
+                step += 1;
+            }
+            while (step > 0) {
+                if (selection_model.selected + 1 < selection_model.get_n_items()) {
+                    selection_model.selected += 1;
+                }
+                step -= 1;
+            }
+        }
+        if (this.completion_submit) {
+            this.completion_accept();
+        }
+
+        this.completion_navigate = null;
+        this.completion_submit = false;
+    }
+
+    private void
+    completion_init_keyboard() {
         var buffer_controller = new Gtk.EventControllerBuffer();
         buffer_controller.propagation_phase = CAPTURE;
         buffer_controller.discarded.connect(() => {
@@ -420,6 +444,11 @@ public sealed class Brk.Entry : Gtk.Widget {
     }
 
     private void
+    completion_dispose_keyboard() {
+
+    }
+
+    private void
     completion_clear() {
         this.completion_popover.popdown();
     }
@@ -435,16 +464,19 @@ public sealed class Brk.Entry : Gtk.Widget {
         // Activate (if configured)
     }
 
+    /* --- Completion Lifecycle --------------------------------------------- */
+
     private void
     completion_invalidate() {
         if (this.completion_model != null) {
-            this.completion_init_widgets();
+            this.completion_init_view();
+            this.completion_init_keyboard();
         }
 
         // Defer until first map so that properties set during construction
         // result in a single rebuild.
         if (this.get_mapped()) {
-            this.completion_rebuild();
+            this.completion_rebuild_state();
             this.completion_needs_rebuild = false;
         } else {
             this.completion_needs_rebuild = true;
@@ -457,10 +489,13 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.notify["completion-model"].connect(this.completion_invalidate);
         this.notify["completion-factory"].connect(this.completion_invalidate);
         this.notify["completion-expression"].connect(this.completion_invalidate);
+        this.notify["completion-minimum-key-length"].connect(this.completion_invalidate);
+        this.notify["completion-mode"].connect(this.completion_invalidate);
+        this.notify["completion-inline"].connect(this.completion_invalidate);
 
         this.map.connect(() => {
             if (this.completion_needs_rebuild) {
-                this.completion_rebuild();
+                this.completion_rebuild_state();
                 this.completion_needs_rebuild = false;
             }
         });
@@ -469,17 +504,9 @@ public sealed class Brk.Entry : Gtk.Widget {
     private void
     completion_dispose() {
         this.completion_needs_rebuild = false;
-        this.completion_search_binding?.unbind();
-        this.completion_search_binding = null;
-
-        if (completion_popover != null) {
-            this.remove_controller(this.completion_focus_controller);
-            this.completion_focus_controller = null;
-            this.completion_list_view = null;
-            this.completion_selection_model = null;
-            this.completion_popover.unparent();
-            this.completion_popover = null;
-        }
+        this.completion_dispose_state();
+        this.completion_dispose_keyboard();
+        this.completion_dispose_view();
     }
 
     /* === Text Entry ======================================================= */
