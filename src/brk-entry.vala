@@ -256,7 +256,6 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.completion_selection_model.items_changed.connect(() => {
             if (
                 this.completion_focus_controller.contains_focus &&
-                this.text.length > 0 &&
                 this.completion_selection_model.get_n_items() > 0
             ) {
                 this.completion_popover.popup();
