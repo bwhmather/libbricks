@@ -46,6 +46,11 @@ get_category_from_content_type(string content_type) {
     }
 }
 
+private string?
+quick_open_get_query_text(GLib.FileInfo fileinfo) {
+    return fileinfo.get_attribute_string("bricks::query-text");
+}
+
 private void
 selection_model_set_selection(Gtk.SelectionModel model, Gtk.Bitset selected, Gtk.Bitset mask) {
     if (model.set_selection(selected, mask)) {
@@ -317,6 +322,10 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
 
     private void
     quick_open_init() {
+        this.quick_open_entry.completion_expression = new Gtk.CClosureExpression(
+            typeof(string), null, {}, (GLib.Callback) quick_open_get_query_text, null, null
+        );
+
         var factory = new Gtk.SignalListItemFactory();
         factory.setup.connect((listitem_) => {
             var listitem = (Gtk.ListItem) listitem_;
