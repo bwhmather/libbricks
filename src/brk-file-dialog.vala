@@ -338,7 +338,7 @@ private sealed class Brk.FileDialogWindow : Gtk.Window {
             var fileinfo = (GLib.FileInfo) listitem.item;
 
             thumbnail.fileinfo = fileinfo;
-            label.set_markup(fileinfo.get_attribute_string("bricks::markup"));
+            label.set_markup(fileinfo.get_attribute_string("bricks::query-markup"));
         });
         this.quick_open_entry.completion_factory = factory;
 

@@ -51,7 +51,9 @@ private void append_escaped(GLib.StringBuilder str, unichar chr) {
 }
 
 private bool match_subquery(
-    string subquery, string name, GLib.StringBuilder markup, out uint64 quality
+    string subquery, string name,
+    GLib.StringBuilder markup, GLib.StringBuilder text,
+    out uint64 quality
 ) {
     bool bold = false;
     unowned string query_cursor;
@@ -163,6 +165,7 @@ private bool match_subquery(
             }
 
             append_escaped(markup, name_cursor.get_char());
+            text.append_unichar(name_cursor.get_char());
 
             name_cursor = name_cursor.next_char();
             quality_cursor ++;
@@ -277,9 +280,11 @@ internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Br
                 rootinfo.set_attribute_object("standard::file", root);
 
                 if (subquery == null) {
-                    rootinfo.set_attribute_string("bricks::markup", "");
+                    rootinfo.set_attribute_string("bricks::query-markup", "");
+                    rootinfo.set_attribute_string("bricks::query-text", "");
                 } else {
-                    rootinfo.set_attribute_string("bricks::markup", GLib.Markup.printf_escaped("<b>%s</b>", subquery));
+                    rootinfo.set_attribute_string("bricks::query-markup", GLib.Markup.printf_escaped("<b>%s</b>", subquery));
+                    rootinfo.set_attribute_string("bricks::query-text", subquery);
                 }
 
                 this.query_stack.resize(n + 1);
@@ -288,6 +293,7 @@ internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Br
             }
 
             var markup = new GLib.StringBuilder();
+            var text = new GLib.StringBuilder();
             bool done = false;
             while (!done) {
                 n += 1;
@@ -339,9 +345,18 @@ internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Br
                         parentinfo.set_attribute_object("standard::file", parent);
 
                         markup.truncate(0);
-                        markup.append(matchinfo.get_attribute_string("bricks::markup"));
-                        markup.append(markup.len > 0 ? "<b>/..</b>" : "<b>..</b>");
-                        parentinfo.set_attribute_string("bricks::markup", markup.str);
+                        markup.append(matchinfo.get_attribute_string("bricks::query-markup"));
+                        text.truncate(0);
+                        text.append(matchinfo.get_attribute_string("bricks::query-text"));
+                        if (markup.len > 0) {
+                            markup.append("<b>/..</b>");
+                            text.append("/..");
+                        } else {
+                            markup.append("<b>..</b>");
+                            text.append("..");
+                        }
+                        parentinfo.set_attribute_string("bricks::query-markup", markup.str);
+                        parentinfo.set_attribute_string("bricks::query-text", text.str);
 
                         matches += parentinfo;
                         last_parent = parent;
@@ -407,28 +422,32 @@ internal sealed class Brk.QuickOpenSearchModel : GLib.Object, GLib.ListModel, Br
                     var file = candidate.get_attribute_object("standard::file") as GLib.File;
 
                     markup.truncate(0);
+                    text.truncate(0);
                     while (true) {
                         var parentinfo = this.query_stack[n - 1].matches[parent_index];
                         var parentfile = parentinfo.get_attribute_object("standard::file") as GLib.File;
                         if (parentfile.equal(file.get_parent())) {
-                            markup.append(parentinfo.get_attribute_string("bricks::markup"));
+                            markup.append(parentinfo.get_attribute_string("bricks::query-markup"));
+                            text.append(parentinfo.get_attribute_string("bricks::query-text"));
                             break;
                         }
                         parent_index++;
                     }
                     if (markup.len > 0) {
                         markup.append("<b>/</b>");
+                        text.append("/");
                     }
 
                     string name = candidate.get_name();
                     uint64 quality = 0;
-                    if (!match_subquery(subquery, name, markup, out quality)) {
+                    if (!match_subquery(subquery, name, markup, text, out quality)) {
                         continue;
                     }
 
                     // We need to dup in order to invalidate the list view items.
                     var match = candidate.dup();
-                    match.set_attribute_string("bricks::markup", markup.str);
+                    match.set_attribute_string("bricks::query-markup", markup.str);
+                    match.set_attribute_string("bricks::query-text", text.str);
                     match.set_attribute_uint64("bricks::quality", quality);
 
                     matches += match;
