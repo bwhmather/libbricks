@@ -476,13 +476,22 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_accept() {
-        // If selection:  use it.
+        var selection = this.completion_selection_model.selected_item;
+        if (selection != null) {
+            this.completion_activate(selection);
 
-        // Otherwise use common prefix.
+            var expression = this.completion_expression;
+            if (expression == null) {
+                expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
+            }
+            var text_value = new GLib.Value(typeof(string));
+            expression.evaluate(selection, ref text_value);
+            this.text = text_value.get_string();
+        } else {
+            // TODO use common prefix.
+        }
 
-        // Close the popover.
-
-        // Activate (if configured)
+        this.completion_popover.popdown();
     }
 
     /* --- Completion Lifecycle --------------------------------------------- */
