@@ -1,0 +1,12 @@
+- [ ] Forward keystrokes (and focus) from popover to text entry.
+- [ ] Figure out how to disable buffer (and incremental mode in filter) if not using forked gtk.
+
+- [ ] Completion mode COMPLETION:
+  - [ ] Wrap selection to include no selection.
+  - [ ] Inline completion shows longest common prefix.
+  - [ ] Selection optional.
+- [ ] Completion model ACTIVATE:
+  - [ ] Don't wrap selection.
+  - [ ] Inline completion shows selected.
+  - [ ] `completion_activate signal`
+- [ ] Show loading spinner.

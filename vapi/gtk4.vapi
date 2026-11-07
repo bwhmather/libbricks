@@ -6638,6 +6638,9 @@ namespace Gdk {
 	[Version (since = "4.24")]
 	public static unowned uint[]? keyval_get_aliases (uint keyval);
 	[CCode (cheader_filename = "gdk/gdk.h")]
+	[Version (since = "4.26")]
+	public static bool keyval_is_alias (uint keyval_a, uint keyval_b);
+	[CCode (cheader_filename = "gdk/gdk.h")]
 	public static bool keyval_is_lower (uint keyval);
 	[CCode (cheader_filename = "gdk/gdk.h")]
 	public static bool keyval_is_upper (uint keyval);
@@ -6682,7 +6685,10 @@ namespace Gsk {
 	public sealed class BlurNode : Gsk.RenderNode {
 		[CCode (has_construct_function = false)]
 		public BlurNode (Gsk.RenderNode child, float radius);
+		[Version (since = "4.26")]
+		public unowned Graphene.Size? get_blur_radius ();
 		public unowned Gsk.RenderNode get_child ();
+		[Version (deprecated = true, deprecated_since = "4.26")]
 		public float get_radius ();
 	}
 	[CCode (cheader_filename = "gsk/gsk.h", cname = "GskRenderNode", type_id = "gsk_border_node_get_type ()")]
@@ -6764,6 +6770,8 @@ namespace Gsk {
 		[CCode (has_construct_function = false)]
 		public ComponentTransferNode (Gsk.RenderNode child, Gsk.ComponentTransfer r, Gsk.ComponentTransfer g, Gsk.ComponentTransfer b, Gsk.ComponentTransfer a);
 		public unowned Gsk.RenderNode get_child ();
+		[Version (since = "4.26")]
+		public Gsk.RectSnap get_snap ();
 		public unowned Gsk.ComponentTransfer get_transfer (Gdk.ColorChannel component);
 	}
 	[CCode (cheader_filename = "gsk/gsk.h", cname = "GskRenderNode", type_id = "gsk_composite_node_get_type ()")]
@@ -6975,6 +6983,8 @@ namespace Gsk {
 		public bool get_stroke_bounds (Gsk.Stroke stroke, out Graphene.Rect bounds);
 		[Version (since = "4.22")]
 		public bool get_tight_bounds (out Graphene.Rect bounds);
+		[Version (since = "4.26")]
+		public uint hash ();
 		public bool in_fill (Graphene.Point point, Gsk.FillRule fill_rule);
 		public bool is_closed ();
 		public bool is_empty ();
@@ -6983,6 +6993,8 @@ namespace Gsk {
 		public unowned Gsk.Path @ref ();
 		public void to_cairo (Cairo.Context cr);
 		public string to_string ();
+		[Version (since = "4.26")]
+		public bool translatable (Gsk.Path path2);
 		public void unref ();
 	}
 	[CCode (cheader_filename = "gsk/gsk.h", ref_function = "gsk_path_builder_ref", type_id = "gsk_path_builder_get_type ()", unref_function = "gsk_path_builder_unref")]
@@ -9675,6 +9687,7 @@ namespace Gtk {
 		public EventControllerBuffer ();
 		public void discard ();
 		public void enable ();
+		public void enable_from (Gdk.Event event);
 		public bool get_enabled ();
 		public void replay ();
 		public bool enabled { get; }
@@ -9991,7 +10004,7 @@ namespace Gtk {
 		[CCode (has_construct_function = false)]
 		protected FixedLayoutChild ();
 		public unowned Gsk.Transform? get_transform ();
-		public void set_transform (Gsk.Transform transform);
+		public void set_transform (Gsk.Transform? transform);
 		public Gsk.Transform transform { get; set; }
 	}
 	[CCode (cheader_filename = "gtk/gtk.h", type_id = "gtk_flatten_list_model_get_type ()")]
@@ -10450,6 +10463,8 @@ namespace Gtk {
 		public GridView (owned Gtk.SelectionModel? model, owned Gtk.ListItemFactory? factory);
 		public bool get_enable_rubberband ();
 		public unowned Gtk.ListItemFactory? get_factory ();
+		[Version (since = "4.26")]
+		public unowned Gtk.ListItemFactory? get_header_factory ();
 		public uint get_max_columns ();
 		public uint get_min_columns ();
 		public unowned Gtk.SelectionModel? get_model ();
@@ -10460,6 +10475,8 @@ namespace Gtk {
 		public void scroll_to (uint pos, Gtk.ListScrollFlags flags, owned Gtk.ScrollInfo? scroll);
 		public void set_enable_rubberband (bool enable_rubberband);
 		public void set_factory (Gtk.ListItemFactory? factory);
+		[Version (since = "4.26")]
+		public void set_header_factory (Gtk.ListItemFactory? factory);
 		public void set_max_columns (uint max_columns);
 		public void set_min_columns (uint min_columns);
 		public void set_model (Gtk.SelectionModel? model);
@@ -10468,6 +10485,8 @@ namespace Gtk {
 		public void set_tab_behavior (Gtk.ListTabBehavior tab_behavior);
 		public bool enable_rubberband { get; set; }
 		public Gtk.ListItemFactory factory { get; set; }
+		[Version (since = "4.26")]
+		public Gtk.ListItemFactory header_factory { get; set; }
 		public uint max_columns { get; set; }
 		public uint min_columns { get; set; }
 		public Gtk.SelectionModel model { get; set; }
@@ -12521,6 +12540,9 @@ namespace Gtk {
 		public static unowned Gtk.Settings get_for_display (Gdk.Display display);
 		public void reset_property (string name);
 		[NoAccessorMethod]
+		[Version (since = "4.24")]
+		public Gdk.RGBA gtk_accent_color { owned get; set; }
+		[NoAccessorMethod]
 		public bool gtk_alternative_button_order { get; set; }
 		[NoAccessorMethod]
 		public bool gtk_alternative_sort_arrows { get; set; }
@@ -12589,6 +12611,7 @@ namespace Gtk {
 		[Version (since = "4.22")]
 		public Gtk.ReducedMotion gtk_interface_reduced_motion { get; set; }
 		[NoAccessorMethod]
+		[Version (since = "4.24")]
 		public int gtk_keyboard_focus_visible_timeout { get; set; }
 		[NoAccessorMethod]
 		public bool gtk_keynav_use_caret { get; set; }
@@ -15463,6 +15486,8 @@ namespace Gtk {
 		public void forward_to_end ();
 		public bool forward_to_line_end ();
 		public bool forward_to_tag_toggle (Gtk.TextTag? tag);
+		[Version (since = "4.26")]
+		public bool forward_to_tag_toggle_with_limit (Gtk.TextTag? tag, Gtk.TextIter? limit);
 		public bool forward_visible_cursor_position ();
 		public bool forward_visible_cursor_positions (int count);
 		public bool forward_visible_line ();
@@ -15934,7 +15959,11 @@ namespace Gtk {
 		[Version (since = "4.22")]
 		SESSION,
 		[Version (since = "4.24")]
-		GENERAL_INFO
+		GENERAL_INFO,
+		[Version (since = "4.26")]
+		SVG_ERRORS,
+		[Version (since = "4.26")]
+		SVG_CONTINUOUS
 	}
 	[CCode (cheader_filename = "gtk/gtk.h", cprefix = "GTK_DELETE_", type_id = "gtk_delete_type_get_type ()")]
 	public enum DeleteType {
@@ -17236,10 +17265,8 @@ namespace Gtk {
 	[Version (replacement = "DialogError.quark")]
 	public static GLib.Quark dialog_error_quark ();
 	[CCode (cheader_filename = "gtk/gtk.h")]
-	[Version (since = "4.22")]
-	public static void disable_portal_interfaces ([CCode (array_length = false, array_null_terminated = true)] string[] portal_interfaces);
+	public static void disable_portal_interfaces (string portal_interfaces);
 	[CCode (cheader_filename = "gtk/gtk.h")]
-	[Version (since = "4.18")]
 	public static void disable_portals ();
 	[CCode (cheader_filename = "gtk/gtk.h")]
 	public static void disable_setlocale ();
