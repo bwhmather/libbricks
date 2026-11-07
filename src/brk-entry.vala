@@ -432,9 +432,6 @@ public sealed class Brk.Entry : Gtk.Widget {
         ));
         this.text_input.add_controller(shortcut_controller);
 
-        this.text_input.activate.connect(() => {
-            this.completion_accept();
-        });
         this.text_input.notify["text"].connect((fe, pspec) => {
             this.completion_update_search();
         });
@@ -450,24 +447,34 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.completion_popover.popdown();
     }
 
-    private void
+    private bool
     completion_accept() {
-        var selection = this.completion_selection_model.selected_item;
-        if (selection != null) {
-            this.completion_activate(selection);
-
-            var expression = this.completion_expression;
-            if (expression == null) {
-                expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
-            }
-            var text_value = new GLib.Value(typeof(string));
-            expression.evaluate(selection, ref text_value);
-            this.text = text_value.get_string();
-        } else {
-            // TODO use common prefix.
+        if (this.completion_popover == null) {
+            return false;
+        }
+        if (!this.completion_popover.visible) {
+            return false;
         }
 
+        var selection = this.completion_selection_model.selected_item;
+        if (selection == null) {
+            // TODO use common prefix.
+            this.completion_popover.popdown();
+            return false;
+        }
+
+        this.completion_activate(selection);
+
+        var expression = this.completion_expression;
+        if (expression == null) {
+            expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
+        }
+        var text_value = new GLib.Value(typeof(string));
+        expression.evaluate(selection, ref text_value);
+        this.text = text_value.get_string();
+
         this.completion_popover.popdown();
+        return true;
     }
 
     /* --- Completion Lifecycle --------------------------------------------- */
@@ -663,6 +670,13 @@ public sealed class Brk.Entry : Gtk.Widget {
         return this.text_input.grab_focus_without_selecting();
     }
 
+    /**
+     * Emitted when the entry is activated.
+     *
+     * The keybindings for this signal are all forms of the Enter key.
+     */
+    public new signal void activate();
+
     private void
     text_input_init() {
         this.text_input = new Gtk.Text();
@@ -676,6 +690,11 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input.notify["selection-bound"].connect(() => { this.notify_property("selection-bound"); });
         this.text_input.notify["width-chars"].connect(() => { this.notify_property("width-chars"); });
         this.text_input.notify["xalign"].connect(() => { this.notify_property("xalign"); });
+        this.text_input.activate.connect(() => {
+            if (!this.completion_accept()) {
+                this.activate();
+            }
+        });
         this.text_input.set_parent(this);
     }
 
@@ -690,6 +709,10 @@ public sealed class Brk.Entry : Gtk.Widget {
     class construct {
         set_layout_manager_type(typeof (Gtk.BoxLayout));
         set_css_name("entry");
+    }
+
+    static construct {
+        set_activate_signal_from_name("activate");
     }
 
     construct {
