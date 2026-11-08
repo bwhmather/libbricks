@@ -84,7 +84,7 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
     }
 }
 
-public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
+public sealed class Brk.Entry : Gtk.Widget, Gtk.Accessible, Gtk.Editable {
 
     /* === Completion ======================================================= */
 
@@ -761,6 +761,26 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
         return true;
     }
 
+    /* --- Accessibility ---------------------------------------------------- */
+
+    private void
+    completion_update_accessibility() {
+        if (this.completion_model == null) {
+            this.reset_property(Gtk.AccessibleProperty.HAS_POPUP);
+            this.reset_property(Gtk.AccessibleProperty.AUTOCOMPLETE);
+            this.reset_relation(Gtk.AccessibleRelation.CONTROLS);
+            return;
+        }
+        this.update_property(Gtk.AccessibleProperty.HAS_POPUP, true);
+        if (this.completion_inline) {
+            this.update_property(Gtk.AccessibleProperty.AUTOCOMPLETE, Gtk.AccessibleAutocomplete.BOTH);
+        } else {
+            this.update_property(Gtk.AccessibleProperty.AUTOCOMPLETE, Gtk.AccessibleAutocomplete.LIST);
+        }
+        this.update_relation(Gtk.AccessibleRelation.CONTROLS, this.completion_list_view, null);
+    }
+
+
     /* --- Completion Lifecycle --------------------------------------------- */
 
     private void
@@ -770,6 +790,8 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
             this.completion_init_keyboard();
             this.completion_init_inline();
         }
+
+        this.completion_update_accessibility();
 
         // Defer until first map so that properties set during construction
         // result in a single rebuild.
@@ -985,6 +1007,13 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
         this.text_input = null;
     }
 
+    /* === Accessibility ==================================================== */
+
+    public bool
+    get_platform_state(Gtk.AccessiblePlatformState state) {
+        return this.delegate_get_accessible_platform_state(state);
+    }
+
     /* === Layout =========================================================== */
 
     public override void
@@ -1019,6 +1048,7 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
 
     class construct {
         set_css_name("entry");
+        set_accessible_role(TEXT_BOX);
     }
 
     static construct {
