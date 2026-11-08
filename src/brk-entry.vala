@@ -152,6 +152,18 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Brk.SearchModel completion_search_model;
     private ulong completion_search_loading_handler = 0;
 
+    private string
+    completion_item_text(GLib.Object item) {
+        var expression = this.completion_expression;
+        if (expression == null) {
+            expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
+        }
+        var text_value = GLib.Value(typeof(string));
+        text_value.unset();  // only way to create uninitialised Value in vala...
+        expression.evaluate(item, ref text_value);
+        return text_value.get_string() ?? "";
+    }
+
     private void
     completion_update_search() {
         if (this.completion_search_model == null) {
@@ -237,9 +249,7 @@ public sealed class Brk.Entry : Gtk.Widget {
             factory.bind.connect((listitem_) => {
                 var listitem = (Gtk.ListItem) listitem_;
                 var label = (Gtk.Label) listitem.child;
-                GLib.Value val = GLib.Value(typeof(string));
-                expression.evaluate(listitem.item, ref val);
-                label.label = val.get_string();
+                label.label = this.completion_item_text(listitem.item);
             });
             this.completion_list_view.factory = factory;
         }
@@ -355,7 +365,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         var n_items = this.completion_selection_model.get_n_items();
         for (uint i = 0; i < n_items; i++) {
             var text = this.completion_item_text(this.completion_selection_model.get_item(i));
-            if (text == null || !text.has_prefix(typed)) {
+            if (!text.has_prefix(typed)) {
                 continue;
             }
             if (prefix == null) {
@@ -678,18 +688,6 @@ public sealed class Brk.Entry : Gtk.Widget {
 
         this.completion_activate(selection);
         return true;
-    }
-
-    private string?
-    completion_item_text(GLib.Object item) {
-        var expression = this.completion_expression;
-        if (expression == null) {
-            expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
-        }
-        var text_value = GLib.Value(typeof(string));
-        text_value.unset();  // only way to create uninitialised Value in vala...
-        expression.evaluate(item, ref text_value);
-        return text_value.get_string();
     }
 
     /* --- Completion Lifecycle --------------------------------------------- */
