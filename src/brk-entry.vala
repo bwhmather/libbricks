@@ -84,7 +84,7 @@ private sealed class Brk.StaticSearchModel : GLib.Object, GLib.ListModel, Brk.Se
     }
 }
 
-public sealed class Brk.Entry : Gtk.Widget {
+public sealed class Brk.Entry : Gtk.Widget, Gtk.Editable {
 
     /* === Completion ======================================================= */
 
@@ -966,16 +966,7 @@ public sealed class Brk.Entry : Gtk.Widget {
     private void
     text_input_init() {
         this.text_input = new Gtk.Text();
-        this.text_input.notify["text"].connect(() => { this.notify_property("text"); });
-        this.text_input.notify["complete-text"].connect(() => { this.notify_property("complete-text"); });
-        this.text_input.notify["cursor-position"].connect(() => { this.notify_property("cursor-position"); });
-        this.text_input.notify["editable"].connect(() => { this.notify_property("editable"); });
-        this.text_input.notify["enable-undo"].connect(() => { this.notify_property("enable-undo"); });
-        this.text_input.notify["input-interceptor"].connect(() => { this.notify_property("input-interceptor"); });
-        this.text_input.notify["max-width-chars"].connect(() => { this.notify_property("max-width-chars"); });
-        this.text_input.notify["selection-bound"].connect(() => { this.notify_property("selection-bound"); });
-        this.text_input.notify["width-chars"].connect(() => { this.notify_property("width-chars"); });
-        this.text_input.notify["xalign"].connect(() => { this.notify_property("xalign"); });
+        this.init_delegate();
         this.text_input.activate.connect(() => {
             if (!this.completion_accept()) {
                 this.completion_inline_accept();
@@ -987,7 +978,10 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     text_input_dispose() {
-        this.text_input?.unparent();
+        if (this.text_input != null) {
+            this.finish_delegate();
+            this.text_input.unparent();
+        }
         this.text_input = null;
     }
 
