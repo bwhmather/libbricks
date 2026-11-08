@@ -645,6 +645,7 @@ public sealed class Brk.Entry : Gtk.Widget {
             new Gtk.CallbackAction(() => {
                 if (this.completion_search_model?.search != null) {
                     this.completion_search_model.search = null;
+                    this.completion_dismiss();
                     return true;
                 }
                 return false;
