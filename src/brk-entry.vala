@@ -629,9 +629,33 @@ public sealed class Brk.Entry : Gtk.Widget {
         shortcut_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("Up"),
             new Gtk.CallbackAction(() => {
+                if (!this.completion_popover.visible) {
+                    return false;
+                }
+
                 var selection_model = this.completion_selection_model;
-                if (selection_model.selected > 0) {
-                    selection_model.selected -= 1;
+                var n_items = selection_model.get_n_items();
+
+                if (this.completion_mode == SELECT) {
+                    // In SELECT mode something must always be selected and we
+                    // don't loop around.
+                    if (selection_model.selected > 0) {
+                        selection_model.selected -= 1;
+                    }
+                } else {
+                    // In COMPLETE the default is no selection.  Pressing Up
+                    // from no selection jumps to the end of the list.  Pressing
+                    // it from the beginning of the list clears the selection.
+                    if (selection_model.selected == Gtk.INVALID_LIST_POSITION) {
+                        selection_model.selected = n_items - 1;
+                    } else if (selection_model.selected == 0) {
+                        selection_model.selected = Gtk.INVALID_LIST_POSITION;
+                    } else {
+                        selection_model.selected -= 1;
+                    }
+                }
+                if (selection_model.selected != Gtk.INVALID_LIST_POSITION) {
+                    this.completion_list_view.scroll_to(selection_model.selected, NONE, null);
                 }
                 return true;
             })
@@ -639,9 +663,34 @@ public sealed class Brk.Entry : Gtk.Widget {
         shortcut_controller.add_shortcut(new Gtk.Shortcut(
             Gtk.ShortcutTrigger.parse_string("Down"),
             new Gtk.CallbackAction(() => {
+                if (!this.completion_popover.visible) {
+                    return false;
+                }
+
                 var selection_model = this.completion_selection_model;
-                if (selection_model.selected + 1 < selection_model.get_n_items()) {
-                    selection_model.selected += 1;
+                var n_items = selection_model.get_n_items();
+
+                if (this.completion_mode == SELECT) {
+                    // In SELECT mode something must always be selected and we
+                    // don't loop around.
+                    if (selection_model.selected < n_items - 1) {
+                        selection_model.selected += 1;
+                    }
+                } else {
+                    // In COMPLETE the default is no selection.  Pressing Down
+                    // from no selection jumps to the start of the list.
+                    // Pressing it from the end of the list clears the
+                    // selection.
+                    if (selection_model.selected == Gtk.INVALID_LIST_POSITION) {
+                        selection_model.selected = 0;
+                    } else if (selection_model.selected == n_items - 1) {
+                        selection_model.selected = Gtk.INVALID_LIST_POSITION;
+                    } else {
+                        selection_model.selected += 1;
+                    }
+                }
+                if (selection_model.selected != Gtk.INVALID_LIST_POSITION) {
+                    this.completion_list_view.scroll_to(selection_model.selected, NONE, null);
                 }
                 return true;
             })
