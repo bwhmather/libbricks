@@ -15110,6 +15110,7 @@ namespace Gtk {
 		public abstract int max_width_chars { get; set; }
 		[NoAccessorMethod]
 		public abstract int selection_bound { get; }
+		[ConcreteAccessor]
 		public abstract string text { get; set; }
 		[ConcreteAccessor]
 		public abstract int width_chars { get; set; }
