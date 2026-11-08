@@ -431,17 +431,25 @@ public sealed class Brk.Entry : Gtk.Widget {
         }
 
         var typed_length = typed.char_count();
+        var text_length = this.text_input.text.char_count();
         this.completion_updating_text = true;
-        if (this.completion_inline_prefix != null) {
-            this.text_input.do_delete_text(typed_length, -1);
-        }
         if (completion != typed) {
-            var position = typed_length;
+            // WORKAROUND: releaseing primary selection on X11 results in us
+            // receiving a SelectionClear event some time later.  This will
+            // clear the new selection.  We need to carefully maintain a
+            // selection to avoid this.
+            var position = text_length;
             this.text_input.do_insert_text(completion.substring(typed.length), -1, ref position);
             this.text_input.select_region(typed_length, -1);
+            if (this.completion_inline_prefix != null) {
+                this.text_input.do_delete_text(typed_length, text_length);
+            }
             this.completion_inline_prefix = typed;
             this.completion_inline_pending = false;
         } else {
+            if (this.completion_inline_prefix != null) {
+                this.text_input.do_delete_text(typed_length, -1);
+            }
             // The previous suggestion no longer applies.  Keep waiting in case
             // a later result does.
             this.completion_inline_prefix = null;
