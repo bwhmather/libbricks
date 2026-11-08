@@ -64,6 +64,7 @@ class Brk.EntryCompletionDemo : Gtk.Application {
 
         var entry = new Brk.Entry();
         entry.completion_model = create_completion_model();
+        entry.completion_inline = true;
         vbox.append(entry);
 
         //entry.update_relation(LABELLED_BY, label);
