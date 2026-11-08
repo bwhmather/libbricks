@@ -346,7 +346,7 @@ public sealed class Brk.Entry : Gtk.Widget {
     /* --- Inline Completion ------------------------------------------------ */
 
     private bool completion_inline_pending = false;
-    private bool completion_inline_inserting = false;
+    private bool completion_updating_text = false;
     private bool completion_inline_editing = false;
     private string? completion_inline_prefix = null;
     private uint completion_inline_idle = 0;
@@ -425,7 +425,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         }
 
         var typed_length = typed.char_count();
-        this.completion_inline_inserting = true;
+        this.completion_updating_text = true;
         if (this.completion_inline_prefix != null) {
             this.text_input.do_delete_text(typed_length, -1);
         }
@@ -441,7 +441,7 @@ public sealed class Brk.Entry : Gtk.Widget {
             this.completion_inline_prefix = null;
             this.completion_inline_pending = true;
         }
-        this.completion_inline_inserting = false;
+        this.completion_updating_text = false;
     }
 
     private void
@@ -461,7 +461,7 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_inline_cursor_moved() {
-        if (this.completion_inline_inserting) {
+        if (this.completion_updating_text) {
             return;
         }
         this.completion_inline_prefix = null;
@@ -502,7 +502,10 @@ public sealed class Brk.Entry : Gtk.Widget {
     private void
     completion_init_inline() {
         this.text_input.insert_text.connect(() => {
-            if (this.completion_inline_inserting || !this.completion_inline) {
+            if (this.completion_updating_text) {
+                return;
+            }
+            if (!this.completion_inline) {
                 return;
             }
             // Cleared by the idle, as Gtk.Text keeps updating the cursor after
@@ -510,14 +513,17 @@ public sealed class Brk.Entry : Gtk.Widget {
             this.completion_inline_editing = true;
         });
         this.text_input.insert_text.connect_after(() => {
-            if (this.completion_inline_inserting || !this.completion_inline) {
+            if (this.completion_updating_text) {
+                return;
+            }
+            if (!this.completion_inline) {
                 return;
             }
             this.completion_inline_pending = true;
             this.completion_inline_queue();
         });
         this.text_input.delete_text.connect(() => {
-            if (this.completion_inline_inserting) {
+            if (this.completion_updating_text) {
                 return;
             }
             this.completion_inline_reset();
@@ -600,14 +606,14 @@ public sealed class Brk.Entry : Gtk.Widget {
             // Buffered keyboard events will have happened before whatever
             // changed the entry (for example, a careful middle click paste)
             // and so can't be replayed after.
-            if (!this.completion_inline_inserting) {
+            if (!this.completion_updating_text) {
                 buffer_controller.discard();
             }
         });
         this.text_input.notify["cursor-position"].connect((_, pspec) => {
             // Likewise, replaying events after moving the cursor would cause
             // text to be entered in the wrong place.
-            if (!this.completion_inline_inserting) {
+            if (!this.completion_updating_text) {
                 buffer_controller.discard();
             }
         });
@@ -647,8 +653,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input.add_controller(shortcut_controller);
 
         this.text_input.notify["text"].connect((fe, pspec) => {
-            // Search using what the user typed, not the inline suggestion.
-            if (!this.completion_inline_inserting) {
+            if (!this.completion_updating_text) {
                 this.completion_update_search();
             }
         });
@@ -680,9 +685,11 @@ public sealed class Brk.Entry : Gtk.Widget {
             return false;
         }
 
+        this.completion_updating_text = true;
         this.text = this.completion_item_text(selection);
-        this.completion_inline_reset();
         this.text_input.set_position(-1);
+        this.completion_updating_text = false;
+        this.completion_inline_reset();
 
         this.completion_popover.popdown();
 
