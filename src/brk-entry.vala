@@ -273,6 +273,11 @@ public sealed class Brk.Entry : Gtk.Widget {
     private Gtk.EventControllerFocus? completion_focus_controller;
 
     private void
+    completion_resize_popover() {
+        this.completion_popover.set_size_request(this.get_width(), -1);
+    }
+
+    private void
     completion_init_view() {
         if (this.completion_popover != null) {
             return;
@@ -283,16 +288,16 @@ public sealed class Brk.Entry : Gtk.Widget {
             halign = START,
             position = BOTTOM,
             has_arrow = false,
-            autohide = false,
-            width_request = 400,
-            height_request = 300
+            autohide = false
         };
         this.completion_popover.set_parent(this);
 
         // Initialise scrolled window.
         var scrolled_window = new Gtk.ScrolledWindow() {
             hexpand = true,
-            vexpand = true
+            vexpand = true,
+            propagate_natural_height = true,
+            max_content_height = 300
         };
         this.completion_popover.child = scrolled_window;
 
@@ -313,6 +318,7 @@ public sealed class Brk.Entry : Gtk.Widget {
                 this.completion_focus_controller.contains_focus &&
                 this.completion_selection_model.get_n_items() > 0
             ) {
+                this.completion_resize_popover();
                 this.completion_popover.popup();
             } else {
                 this.completion_clear();
@@ -928,10 +934,39 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input = null;
     }
 
+    /* === Layout =========================================================== */
+
+    public override void
+    measure(
+        Gtk.Orientation orientation, int for_size,
+        out int minimum, out int natural,
+        out int minimum_baseline, out int natural_baseline
+    ) {
+        this.text_input.measure(
+            orientation, for_size,
+            out minimum, out natural,
+            out minimum_baseline, out natural_baseline
+        );
+    }
+
+    public override void
+    size_allocate(int width, int height, int baseline) {
+        var valign = this.get_valign();
+        if (valign != BASELINE_FILL && valign != BASELINE_CENTER) {
+            baseline = -1;
+        }
+
+        this.text_input.allocate(width, height, baseline, null);
+
+        if (this.completion_popover != null) {
+            this.completion_resize_popover();
+            this.completion_popover.present();
+        }
+    }
+
     /* === Lifecycle ======================================================== */
 
     class construct {
-        set_layout_manager_type(typeof (Gtk.BoxLayout));
         set_css_name("entry");
     }
 
