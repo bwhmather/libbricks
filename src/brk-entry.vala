@@ -121,12 +121,11 @@ public sealed class Brk.Entry : Gtk.Widget {
     public Brk.EntryCompletionMode completion_mode { get; set; default = COMPLETE; }
 
     /**
-     * Determines whether a preview of the completion should be show inline in
-     * the text box while typing.
+     * Determines whether a preview of the selected completion should be show
+     * inline in the text box while typing.
      *
-     * In COMPLETE mode this will be the common prefix of all possible
-     * completions.  In SELECT mode it will be the rest of the completion that
-     * is currently highlighted.
+     * In COMPLETE mode, when nothing is selected, this will also determine
+     * whether to show the common prefix of all possible completions.
      */
     public bool completion_inline { get; set; default = false; }
 
@@ -168,6 +167,8 @@ public sealed class Brk.Entry : Gtk.Widget {
 
     private void
     completion_rebuild_state() {
+        this.completion_inline_reset();
+
         // Tear down previous completion setups.
         if (this.completion_popover != null) {
             this.completion_selection_model.model = null;
@@ -313,6 +314,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.completion_focus_controller = new Gtk.EventControllerFocus();
         this.completion_focus_controller.notify["contains-focus"].connect(() => {
             if (!this.completion_focus_controller.contains_focus) {
+                this.completion_inline_accept();
                 this.completion_clear();
             }
         });
@@ -329,6 +331,201 @@ public sealed class Brk.Entry : Gtk.Widget {
             this.completion_popover.unparent();
             this.completion_popover = null;
         }
+    }
+
+    /* --- Inline Completion ------------------------------------------------ */
+
+    private bool completion_inline_pending = false;
+    private bool completion_inline_inserting = false;
+    private bool completion_inline_editing = false;
+    private string? completion_inline_prefix = null;
+    private uint completion_inline_idle = 0;
+
+    private string?
+    completion_inline_candidate(string typed) {
+        var selection = this.completion_selection_model.selected_item;
+        if (selection != null) {
+            return this.completion_item_text(selection);
+        }
+        if (this.completion_mode != COMPLETE) {
+            return null;
+        }
+
+        string? prefix = null;
+        var n_items = this.completion_selection_model.get_n_items();
+        for (uint i = 0; i < n_items; i++) {
+            var text = this.completion_item_text(this.completion_selection_model.get_item(i));
+            if (text == null || !text.has_prefix(typed)) {
+                continue;
+            }
+            if (prefix == null) {
+                prefix = text;
+                continue;
+            }
+            int length = 0;
+            while (length < prefix.length && length < text.length && prefix[length] == text[length]) {
+                length++;
+            }
+            while (length > 0 && length < prefix.length && ((uint8) prefix[length] & 0xC0) == 0x80) {
+                length--;
+            }
+            prefix = prefix.substring(0, length);
+        }
+        return prefix;
+    }
+
+    private void
+    completion_inline_update() {
+        if (!this.completion_inline || this.completion_selection_model == null) {
+            return;
+        }
+        // Results may still be from the previous search.  Leave any pending
+        // completion for when loading finishes.
+        if (this.completion_loading) {
+            return;
+        }
+
+        string typed;
+        if (this.completion_inline_prefix != null) {
+            typed = this.completion_inline_prefix;
+            if (!this.text_input.text.has_prefix(typed)) {
+                this.completion_inline_reset();
+                return;
+            }
+        } else if (this.completion_inline_pending) {
+            typed = this.text_input.text;
+            int start, end;
+            if (
+                this.text_input.get_selection_bounds(out start, out end) ||
+                this.text_input.cursor_position != typed.char_count()
+            ) {
+                this.completion_inline_pending = false;
+                return;
+            }
+        } else {
+            return;
+        }
+
+        var completion = this.completion_inline_candidate(typed);
+        if (completion == null || completion.length <= typed.length || !completion.has_prefix(typed)) {
+            completion = typed;
+        }
+        if (completion == this.text_input.text) {
+            return;
+        }
+
+        var typed_length = typed.char_count();
+        this.completion_inline_inserting = true;
+        if (this.completion_inline_prefix != null) {
+            this.text_input.do_delete_text(typed_length, -1);
+        }
+        if (completion != typed) {
+            var position = typed_length;
+            this.text_input.do_insert_text(completion.substring(typed.length), -1, ref position);
+            this.text_input.select_region(typed_length, -1);
+            this.completion_inline_prefix = typed;
+            this.completion_inline_pending = false;
+        } else {
+            // The previous suggestion no longer applies.  Keep waiting in case
+            // a later result does.
+            this.completion_inline_prefix = null;
+            this.completion_inline_pending = true;
+        }
+        this.completion_inline_inserting = false;
+    }
+
+    private void
+    completion_inline_accept() {
+        if (this.completion_inline_prefix == null) {
+            return;
+        }
+        this.completion_inline_reset();
+        this.text_input.set_position(-1);
+    }
+
+    private void
+    completion_inline_reset() {
+        this.completion_inline_prefix = null;
+        this.completion_inline_pending = false;
+    }
+
+    private void
+    completion_inline_cursor_moved() {
+        if (this.completion_inline_inserting) {
+            return;
+        }
+        this.completion_inline_prefix = null;
+        if (this.text_input.cursor_position != this.text_input.text.char_count()) {
+            this.completion_inline_pending = false;
+        }
+    }
+
+    private void
+    completion_inline_queue() {
+        if (this.completion_inline_idle != 0) {
+            return;
+        }
+        // Gtk.Text sets the cursor position after inserting text, so changes
+        // made synchronously from inside the insertion would be clobbered.
+        this.completion_inline_idle = GLib.Idle.add(() => {
+            this.completion_inline_idle = 0;
+            this.completion_inline_editing = false;
+            this.completion_inline_update();
+            return GLib.Source.REMOVE;
+        }, GLib.Priority.HIGH);
+    }
+
+    // Applies any queued inline completion immediately, unless that would
+    // happen inside an insertion, in which case it is left to the idle.
+    private void
+    completion_inline_flush() {
+        if (this.completion_inline_editing) {
+            return;
+        }
+        if (this.completion_inline_idle != 0) {
+            GLib.Source.remove(this.completion_inline_idle);
+            this.completion_inline_idle = 0;
+        }
+        this.completion_inline_update();
+    }
+
+    private void
+    completion_init_inline() {
+        this.text_input.insert_text.connect(() => {
+            if (this.completion_inline_inserting || !this.completion_inline) {
+                return;
+            }
+            // Cleared by the idle, as Gtk.Text keeps updating the cursor after
+            // the insert-text signal has returned.
+            this.completion_inline_editing = true;
+        });
+        this.text_input.insert_text.connect_after(() => {
+            if (this.completion_inline_inserting || !this.completion_inline) {
+                return;
+            }
+            this.completion_inline_pending = true;
+            this.completion_inline_queue();
+        });
+        this.text_input.delete_text.connect(() => {
+            if (this.completion_inline_inserting) {
+                return;
+            }
+            this.completion_inline_reset();
+        });
+        this.text_input.notify["cursor-position"].connect(this.completion_inline_cursor_moved);
+        this.text_input.notify["selection-bound"].connect(this.completion_inline_cursor_moved);
+        this.completion_selection_model.items_changed.connect(this.completion_inline_queue);
+        this.completion_selection_model.notify["selected"].connect(this.completion_inline_queue);
+    }
+
+    private void
+    completion_dispose_inline() {
+        if (this.completion_inline_idle != 0) {
+            GLib.Source.remove(this.completion_inline_idle);
+            this.completion_inline_idle = 0;
+        }
+        this.completion_inline_editing = false;
+        this.completion_inline_reset();
     }
 
     /* --- Completion Keyboard Interaction ---------------------------------- */
@@ -383,6 +580,9 @@ public sealed class Brk.Entry : Gtk.Widget {
 
         this.notify["completion-loading"].connect((_, pspec) => {
             if (!this.completion_loading) {
+                // Replayed keys, in particular Return, must see the inline
+                // completion derived from the final results.
+                this.completion_inline_flush();
                 buffer_controller.replay();
             }
         });
@@ -390,12 +590,16 @@ public sealed class Brk.Entry : Gtk.Widget {
             // Buffered keyboard events will have happened before whatever
             // changed the entry (for example, a careful middle click paste)
             // and so can't be replayed after.
-            buffer_controller.discard();
+            if (!this.completion_inline_inserting) {
+                buffer_controller.discard();
+            }
         });
         this.text_input.notify["cursor-position"].connect((_, pspec) => {
             // Likewise, replaying events after moving the cursor would cause
             // text to be entered in the wrong place.
-            buffer_controller.discard();
+            if (!this.completion_inline_inserting) {
+                buffer_controller.discard();
+            }
         });
 
         // ... Bubble Phase ...
@@ -433,7 +637,10 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input.add_controller(shortcut_controller);
 
         this.text_input.notify["text"].connect((fe, pspec) => {
-            this.completion_update_search();
+            // Search using what the user typed, not the inline suggestion.
+            if (!this.completion_inline_inserting) {
+                this.completion_update_search();
+            }
         });
     }
 
@@ -463,18 +670,26 @@ public sealed class Brk.Entry : Gtk.Widget {
             return false;
         }
 
-        this.completion_activate(selection);
+        this.text = this.completion_item_text(selection);
+        this.completion_inline_reset();
+        this.text_input.set_position(-1);
 
+        this.completion_popover.popdown();
+
+        this.completion_activate(selection);
+        return true;
+    }
+
+    private string?
+    completion_item_text(GLib.Object item) {
         var expression = this.completion_expression;
         if (expression == null) {
             expression = new Gtk.PropertyExpression(typeof(Gtk.StringObject), null, "string");
         }
-        var text_value = new GLib.Value(typeof(string));
-        expression.evaluate(selection, ref text_value);
-        this.text = text_value.get_string();
-
-        this.completion_popover.popdown();
-        return true;
+        var text_value = GLib.Value(typeof(string));
+        text_value.unset();  // only way to create uninitialised Value in vala...
+        expression.evaluate(item, ref text_value);
+        return text_value.get_string();
     }
 
     /* --- Completion Lifecycle --------------------------------------------- */
@@ -484,6 +699,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         if (this.completion_model != null && this.completion_popover == null) {
             this.completion_init_view();
             this.completion_init_keyboard();
+            this.completion_init_inline();
         }
 
         // Defer until first map so that properties set during construction
@@ -518,6 +734,7 @@ public sealed class Brk.Entry : Gtk.Widget {
     completion_dispose() {
         this.completion_needs_rebuild = false;
         this.completion_dispose_state();
+        this.completion_dispose_inline();
         this.completion_dispose_keyboard();
         this.completion_dispose_view();
     }
@@ -692,6 +909,7 @@ public sealed class Brk.Entry : Gtk.Widget {
         this.text_input.notify["xalign"].connect(() => { this.notify_property("xalign"); });
         this.text_input.activate.connect(() => {
             if (!this.completion_accept()) {
+                this.completion_inline_accept();
                 this.activate();
             }
         });
