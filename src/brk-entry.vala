@@ -722,6 +722,16 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Accessible, Gtk.Editable {
         ));
         this.text_input.add_controller(shortcut_controller);
 
+        this.text_input.move_cursor.connect_after(() => {
+            if (this.completion_mode == SELECT) {
+                return;
+            }
+            if (this.completion_search_model != null) {
+                this.completion_search_model.search = null;
+            }
+            this.completion_clear();
+        });
+
         this.text_input.notify["text"].connect((fe, pspec) => {
             if (!this.completion_updating_text) {
                 this.completion_update_search();
