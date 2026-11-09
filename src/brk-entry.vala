@@ -303,9 +303,15 @@ public sealed class Brk.Entry : Gtk.Widget, Gtk.Accessible, Gtk.Editable {
 
         // Initialise ist view.
         this.completion_list_view = new Gtk.ListView(null, null) {
-            tab_behavior = ITEM,
+            can_focus = false,
+            single_click_activate = true
         };
         this.completion_list_view.add_css_class("data-table");
+        this.completion_list_view.activate.connect((position) => {
+            if (this.completion_selection_model.selected == position) {
+                this.completion_accept();
+            }
+        });
         scrolled_window.child = this.completion_list_view;
 
         // Initialise selection model.
