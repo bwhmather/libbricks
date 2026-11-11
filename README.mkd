@@ -111,6 +111,8 @@ Discouraged widgets:
 
 No client side decorations, no prisoners, no surrender!
 
+When asked to choose between composition and inheritance, choose duplication.
+
 Types of windows:
   - Launchers.
   - Wizards.
