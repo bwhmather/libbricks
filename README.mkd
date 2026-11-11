@@ -141,11 +141,8 @@ Application developers using `libbricks` should not need to manually set CSS cla
   - Helium - https://docs.developers.tauos.co/libhelium/libhelium-1/
 
 
+## LLM Policy
 
+No slop, please.
 
-
-
-
-
-
-
+Vala is a much more precise language than English for generating C.  It's also much more fun.
